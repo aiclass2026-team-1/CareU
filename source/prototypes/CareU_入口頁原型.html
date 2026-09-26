@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Care U｜入口頁動畫原型</title>
+  <style>
+    :root {
+      --brand-blue: #197afc;
+      --brand-orange: #fb8f54;
+      --brand-navy: #07295c;
+      --surface: #f7f8fa;
+      --motion-smooth: cubic-bezier(.22, .7, .18, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--surface);
+      color: var(--brand-navy);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    /* 首頁只作為轉場終點示意，不代表後續首頁設計。 */
+    .home-placeholder {
+      padding: 32px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(163, 211, 247, .24), transparent 38%),
+        var(--surface);
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(1.012);
+      transition:
+        opacity 520ms ease,
+        transform 700ms var(--motion-smooth),
+        visibility 0s linear 520ms;
+    }
+
+    .home-placeholder.is-visible {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+      transition-delay: 0s;
+    }
+
+    .home-placeholder__content {
+      width: min(760px, 100%);
+      text-align: center;
+    }
+
+    .home-placeholder__eyebrow {
+      margin: 0 0 18px;
+      color: var(--brand-blue);
+      font-size: clamp(.88rem, 1.7vw, 1rem);
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .home-placeholder h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.5rem);
+      line-height: 1.22;
+      letter-spacing: -.035em;
+    }
+
+    .home-placeholder__note {
+      margin: 24px 0 0;
+      color: rgba(7, 41, 92, .58);
+      font-size: .82rem;
+      letter-spacing: .04em;
+    }
+
+    .replay-button {
+      margin-top: 28px;
+      padding: 11px 18px;
+      border: 1px solid rgba(25, 122, 252, .3);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .72);
+      color: var(--brand-blue);
+      cursor: pointer;
+      transition: background-color 180ms ease, transform 180ms ease;
+    }
+
+    .replay-button:hover {
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    .replay-button:focus-visible,
+    .splash:focus-visible {
+      outline: 3px solid rgba(25, 122, 252, .32);
+      outline-offset: -6px;
+    }
+
+    .splash {
+      z-index: 2;
+      padding: clamp(24px, 5vw, 64px);
+      background: var(--surface);
+      cursor: pointer;
+      opacity: 1;
+      visibility: visible;
+      transition:
+        opacity 440ms ease,
+        visibility 0s linear 440ms;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .splash.is-leaving {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash__content {
+      display: flex;
+      width: min(700px, 100%);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-1vh);
+    }
+
+    .logo {
+      width: clamp(119px, 16.2vw, 176px);
+      height: auto;
+      overflow: visible;
+      filter: drop-shadow(0 18px 28px rgba(7, 41, 92, .055));
+    }
+
+    .logo__blue {
+      opacity: .18;
+      filter: blur(15px);
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: blue-clear 1.28s var(--motion-smooth) .28s forwards;
+    }
+
+    .logo__dot {
+      opacity: 1;
+      transform: translateY(180.334px);
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: sunrise 1.14s cubic-bezier(.2, .68, .18, 1) .34s forwards;
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      margin-top: clamp(27px, 4.2vw, 40px);
+      color: var(--brand-navy);
+      font-size: clamp(1.05rem, 2.2vw, 1.42rem);
+      font-weight: 650;
+      letter-spacing: .035em;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: copy-in 660ms var(--motion-smooth) 1.58s forwards;
+    }
+
+    .brand-line__name {
+      font-weight: 750;
+      letter-spacing: .015em;
+    }
+
+    .brand-line__separator {
+      display: inline-block;
+      margin: 0 .18em;
+      font-size: .72em;
+      font-weight: 700;
+      transform: translateY(-.04em);
+    }
+
+    .enter-hint {
+      position: fixed;
+      right: 0;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      left: 0;
+      margin: 0;
+      color: rgba(7, 41, 92, .44);
+      font-size: .76rem;
+      letter-spacing: .12em;
+      text-align: center;
+      opacity: 1;
+    }
+
+    @keyframes blue-clear {
+      0% {
+        opacity: .18;
+        filter: blur(15px);
+        transform: scale(.985);
+      }
+      68% {
+        opacity: .82;
+        filter: blur(3.5px);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+    }
+
+    @keyframes sunrise {
+      0% {
+        opacity: 1;
+        transform: translateY(180.334px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes copy-in {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-line {
+        font-size: 1rem;
+        letter-spacing: .018em;
+      }
+
+      .brand-line__separator {
+        margin-inline: .12em;
+      }
+
+      .enter-hint {
+        font-size: .7rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+
+      .logo__blue,
+      .logo__dot,
+      .brand-line,
+      .enter-hint {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="screen home-placeholder" id="home" aria-hidden="true">
+      <div class="home-placeholder__content">
+        <p class="home-placeholder__eyebrow">［你的身體］正在輸入訊息……</p>
+        <h1>如果身體會說話，<br>最近想跟你說什麼？</h1>
+        <p class="home-placeholder__note">首頁銜接示意，非首頁設計定案</p>
+        <button class="replay-button" id="replay" type="button">重新播放入口動畫</button>
+      </div>
+    </section>
+
+    <section
+      class="screen splash"
+      id="splash"
+      role="button"
+      tabindex="0"
+      aria-label="Care U，為你的健康導航。點擊或按 Enter 進入首頁"
+    >
+      <div class="splash__content" aria-hidden="true">
+        <svg class="logo" viewBox="0 0 500 630.018" role="img" aria-label="Care U">
+          <defs>
+            <!-- 圓點最終位置的下緣（y=180.334）作為不可見的水平線。 -->
+            <clipPath id="dot-horizon" clipPathUnits="userSpaceOnUse">
+              <rect x="159.833" y="-1" width="180.334" height="181.334"/>
+            </clipPath>
+          </defs>
+          <g class="logo__blue">
+            <path d="M499.981,151.266c-12.088,0-16.978-.363-32.45.335-61.012,2.751-90.306,41.805-91.563,102.967-.942,45.862.13,91.825-1.936,137.617C371.262,453.575,313.39,506.251,250,506.251S128.738,453.575,125.968,392.185c-2.066-45.792-.994-91.755-1.936-137.617C122.775,193.406,93.481,154.352,32.469,151.6c-15.472-.7-20.362-.335-32.45-.335,0,144.2-.736,224.892,7.064,276.869C22.5,530.852,110.94,630.018,250,630.018s227.5-99.166,242.917-201.883C500.717,376.158,499.981,295.463,499.981,151.266Z" fill="#197afc"/>
+            <path d="M307.97,312.882H278.338V283.244a28.338,28.338,0,0,0-56.675,0v29.638H192.03a28.334,28.334,0,1,0,0,56.667h29.633v29.637a28.338,28.338,0,0,0,56.675,0V369.549H307.97a28.334,28.334,0,1,0,0-56.667Z" fill="#197afc"/>
+          </g>
+          <g clip-path="url(#dot-horizon)">
+            <circle class="logo__dot" cx="250" cy="90.167" r="90.167" fill="#fb8f54"/>
+          </g>
+        </svg>
+
+        <div class="brand-line" aria-label="Care U，為你的健康導航">
+          <span class="brand-line__name">Care U</span>
+          <span class="brand-line__separator">．</span>
+          <span>為你的健康導航</span>
+        </div>
+      </div>
+
+      <p class="enter-hint" aria-hidden="true">點擊畫面進入</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const splash = document.querySelector('#splash');
+      const home = document.querySelector('#home');
+      const replay = document.querySelector('#replay');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let autoEnterTimer = null;
+      let isLeaving = false;
+
+      function scheduleAutoEnter() {
+        window.clearTimeout(autoEnterTimer);
+        if (!reduceMotion.matches) {
+          autoEnterTimer = window.setTimeout(enterHome, 2850);
+        }
+      }
+
+      function enterHome() {
+        if (isLeaving) return;
+        isLeaving = true;
+        window.clearTimeout(autoEnterTimer);
+        splash.classList.add('is-leaving');
+        splash.setAttribute('aria-hidden', 'true');
+        splash.setAttribute('tabindex', '-1');
+
+        window.setTimeout(() => {
+          home.classList.add('is-visible');
+          home.setAttribute('aria-hidden', 'false');
+          replay.focus({ preventScroll: true });
+        }, reduceMotion.matches ? 0 : 170);
+      }
+
+      function playAgain() {
+        window.clearTimeout(autoEnterTimer);
+        isLeaving = false;
+        home.classList.remove('is-visible');
+        home.setAttribute('aria-hidden', 'true');
+
+        const replacement = splash.cloneNode(true);
+        splash.replaceWith(replacement);
+        window.location.reload();
+      }
+
+      splash.addEventListener('click', enterHome);
+      splash.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          enterHome();
+        }
+      });
+      replay.addEventListener('click', playAgain);
+
+      reduceMotion.addEventListener?.('change', () => {
+        scheduleAutoEnter();
+      });
+
+      scheduleAutoEnter();
+    })();
+  </script>
+</body>
+</html>
