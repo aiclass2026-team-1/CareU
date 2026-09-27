@@ -40,6 +40,14 @@ const routes: RouteRecordRaw[] = [
       hideLayout: true,
     },
   },
+  {
+    path: '/preview/loading-1',
+    name: 'preview-loading-one',
+    component: () => import('@/views/LoadingOneView.vue'),
+    meta: {
+      hideLayout: true,
+    },
+  },
 ]
 
 const router = createRouter({

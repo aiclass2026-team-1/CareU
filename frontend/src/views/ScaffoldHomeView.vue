@@ -41,7 +41,10 @@
         &larr; 入口頁預覽 (/preview/splash)
       </RouterLink>
       <RouterLink to="/preview/home" class="btn btn--secondary">
-        首頁預覽 (/preview/home) &rarr;
+        首頁預覽 (/preview/home)
+      </RouterLink>
+      <RouterLink to="/preview/loading-1" class="btn btn--secondary">
+        Loading-1 預覽 (/preview/loading-1) &rarr;
       </RouterLink>
       <RouterLink to="/scaffold-verify" class="btn">
         前往骨架驗證分頁 &rarr;
