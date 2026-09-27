@@ -32,6 +32,14 @@ const routes: RouteRecordRaw[] = [
       hideLayout: true,
     },
   },
+  {
+    path: '/preview/home',
+    name: 'preview-home',
+    component: () => import('@/views/HomeView.vue'),
+    meta: {
+      hideLayout: true,
+    },
+  },
 ]
 
 const router = createRouter({

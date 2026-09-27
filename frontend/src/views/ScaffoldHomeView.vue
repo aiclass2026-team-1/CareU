@@ -38,7 +38,10 @@
 
     <div class="actions">
       <RouterLink to="/preview/splash" class="btn btn--secondary">
-        &larr; 預覽入口頁動畫 (/preview/splash)
+        &larr; 入口頁預覽 (/preview/splash)
+      </RouterLink>
+      <RouterLink to="/preview/home" class="btn btn--secondary">
+        首頁預覽 (/preview/home) &rarr;
       </RouterLink>
       <RouterLink to="/scaffold-verify" class="btn">
         前往骨架驗證分頁 &rarr;

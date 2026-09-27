@@ -21,6 +21,7 @@ const isBareLayout = computed(() => Boolean(route.meta.hideLayout))
           <RouterLink to="/" class="nav-item" active-class="active">占位首頁</RouterLink>
           <RouterLink to="/scaffold-verify" class="nav-item" active-class="active">路由驗證</RouterLink>
           <RouterLink to="/preview/splash" class="nav-item nav-item--highlight" active-class="active">入口頁預覽</RouterLink>
+          <RouterLink to="/preview/home" class="nav-item nav-item--highlight" active-class="active">首頁預覽</RouterLink>
         </nav>
       </div>
     </header>
