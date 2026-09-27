@@ -1,18 +1,26 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+
+const route = useRoute()
+const isBareLayout = computed(() => Boolean(route.meta.hideLayout))
 </script>
 
 <template>
-  <div class="app-layout">
+  <div v-if="isBareLayout" class="app-bare">
+    <RouterView />
+  </div>
+  <div v-else class="app-layout">
     <header class="app-header">
       <div class="header-inner">
         <div class="brand">
           <span class="brand-title">Care U</span>
-          <span class="brand-tag">Phase 3 Scaffold</span>
+          <span class="brand-tag">Phase 4 Implementation</span>
         </div>
         <nav class="nav-links">
           <RouterLink to="/" class="nav-item" active-class="active">占位首頁</RouterLink>
           <RouterLink to="/scaffold-verify" class="nav-item" active-class="active">路由驗證</RouterLink>
+          <RouterLink to="/preview/splash" class="nav-item nav-item--highlight" active-class="active">入口頁預覽</RouterLink>
         </nav>
       </div>
     </header>
@@ -22,12 +30,19 @@ import { RouterLink, RouterView } from 'vue-router'
     </main>
 
     <footer class="app-footer">
-      <p>Care U Frontend Engineering Baseline &bull; Phase 3 Scaffold</p>
+      <p>Care U Frontend Engineering Baseline &bull; Phase 4 Page Implementation</p>
     </footer>
   </div>
 </template>
 
 <style scoped>
+.app-bare {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -97,6 +112,15 @@ import { RouterLink, RouterView } from 'vue-router'
   font-weight: 600;
 }
 
+.nav-item--highlight {
+  color: #197afc;
+  border: 1px solid #bfdbfe;
+}
+
+.nav-item--highlight:hover {
+  background-color: #eff6ff;
+}
+
 .app-main {
   flex: 1;
   max-width: 960px;
@@ -114,3 +138,4 @@ import { RouterLink, RouterView } from 'vue-router'
   color: #94a3b8;
 }
 </style>
+

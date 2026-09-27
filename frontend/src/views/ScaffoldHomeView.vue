@@ -37,6 +37,9 @@
     </div>
 
     <div class="actions">
+      <RouterLink to="/preview/splash" class="btn btn--secondary">
+        &larr; 預覽入口頁動畫 (/preview/splash)
+      </RouterLink>
       <RouterLink to="/scaffold-verify" class="btn">
         前往骨架驗證分頁 &rarr;
       </RouterLink>
@@ -106,7 +109,9 @@ h2 {
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .btn {
@@ -124,5 +129,17 @@ h2 {
 .btn:hover {
   background-color: #1462ca;
   text-decoration: none;
+}
+
+.btn--secondary {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.btn--secondary:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
 }
 </style>
