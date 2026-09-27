@@ -1,0 +1,225 @@
+# Care U｜工程歷程日誌（Phase & Milestone Engineering Log）
+
+- **最後更新日期**：2026-09-28
+- **當前階段**：Phase 4｜Prototype → Vue Page Migration
+- **最近已提交功能 Checkpoint**：`41fb549`（完整 SHA：`41fb5494fc717573967f22e82ac0d01f32131291`，`fix: finalize loading-one layout and exclusion modal`）
+- **功能基線說明**：`41fb549` 為建立本工程歷程日誌前，最近已完成、已驗收並已提交之功能 Checkpoint。
+- **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
+- **文件性質**：Care U 專案各階段（Phase）與批次（Batch）之長期里程碑與驗收紀錄
+
+---
+
+## 1. 記錄原則與標籤規範（Recording Rules & Evidence Tags）
+
+本文件採用嚴格的事實與證據等級標籤，禁止無依據的主觀推測：
+
+- **`CONFIRMED`**：已有實體工程文件、明確 Git Checkpoint 或詳細人工驗收紀錄作為客觀事實佐證。
+- **`NEEDS_CONFIRMATION`**：已知存在該 Checkpoint 或代碼，但專案內缺少獨立詳細的逐項驗收清單，刻意保留不作主觀假設。
+- **`RUNTIME_UNVERIFIED`**：程式碼結構已完成並通過靜態檢查，但尚未經瀏覽器真機、行動裝置或長時間運行驗證。
+- **`TBD`**：尚待後續階段定義、評估或 Technical PM 授權之事項。
+
+### 核心記錄原則
+1. **不得反向推論**：後續 Phase / Batch 的完成，不能作為前面 Phase 驗收細節自動 PASS 的證據。
+2. **不複製整份程式碼或逐檔 Diff**：本文件記錄關鍵成果、重大決策、驗收結果與未驗證邊界，不作流水帳式的 Diff 複製。
+3. **維護協議（Update Protocol）**：每一批次工作完成並通過使用者/PM 驗收後，與 `docs/project-status.md` 同步更新並納入 Git Checkpoint。
+
+---
+
+## 2. Phase 0｜來源基準鎖定與防護（Git Source Baseline Preparation）
+
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`ba4a60e`（完整 SHA：`ba4a60eff2eca656b3c9b7d49828b725d417d22e`）
+- **Commit 訊息**：`chore: establish Care U source baseline`
+- **證據來源**：`docs/audit/phase-0-preflight.md`、`docs/audit/source-manifest.csv`
+- **狀態標籤**：`CONFIRMED`
+
+### 2.1 階段目標與成果
+- 鎖定 `source/` 目錄內 **33 份來源檔案**，並建立 SHA-256 manifest baseline。
+- 依據 `docs/audit/phase-0-preflight.md` 與 `docs/audit/source-manifest.csv` 記載，33 份來源檔案涵蓋：
+  - `prototypes`：5 份 HTML 原型
+  - `page-specs`：5 份頁面規格 MD
+  - `flows`：2 份流程檔案（1 PNG 流程圖, 1 MD 流程說明）
+  - `assets/brand`：15 份官方 VIS 品牌資產（7 SVG, 7 PNG, 1 AI 原檔）
+  - `data`：4 份題庫與商品資料集（1 問卷 TXT, 1 保健分類 CSV, 1 Raw 商品 CSV, 1 Derived 商品 CSV）
+  - `project-brief`：2 份專案指引文件（2 TXT）
+  - **總計 33 份**（5 + 5 + 2 + 15 + 4 + 2 = 33）。
+- 建立 `docs/audit/source-manifest.csv`，計算並記錄 33 份來源檔案之 SHA-256 雜湊基準。
+- 配置 `.gitattributes`（`/source/** -text`），關閉換行轉換以確保來源二進位與雜湊永不被 Git 竄改。
+- 配置 `.gitignore` 排除規則，並對空目錄設置 `.gitkeep` 防護。
+
+### 2.2 審計與已知差異
+- 記錄早期差異項目 D-01 至 D-07（包含排除視窗分支差異、題庫範圍差異、Derived CSV 缺網址欄、字體宣告差異等）。
+- `source/assets/brand/vis/CareU_VIS.ai` 標記為 `UNVERIFIED_BINARY`（二進位專用原檔）。
+
+---
+
+## 3. Phase 1｜原型遷移審計與資產清冊（Migration Audit & Asset Inventory）
+
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`b96132d`（完整 SHA：`b96132d3d35a05364b2b7275e9ab7b21f31b3a50`）
+- **Commit 訊息**：`docs: add frontend migration audit and asset inventory`
+- **證據來源**：`docs/audit/frontend-migration-audit.md`、`docs/assets/asset-inventory.md`
+- **狀態標籤**：`CONFIRMED`
+
+### 3.1 階段目標與成果
+- **逐頁原始碼審計**：全面檢驗 5 份獨立 HTML 原型之 DOM 結構、CSS 樣式、Keyframes 動畫、JavaScript 事件、時序計時器與 Placeholder。
+- **靜態資產盤點清冊（Asset Inventory）**：
+  - 記憶體解碼並計算所有內嵌 Data URI 與獨立檔案之 SHA-256 雜湊。
+  - 盤點 15 份品牌資產、6 份內嵌 WOFF 字體、3 份內嵌 PNG 圖片、1 份 SVG Favicon、11 款 SVG Symbol 精靈圖標、3 處 Canvas 動態視覺。
+  - 確認專案無外部網路依賴（0 external HTTP/HTTPS resources）。
+- 提出元件階層拆分提案與 Token 抽取建議。
+
+---
+
+## 4. Phase 2｜架構與工程規格基準（Architecture & Specification Baseline）
+
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`9603ed4`（完整 SHA：`9603ed47bd497151a4306353fee97c8e9f4d555a`）
+- **Commit 訊息**：`docs: establish phase 2 specification baseline`
+- **證據來源**：`docs/specs/**`（5 份架構規格 + 5 份工程頁面規格）
+- **狀態標籤**：`CONFIRMED`（規格基準 Draft 建立）
+
+### 4.1 階段目標與成果
+建立完整的工程化規格體系，包含：
+1. `docs/specs/frontend-requirements.md`（前端工程需求規範、無障礙規範、時序模型與 Phase 3~16 推進基準）
+2. `docs/specs/site-flow.md`（整站流程與路由架構規格）
+3. `docs/specs/component-inventory.md`（共用元件清冊與介面規格）
+4. `docs/specs/design-system.md`（視覺設計系統與 Design Tokens 規格）
+5. `docs/specs/state-data-notes.md`（狀態管理與資料模型筆記）
+6. 5 份工程頁面規格：`01-splash-page.md` 至 `05-report-auth-modal.md`
+
+### 4.2 確立之核心架構決策
+- **`DEC-01`**：排除視窗明確落實「返回首頁」與「直接填寫問卷（銜接 full 模式，被排除檔案不計為有效資料）」雙分支。
+- **`DEC-02`**：問卷頁先依原型遷移 6~7 步 Demo 結構；12 類 32 題完整題庫留待 Phase 7 資料對齊。
+- **`DEC-03`**：保留各頁現行字體宣告差異（首頁 `"LINE Seed TW"`、其他頁面 `"CareU LINE Seed TW"`），現階段不合併字體。
+- **`DEC-04`**：排除視窗**不支援 `Escape` 鍵關閉與遮罩點擊關閉**，焦點鎖定於雙按鈕間；其他通用 Modal 則支援 `Escape` 關閉與焦點還原。
+- **共用登入視窗**：全域單一 Modal 元件，登入後原地解鎖，首頁不跳轉專屬頁，報告頁不重跑分析。
+
+---
+
+## 5. Phase 3｜前端工程骨架建置（Frontend Scaffold & Configuration）
+
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`edfcc90`（完整 SHA：`edfcc909186c89354a5ae015351954398604ead2`）
+- **Commit 訊息**：`chore: scaffold Vue frontend with Vite and TypeScript`
+- **證據來源**：`frontend/package.json`、`frontend/vite.config.ts`、`frontend/src/**`
+- **狀態標籤**：Milestone Confirmed；詳細驗收清單：`NEEDS_CONFIRMATION`
+
+### 5.1 階段目標與成果
+- 於 `frontend/` 目錄建立 Vue 3 前端工程骨架：
+  - **核心框架**：Vue 3 (`v3.5.x`, SFC Composition API `<script setup>`)
+  - **建置工具**：Vite (`v8.x`)
+  - **語言支援**：TypeScript (`v5.8.x`, 專案參考模式，`vue-tsc -b`)
+  - **路由管理**：Vue Router (`v5.x`，暫採 Hash History `createWebHashHistory`)
+  - **狀態管理**：Pinia (`v4.x`，完成全域實例註冊，無業務 Store)
+  - **相依套件**：配置 `@vue/devtools-api`
+- 提供基礎骨架驗證頁面：`#/`（占位首頁）與 `#/scaffold-verify`（路由驗證頁）。
+
+
+---
+
+## 6. Phase 4｜原型逐頁遷移至 Vue（Prototype → Vue Page Migration）
+
+本階段目標為將 5 大 HTML 原型模組化遷移至 Vue 3 SFC，分批次推進與驗收。
+
+### 6.1 Phase 4 第一批：入口頁遷移（Splash Page Migration）
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`a40f65c`（完整 SHA：`a40f65cf52692deccf8458b1725d5244306470db`）
+- **Commit 訊息**：`feat: migrate splash page to Vue`
+- **遷移範圍**：`frontend/src/views/SplashView.vue`
+- **預覽路由**：`#/preview/splash`（`meta: { hideLayout: true }`）
+- **證據來源**：`frontend/src/views/SplashView.vue`、`frontend/src/router/index.ts`、Git log
+- **狀態標籤**：Checkpoint Confirmed；詳細驗收清單：`NEEDS_CONFIRMATION`
+- **已知成果**：
+  - 品牌開場動畫完整還原（U 型/十字模糊轉清晰、圓點升起、Slogan 漸入）。
+  - 支援 2850ms 自動進入示意首頁、點擊/鍵盤（Enter/Space）立即略過、Reduced Motion 動態偏好適配。
+
+---
+
+### 6.2 Phase 4 第二批：首頁與上傳面板遷移（Home & Upload Page Migration）
+- **完成日期**：2026-09-27
+- **Git Checkpoint**：`1df51af`（完整 SHA：`1df51afe6a88f5a6ebd4fca0e9168e692936a166`）
+- **Commit 訊息**：`feat: migrate home and upload page to Vue`
+- **遷移範圍**：`frontend/src/views/HomeView.vue`、`frontend/src/views/useHome.ts`、`frontend/src/assets/home/`
+- **預覽路由**：`#/preview/home`
+- **證據來源**：`frontend/README.md` §4、Git log
+- **狀態標籤**：`CONFIRMED`
+
+#### 驗收成果清單
+- **自動化驗證**：
+  - `npm --prefix frontend run type-check`：`vue-tsc -b` 0 錯誤、0 警告。
+  - `npm --prefix frontend run build`：`vite build` 順利產出獨立分塊。
+  - `docs/audit/source-manifest.csv` 33 份來源資產 SHA-256 雜湊 100% 吻合（33 PASS）。
+- **使用者人工驗收項目（全數通過）**：
+  - 頂部標準字、打字六點跳動（`home-dot-hop`）、懸浮登入按鈕過渡動畫與原型 100% 一致。
+  - 向下箭頭點擊後維持 `#/preview/home` 路由，不改寫為 `#trust`。
+  - 桌面雙屏切換（`desktopSnap=true`、`scroll-snap-type: y mandatory`）正常。
+  - 長內容與窄視窗自動降級為原生滾動，可閱畢第二屏至 Footer。
+  - `prefers-reduced-motion` 動態即時同步，Reduced Motion 下點擊箭頭採即時無動畫捲動。
+  - 樣式完全隔離，不污染 Splash 與骨架頁面。
+  - 上傳面板選檔、格式檢查、最多 10 檔累加與上限提示正常。
+  - 瀏覽器強整後無 `/favicon.ico` 404 請求。
+- **保留之未驗證項目**：
+  - 多品牌行動真機觸控與高解析度螢幕長時間 Canvas 渲染效能（`[RUNTIME_UNVERIFIED]`）。
+
+---
+
+### 6.3 Phase 4 第三批：Loading頁-1 與排除視窗遷移（Loading-1 & Exclude Modal Migration）
+- **完成日期**：2026-09-28
+- **Git Checkpoint**：`41fb549`（完整 SHA：`41fb5494fc717573967f22e82ac0d01f32131291`）
+- **Commit 訊息**：`fix: finalize loading-one layout and exclusion modal`
+- **遷移範圍**：`frontend/src/views/LoadingOneView.vue`、`frontend/src/views/useLoadingOne.ts`、`frontend/src/assets/loading-one/`
+- **預覽路由**：`#/preview/loading-1`
+- **證據來源**：`frontend/README.md` §3, §5、Git log
+- **狀態標籤**：`CONFIRMED`
+
+#### A. 已記錄之工程實作與自動化驗證（Documented Implementation & Automated Validation）
+- **自動化驗證**：
+  - `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+  - `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+  - 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- **工程實作細節（依據 `frontend/README.md` §5.1, §5.2）**：
+  - 4 階段狀態文字推進時序（1800ms / 2400ms / 2200ms / 1100ms，正常流程 7.5s、排除流程 4.2s）與 220ms 更新延遲、230ms CSS 過渡。
+  - Logo `viewBox="0 0 300 378.011"`、橘點跳動（`loading-logo-dot-hop` 1.45s）、狀態三點（`loading-dot-hop` 1.2s）、Canvas 全螢幕粒子場。
+  - 排除視窗（`ExcludeModal`）落實 DEC-01 雙分支與 DEC-04 不支援 Escape/遮罩點擊關閉。
+  - 排除視窗透過 `isBodyScrollLocked` 鎖定與精準還原 `body` 捲動，延遲 80ms 聚焦並具備定時器清理。
+  - 非活動畫面 `.screen` 採 `position: absolute; inset: 0; transform: none; overflow: hidden;`，將位移轉場下移至內層卡片容器，阻斷非活動 DOM 位移造成的容器溢出；活動畫面 `.screen.is-active` 正常垂直捲動；`.modal-backdrop` 補齊 `overflow-y: auto`。
+  - 排除視窗叉叉圖示（`viewBox="0 0 40 40"`）與專屬膠囊按鈕圓角（`border-radius: 999px`）。
+  - 內嵌示範問卷與首頁外殼僅供頁內轉場分流驗證（Demo Only）。
+
+#### B. 使用者人工驗收成果（User Acceptance，依據 `frontend/README.md` §5.4）
+- ✅ **焦點與鍵盤互動**：Tab / Shift+Tab 焦點循環、Escape 鍵忽略、遮罩點擊不關閉行為通過。
+- ✅ **分流切換**：返回首頁／直接填寫問卷雙分支切換通過。
+- ✅ **主控台狀態**：Console 無警告與報錯通過。
+- ✅ **動態偏好**：Reduced Motion 靜態與即時切換響應通過。
+- ✅ **視覺與排版**：Loading 與排除視窗沒有多餘右側捲軸，Logo／氣泡位置正常通過。
+- ✅ **圖示外觀**：排除視窗叉叉圖示向量外觀正確通過。
+- ✅ **流程轉場**：流程轉場自然通過。
+- ✅ **響應適配**：短視窗下內容與按鈕可完整看到或捲動到達通過。
+
+#### C. 保留之未驗證與獨立待處理事項（Runtime Unverified & Isolated Items）
+- 離開 Loading-1／排除視窗路由後的捲動還原（`[RUNTIME_UNVERIFIED]`，保留未驗證）。
+- 多品牌真機觸控與長時間 Canvas 渲染效能（`[RUNTIME_UNVERIFIED]`）。
+- 主控台 `/preview` 無對應路由警告記錄為獨立待處理事項，本批次不處理。
+
+---
+
+### 6.4 Next Phase 4 migration batch
+- **遷移範圍**：**`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`）
+- **狀態**：尚未授權，嚴格等待 Technical PM 規劃、Review 與後續指令。
+
+---
+
+## 7. 長期工程歷程總覽表（Milestone Summary Matrix）
+
+| 階段 / 批次 | 核心產出 / 範圍 | 最新 Git Checkpoint | 狀態與驗收等級 |
+| :--- | :--- | :---: | :--- |
+| **Phase 0** | 來源基準鎖定、33 份檔案雜湊 Manifest、Git 保護 | `ba4a60e` | `CONFIRMED` |
+| **Phase 1** | 原型程式碼審計、Asset Inventory、Token 分析 | `b96132d` | `CONFIRMED` |
+| **Phase 2** | 5 份架構規格 + 5 份工程頁面規格、DEC-01~04 確立 | `9603ed4` | `CONFIRMED` (Draft Baseline) |
+| **Phase 3** | Vue 3 + Vite + TS + Pinia + Vue Router 專案骨架 | `edfcc90` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
+| **Phase 4 Batch 1** | 入口頁 (Splash Page) 遷移至 Vue | `a40f65c` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
+| **Phase 4 Batch 2** | 首頁與上傳面板 (Home & Upload) 遷移至 Vue | `1df51af` | `CONFIRMED` (User Accepted) |
+| **Phase 4 Batch 3** | Loading-1 與排除視窗遷移至 Vue | `41fb549` | `CONFIRMED` (User Accepted) |
+| **Next Phase 4 migration batch** | 下一批次 | - | **`TBD / NOT YET AUTHORIZED`** |
+
