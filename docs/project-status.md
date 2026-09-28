@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
 - **最後更新日期**：2026-09-28
-- **當前階段**：Phase 4｜Prototype → Vue Page Migration
-- **最近已提交功能 Checkpoint**：`41fb549`（完整 SHA：`41fb5494fc717573967f22e82ac0d01f32131291`，`fix: finalize loading-one layout and exclusion modal`）
-- **功能基線說明**：`41fb549` 為建立本工程文件基準前，最近已完成、已驗收並已提交之功能 Checkpoint。
+- **當前階段**：Phase 4｜Prototype → Vue Page Migration（已完成）
+- **最近已提交功能 Checkpoint**：`3d9c22a`（完整 SHA：`3d9c22a7f5a7e671d4bf59c36e811caef94a61b8`，`feat: migrate questionnaire and loading-two to Vue`）
+- **功能基線說明**：`3d9c22a` 為建立本工程文件基準前，最近已完成、已驗收並已提交之功能 Checkpoint。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 
@@ -40,9 +40,9 @@ Implementation 完成
 | 項目 | 當前狀態事實 | 依據來源 |
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
-| **當前階段 (Current Phase)** | **Phase 4｜Prototype → Vue Page Migration** | `frontend/README.md`, Git log |
-| **最近完成之功能批次** | **Phase 4 第四批：問卷頁與 Loading頁-2（Questionnaire & Loading-2）** | `frontend/README.md` §6, 使用者人工驗收 PASS |
-| **最近已提交功能 Checkpoint** | `41fb549` (`fix: finalize loading-one layout and exclusion modal`，本批待提交 Checkpoint：`feat: migrate questionnaire and loading-two to Vue`) | Git HEAD / 當前批次基準 |
+| **當前階段 (Current Phase)** | **Phase 4｜Prototype → Vue Page Migration（已完成）** | `frontend/README.md`, Git log |
+| **最近完成之功能批次** | **Phase 4 第五批：報告頁與會員登入視窗（Report Page & Login Modal）** | `frontend/README.md` §7, 使用者人工驗收 PASS |
+| **最近已提交功能 Checkpoint** | `3d9c22a` (`feat: migrate questionnaire and loading-two to Vue`，本批待提交 Checkpoint：`feat: migrate report and login modal to Vue`) | Git HEAD / 當前批次基準 |
 | **執行中功能工作** | **無 (None)** | 當前無進行中的功能開發 |
 | **下一批遷移 Scope** | **`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`，未授權，嚴禁自行推測頁面） | Repo 權威文件盤點結果 |
 
@@ -55,8 +55,9 @@ Implementation 完成
 | **Batch 1** | **入口頁 (Splash Page)**<br>`src/views/SplashView.vue` | `#/preview/splash` | `a40f65c` | `frontend/src/views/SplashView.vue`<br>`frontend/src/router/index.ts` | **Checkpoint Confirmed**<br>詳細驗收清單：`NEEDS_CONFIRMATION` |
 | **Batch 2** | **首頁 (Home & Upload Page)**<br>`src/views/HomeView.vue`<br>`src/views/useHome.ts`<br>`src/assets/home/` | `#/preview/home` | `1df51af` | `frontend/README.md` §4<br>Git log `1df51af` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
 | **Batch 3** | **Loading頁-1 與排除視窗**<br>`src/views/LoadingOneView.vue`<br>`src/views/useLoadingOne.ts`<br>`src/assets/loading-one/` | `#/preview/loading-1` | `41fb549` | `frontend/README.md` §3, §5<br>Git log `41fb549` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue`<br>`src/views/useQuestionnaire.ts`<br>`src/assets/questionnaire/`<br>`src/assets/loading-one/loading-one.css` (背景同步) | `#/preview/questionnaire` | 待本批 Commit | `frontend/README.md` §6 | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Next Phase 4 migration batch** | **下一批次** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
+| **Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue`<br>`src/views/useQuestionnaire.ts`<br>`src/assets/questionnaire/`<br>`src/assets/loading-one/loading-one.css` (背景同步) | `#/preview/questionnaire` | `3d9c22a` | `frontend/README.md` §6<br>Git log `3d9c22a` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
+| **Batch 5** | **報告頁與會員登入視窗**<br>`src/views/ReportView.vue` 等組件<br>`src/views/useReport.ts`<br>`src/views/reportData.ts`<br>`src/views/catalogData.json`<br>`src/assets/report/` (4.37M/4.53M WOFF 全字集) | `#/preview/report` | 待本批 Commit | `frontend/README.md` §7 | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
+| **Next MVP Scope** | **整站流程與前後端整合準備** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
 
 
 ---
@@ -89,7 +90,7 @@ Implementation 完成
 
 ### 5.1 根目錄 README 內容過期（`KNOWN_STALE_DOCUMENTATION`）
 - **現象**：根目錄 `README.md` 仍停留在「Phase 0：Git Source Baseline Preparation」與「尚未建立前端工程專案（No scaffold yet）」之早期敘述。
-- **實際現況**：前端專案已於 Phase 3 建立，且已完成 Phase 4 第三批。
+- **實際現況**：前端專案已於 Phase 3 建立，且已完成 Phase 4 全五批頁面遷移。
 - **處置原則**：標記為已知過期文件，待後續專案級文件整理指令時再行更新，本輪不修改。
 
 ### 5.2 Phase 推進計畫版本演進（`HISTORICAL_ROADMAP_VERSION_DIFFERENCE`）
@@ -113,7 +114,7 @@ Implementation 完成
 
 ## 7. 待決策與確認事項（Current TBD / Needs Confirmation）
 
-- **`TBD`**：Next Phase 4 migration batch 之正式頁面 Scope 與驗收標準（等待 Technical PM 定案與授權）。
+- **`TBD`**：Next MVP Scope（整站流程／前後端整合準備）之正式工程範圍與驗收標準（等待 Technical PM 定案與授權）。
 - **`NEEDS_CONFIRMATION`**：Phase 3（Scaffold）與 Phase 4 Batch 1（Splash）之詳細逐項人工驗收紀錄因 Repo 內未留存獨立清單，保留待確認標記。
 - **`[RUNTIME_UNVERIFIED]`**：真機 Canvas 渲染效能、離頁捲動還原及弱網重試機制。
 
@@ -121,7 +122,7 @@ Implementation 完成
 
 ## 8. 明確下一步行動（Exact Next Action）
 
-**由 Technical PM／使用者確認並授權下一個最高價值的 Phase 4 / MVP migration batch 正式 scope（例如報告頁與會員登入視窗）；在 scope 定案以前不得開始功能 Preflight 或 Implementation。**
+**由 Technical PM／使用者確認並授權下一步 MVP 工程範圍（例如整站正式流程與前後端整合準備 / site-flow & frontend-backend integration preparation）；在 scope 定案以前不得提前開始功能開發。**
 
 
 

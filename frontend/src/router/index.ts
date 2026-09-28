@@ -56,6 +56,14 @@ const routes: RouteRecordRaw[] = [
       hideLayout: true,
     },
   },
+  {
+    path: '/preview/report',
+    name: 'preview-report',
+    component: () => import('@/views/ReportView.vue'),
+    meta: {
+      hideLayout: true,
+    },
+  },
 ]
 
 const router = createRouter({

@@ -38,7 +38,7 @@ npm run preview
 
 ---
 
-## 3. 目前階段與預覽路由（Phase 4 第四批）
+## 3. 目前階段與預覽路由（Phase 4 第五批完成）
 
 ### 3.1 頁面實作進度
 - **入口頁 (Splash Page)**：`src/views/SplashView.vue`（已完成遷移）
@@ -49,6 +49,8 @@ npm run preview
   - 預覽路由：`#/preview/loading-1`
 - **問卷頁與 Loading頁-2 (Questionnaire Page & Loading-2)**：`src/views/QuestionnaireView.vue`（已完成遷移）
   - 預覽路由：`#/preview/questionnaire`
+- **報告頁與會員登入視窗 (Report Page & Login Modal)**：`src/views/ReportView.vue`（已完成遷移）
+  - 預覽路由：`#/preview/report`
 - **骨架驗證頁面**：
   - `#/`：占位首頁 (`src/views/ScaffoldHomeView.vue`)
   - `#/scaffold-verify`：路由切換驗證頁 (`src/views/ScaffoldAboutView.vue`)
@@ -192,12 +194,64 @@ npm run preview
 
 ---
 
-## 7. 階段限制與邊界規範（嚴格遵守）
+## 7. Phase 4 第五批驗收紀錄（Report Page & Login Modal Migration）
+
+### 7.1 核心規格與實作確認
+- **預覽路由**：`#/preview/report`（設置 `meta: { hideLayout: true }`）
+- **頂部與 Hero 摘要區 (Topbar & Hero)**：
+  - 官方 VIS 標誌組合（`CareU_VIS-logogroup-01.svg`）、購物車圖示按鈕、會員登入／示範會員狀態按鈕。
+  - 主標「你的健康分析報告」、英文小標、公開版摘要與登入後完整摘要平滑切換。
+  - U Logo 暖橘圓點、柔和懸浮光暈動效與通用健康提醒。
+- **身體優先關注方向圖表 (Priority Chart)**：
+  - 顯示前 8 項指標，依 `score` (0~100) 降冪排序，純橫向長條進度條（無刻度、無雷達圖）。
+  - 未登入時前 2 名覆蓋鎖定遮罩與「登入會員查看」CTA，點擊可直接呼叫會員登入視窗。
+  - 點選公開項目可於下方展開詳細說明與依據，再次點擊收合，且點擊時僅對被點擊橫條重播 `@keyframes grow` 增長動畫（0.65s）。
+  - 附「分數，代表關注順序」說明卡。
+- **重點保健方向 (Key Insights)**：
+  - 前 5 項方向展開卡片（`<details class="insight-card">`），未登入前 2 名為鎖定卡與登入 CTA。
+  - 展開呈現方向摘要、生活依據、原因說明及警示標記（黃色三角「接近提醒門檻」、紅色圓形「就醫警告」）。
+- **保健食品推薦與頁內更換 (Recommendations & Replace Item)**：
+  - 未登入呈現會員預覽卡與登入 CTA；登入後原地解鎖推薦品項。
+  - 候選品項 Choice Chip、DOM+CSS 劑型示意（膠囊與錠劑視覺）、主要成分、核准字號、功效宣稱與注意事項展開。
+  - 點擊「更換品項」於卡片下方頁內展開候選清單，點選即時替換組合。
+  - **跨方向重複阻擋**：選取已在其他方向使用之商品時，自動阻擋並觸發 Toast 提示「這個品項已在組合中，不會重複加入。」。
+- **專屬保健組合與去重計價 (Personal Bundle)**：
+  - 登入後展示已選品項卡片、推薦理由、移除與重新選擇。
+  - 月組合摘要卡片以 `uniqueSelected()` 針對品項 ID 進行 Set 去重加總模擬金額。
+- **會員登入視窗與原地解鎖 (Login Modal)**：
+  - 支援「登入」、「註冊」、「忘記密碼」三種模式切換、密碼明文切換眼睛圖示、示範帳號一鍵體驗。
+  - **原地解鎖**：登入成功後關閉視窗，原地解鎖前 2 名指標與推薦組合，不跳轉首頁、不重新執行問卷或 Loading。
+  - **登出確認**：點擊「示範會員」按鈕開啟確認視窗，點擊「登出示範會員」才執行登出，點擊關閉維持登入狀態。
+- **側邊節點導覽 (Side Navigation)**：
+  - 4 個圓形節點導航，點擊平滑捲動至對應區段標題，hover 無文字底線。
+- **Demo 控制面板 (Demo Controller)**：
+  - 右下角懸浮面板，可切換 4 組受試者 Profile（小安、小晴、阿哲、小柔）、一鍵切換訪客／登入狀態、重設／清空組合。
+- **專屬素材與字體**：
+  - 自原型提取完整 `CareU LINE Seed TW` Regular (4.37MB) 與 Bold (4.53MB) WOFF 字體，SHA-256 100% 吻合，徹底解決字符降級粗細不一問題。
+
+### 7.2 驗收狀態
+- `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+- `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+- 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- **使用者人工驗收確認通過事項**：
+  - ✅ 8 條橫向長條指標渲染、分數排序與點擊單條動畫重播通過；
+  - ✅ 候選品項功效宣稱、證據類型與注意事項詳細資訊展開通過；
+  - ✅ 示範會員點擊彈出登出確認視窗（不直接登出）通過；
+  - ✅ 左側選單 hover 無文字底線通過；
+  - ✅ 報告文字字重一致性（完整 WOFF 字集）通過；
+  - ✅ 專屬保健組合 `.wrap` 寬度約束與置中通過；
+  - ✅ 登入後原地解鎖（不重跑問卷/Loading/跳首頁）通過；
+  - ✅ 跨方向重複選取阻擋與 Toast 提示通過；
+  - ✅ Set 去重計價與模擬購買視窗通過。
+
+---
+
+## 8. 階段限制與邊界規範（嚴格遵守）
 
 1. **無業務邏輯**：尚未實作正式問卷計分、OCR、推薦演算法、登入 API 或購物流程。
 2. **無業務 Store**：Pinia 僅完成 `app.use(pinia)` 實例註冊，不建立 Auth/Cart/Report 等業務 Store，不加入持久化外掛（留待 Phase 8）。
 3. **無正式路由**：整站業務路由（`/home`, `/questionnaire`, `/report` 等）與路由守衛留待 Phase 6。
 4. **無 UI 庫**：不引入 Element Plus、Ant Design Vue 等第三方大型 UI 庫，亦不在此階段建立正式 Design Tokens。
-5. **Demo != Production**：Loading-2 為固定計時器模擬，sessionStorage 僅為 Demo 暫存，非正式敏感健康資料持久化方案。
+5. **Demo != Production**：所有健康分數、受試者 Profile、推薦配對、商品價格、會員登入與購買確認均為 Demo 展示資料，非正式生產邏輯。
 
 

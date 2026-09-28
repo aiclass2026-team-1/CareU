@@ -206,7 +206,8 @@
 
 ### 6.4 Phase 4 第四批：問卷頁與 Loading頁-2 遷移（Questionnaire & Loading-2 Migration）
 - **完成日期**：2026-09-28
-- **Git Checkpoint**：待提交（`feat: migrate questionnaire and loading-two to Vue`）
+- **Git Checkpoint**：`3d9c22a`（完整 SHA：`3d9c22a7f5a7e671d4bf59c36e811caef94a61b8`）
+- **Commit 訊息**：`feat: migrate questionnaire and loading-two to Vue`
 - **遷移範圍**：`frontend/src/views/QuestionnaireView.vue`、`frontend/src/views/useQuestionnaire.ts`、`frontend/src/assets/questionnaire/`、`frontend/src/assets/loading-one/loading-one.css`（背景同步）
 - **預覽路由**：`#/preview/questionnaire`
 - **證據來源**：`frontend/README.md` §6、使用者人工驗收紀錄
@@ -243,7 +244,49 @@
 
 ---
 
-### 6.5 Next Phase 4 migration batch
+### 6.5 Phase 4 第五批：報告頁與會員登入視窗遷移（Report Page & Login Modal Migration）
+- **完成日期**：2026-09-28
+- **Git Checkpoint**：待本批 Commit（`feat: migrate report and login modal to Vue`）
+- **遷移範圍**：
+  - `frontend/src/views/ReportView.vue`、`frontend/src/views/ReportHero.vue`、`frontend/src/views/ReportChartSection.vue`、`frontend/src/views/ReportInsightSection.vue`、`frontend/src/views/ReportRecommendationSection.vue`、`frontend/src/views/ReportBundleSection.vue`、`frontend/src/views/LoginModal.vue`、`frontend/src/views/CartModal.vue`
+  - `frontend/src/views/useReport.ts`、`frontend/src/views/reportData.ts`、`frontend/src/views/catalogData.json`
+  - `frontend/src/assets/report/`（包含完整 4.37MB / 4.53MB WOFF 全字集字體、官方 VIS Logo、網絡通用背景圖）
+- **預覽路由**：`#/preview/report`
+- **證據來源**：`frontend/README.md` §7、使用者人工驗收紀錄
+- **狀態標籤**：`CONFIRMED`
+
+#### A. 已記錄之工程實作與自動化驗證（Documented Implementation & Automated Validation）
+- **自動化驗證**：
+  - `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+  - `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+  - 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- **工程實作細節（依據 `frontend/README.md` §7.1）**：
+  - 頂部導覽列與 Hero 摘要區：官方 VIS 標誌 Lockup、購物車與示範會員入口、公開摘要與會員完整摘要即時切換、懸浮光暈與通用免責聲明。
+  - 身體優先關注方向圖表：顯示前 8 項指標（依 `score` 降冪排序），純橫向長條進度條；未登入前 2 名覆蓋鎖定遮罩與登入 CTA；點擊公開項目展開詳細分析，再次點擊收合，且點擊時僅對當前被點擊橫條重播 `@keyframes grow` 動畫（0.65s）。
+  - 重點保健方向卡片：展示前 5 項方向展開卡片（`<details>`），未登入前 2 名鎖定；展開呈現摘要、生活依據、原因說明及警示標記（黃色三角門檻提醒、紅色圓形就醫警告）。
+  - 保健食品推薦與更換：登入後原地解鎖；候選品項 Choice Chip、DOM+CSS 劑型示意（膠囊與錠劑視覺）、主要成分、核准字號、功效宣稱與注意事項展開；點擊「更換品項」頁內展開候選清單；跨方向選取已存在商品時阻擋並觸發 Toast 提示。
+  - 專屬保健組合與計價：已選品項卡片、推薦理由、可自組合移除或重新選擇；月組合摘要卡片以 `uniqueSelected()` 針對品項 ID 進行 Set 去重加總模擬金額。
+  - 共用登入視窗：登入/註冊/忘記密碼模式切換、密碼明文切換眼睛圖示、示範帳號一鍵體驗；登入後原地解鎖報告與推薦，不重跳首頁、不重跑問卷或 Loading；點擊「示範會員」開啟確認視窗，確認後才執行登出。
+  - 側邊 4 節點導航：點擊平滑捲動至各區段標題，hover 無文字底線。
+  - Demo 控制面板：右下角懸浮展開，支援切換 4 組受試者 Profile（小安、小晴、阿哲、小柔）、訪客/登入切換、重設/清空組合。
+  - 專屬全字集素材：提取完整 4.37MB / 4.53MB WOFF 字體，SHA-256 100% 吻合，徹底解決字符降級粗細不一問題；`.wrap` 容器包裹解決組合區塊滿版問題。
+
+#### B. 使用者人工驗收成果（User Acceptance，依據 `frontend/README.md` §7.2）
+- ✅ **圖表 8 條橫向長條**：正常渲染、依 score 排序與點擊單條動畫重播通過。
+- ✅ **候選商品詳細資訊**：功效宣稱、證據類型、主要成分、警語、注意事項與核准資訊展開通過。
+- ✅ **示範會員登出確認**：點擊會員按鈕彈出確認視窗（不直接登出），確認後安全登出通過。
+- ✅ **左側選單樣式**：hover 無文字底線，點擊平滑定位通過。
+- ✅ **文字字重一致性**：完整 WOFF 字集覆蓋，無中文字元降級微軟正黑體之粗細混雜通過。
+- ✅ **組合區塊寬度**：`.wrap` 容器約束與置中正常，無滿版跑版通過。
+- ✅ **原地解鎖與防呆**：登入後原地解鎖、不重跑流程、跨方向重複選取阻擋與 Set 去重計價通過。
+
+#### C. 保留之未驗證事項（Runtime Unverified Items）
+- 多品牌行動真機長時間 Canvas 粒子渲染效能（`[RUNTIME_UNVERIFIED]`）。
+- 行動端虛擬鍵盤彈起時之滾動置中（`[RUNTIME_UNVERIFIED]`）。
+
+---
+
+### 6.6 Next MVP Scope
 - **遷移範圍**：**`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`）
 - **狀態**：尚未授權，嚴格等待 Technical PM 規劃、Review 與後續指令。
 
@@ -260,7 +303,8 @@
 | **Phase 4 Batch 1** | 入口頁 (Splash Page) 遷移至 Vue | `a40f65c` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
 | **Phase 4 Batch 2** | 首頁與上傳面板 (Home & Upload) 遷移至 Vue | `1df51af` | `CONFIRMED` (User Accepted) |
 | **Phase 4 Batch 3** | Loading-1 與排除視窗遷移至 Vue | `41fb549` | `CONFIRMED` (User Accepted) |
-| **Phase 4 Batch 4** | 問卷頁與 Loading頁-2 遷移至 Vue（含 Loading-1 背景同步） | 待本批 Commit | `CONFIRMED` (User Accepted) |
-| **Next Phase 4 migration batch** | 下一批次 | - | **`TBD / NOT YET AUTHORIZED`** |
+| **Phase 4 Batch 4** | 問卷頁與 Loading頁-2 遷移至 Vue（含 Loading-1 背景同步） | `3d9c22a` | `CONFIRMED` (User Accepted) |
+| **Phase 4 Batch 5** | 報告頁與會員登入視窗遷移至 Vue（含全字集與 UI 修正） | 待本批 Commit | `CONFIRMED` (User Accepted) |
+| **Next MVP Scope** | 整站流程與前後端整合準備 | - | **`TBD / NOT YET AUTHORIZED`** |
 
 
