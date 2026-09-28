@@ -1,9 +1,13 @@
 @keyframes home-brand-to-top {
-  0% { top: 46%; transform: translate(-50%,-50%) scale(1.08); }
+  0% { top: 50%; transform: translate(-50%,-58%) scale(1.25); }
   100% { top: clamp(34px, 6.2vh, 66px); transform: translate(-50%,0) scale(1); }
 }
+@keyframes home-scene-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
 @keyframes home-mark-settle {
-  0% { width: 68px; }
+  0% { width: 135px; }
   100% { width: 46px; }
 }
 @keyframes home-reveal-wordmark {
@@ -83,6 +87,7 @@
     radial-gradient(circle at 19% 24%, rgba(163,211,247,.34), transparent 24%),
     radial-gradient(circle at 82% 75%, rgba(251,143,84,.13), transparent 22%),
     linear-gradient(180deg, #fff 0%, var(--surface) 72%, #f4f7fb 100%);
+  animation: home-scene-fade 700ms var(--ease) 180ms both;
 }
 
 .home-page-container #dataField {
@@ -167,10 +172,10 @@
 .home-page-container .brand-stage {
   position: absolute;
   z-index: 5;
-  top: 46%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
-  animation: home-brand-to-top 980ms var(--ease) 180ms forwards;
+  transform: translate(-50%,-50%) scale(1.25);
+  animation: home-brand-to-top 980ms var(--ease) 180ms both;
 }
 .home-page-container .brand-lockup {
   display: flex;
@@ -179,18 +184,18 @@
   filter: drop-shadow(0 10px 22px rgba(7,41,92,.05));
 }
 .home-page-container .brand-mark {
-  width: 68px;
+  width: 135px;
   height: auto;
   flex: 0 0 auto;
   transform-origin: center;
-  animation: home-mark-settle 980ms var(--ease) 180ms forwards;
+  animation: home-mark-settle 980ms var(--ease) 180ms both;
 }
 .home-page-container .wordmark-shell {
   width: 0;
   overflow: hidden;
   opacity: 0;
   margin-left: 0;
-  animation: home-reveal-wordmark 680ms var(--ease) 1040ms forwards;
+  animation: home-reveal-wordmark 680ms var(--ease) 1040ms both;
 }
 .home-page-container .brand-wordmark {
   display: block;
@@ -198,7 +203,7 @@
   height: auto;
   overflow: visible;
   transform: translateX(-18px);
-  animation: home-wordmark-slide 680ms var(--ease) 1040ms forwards;
+  animation: home-wordmark-slide 680ms var(--ease) 1040ms both;
 }
 
 .home-page-container .hero__content {

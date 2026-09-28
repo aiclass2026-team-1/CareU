@@ -62,7 +62,7 @@ const enter = () => {
   const delay = isReduced ? 0 : 170
 
   leaveTimer = setTimeout(() => {
-    router.replace('/')
+    router.replace('/home')
   }, delay)
 }
 

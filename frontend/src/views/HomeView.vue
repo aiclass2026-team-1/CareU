@@ -31,6 +31,8 @@ const heroRef = ref<HTMLElement | null>(null)
 const explanationRef = ref<HTMLElement | null>(null)
 
 const {
+  isCtaReady,
+  handleHeroAnimationEnd,
   isUploadOpen,
   isRouteScreenOpen,
   isDesktopSnap,
@@ -143,13 +145,15 @@ const onHeroPointerLeave = () => {
             </span>
           </div>
 
-          <div class="hero__message">
+          <div class="hero__message" @animationend="handleHeroAnimationEnd">
             <h1 id="hero-title">如果身體會說話，<br />最近想跟你說什麼？</h1>
             <div class="action-area">
               <button
                 id="chooseFileButton"
                 class="primary-cta"
                 type="button"
+                :disabled="!isCtaReady"
+                :tabindex="isCtaReady ? 0 : -1"
                 @click="openUploadSheet"
               >
                 <span class="primary-cta__label">從體檢資料開始瞭解</span>

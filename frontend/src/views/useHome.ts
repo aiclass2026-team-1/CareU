@@ -1,6 +1,9 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { setUploadFlowActive, clearUploadFlow } from '@/utils/flowContext'
+
 
 interface UseHomeOptions {
   networkBackRef: Ref<HTMLElement | null>
@@ -39,10 +42,21 @@ export function useHome({
 
   // Toast 狀態 (使用共用 useToast)
   const { isToastVisible, toastMessage, toastKind, showToast } = useToast(2800)
+
+  const router = useRouter()
+  clearUploadFlow() // 初始化首頁時清理舊的 upload context
+
+  const isCtaReady = ref(false)
   let wheelTimer: ReturnType<typeof setTimeout> | null = null
   let wheelLocked = false
   let mediaQueryList: MediaQueryList | null = null
   let isDisposed = false
+
+  const handleHeroAnimationEnd = (event: AnimationEvent) => {
+    if (event.animationName.includes('home-quick-in')) {
+      isCtaReady.value = true
+    }
+  }
 
   interface StyleBackup {
     value: string
@@ -203,7 +217,8 @@ export function useHome({
   const startReadingFiles = () => {
     if (!selectedFiles.value.length) return
     isUploadOpen.value = false
-    isRouteScreenOpen.value = true
+    setUploadFlowActive()
+    router.push('/loading-1')
   }
 
   const closeRouteScreen = () => {
@@ -212,7 +227,11 @@ export function useHome({
 
   const handleQuestionnaireClick = (event: MouseEvent) => {
     event.preventDefault()
-    showToast('原型提示：此處將前往健康問卷頁')
+    clearUploadFlow()
+    try {
+      sessionStorage.removeItem('careu-questionnaire')
+    } catch (_) {}
+    router.push('/questionnaire?mode=full')
   }
 
   // 會員登入視窗控制 (Phase 5 共用 LoginModal，維持 Demo Auth 規範)
@@ -383,6 +402,12 @@ export function useHome({
     isDisposed = false
     saveOriginalScrollStyles()
 
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+
+    if (checkReducedMotion()) {
+      isCtaReady.value = true
+    }
+
     if (typeof window !== 'undefined' && window.matchMedia) {
       mediaQueryList = window.matchMedia('(prefers-reduced-motion: reduce)')
       mediaQueryList.addEventListener?.('change', handleMediaChange)
@@ -393,8 +418,15 @@ export function useHome({
     window.addEventListener('resize', handleResize, { passive: true })
     window.addEventListener('keydown', handleKeyDown)
 
-    updateSnapMode()
-    handleScroll()
+    nextTick(() => {
+      if (isDisposed) return
+      updateSnapMode()
+      handleScroll()
+    })
+
+    if (checkReducedMotion()) {
+      isCtaReady.value = true
+    }
 
     if (typeof document !== 'undefined' && document.fonts?.ready) {
       document.fonts.ready.then(() => {
@@ -422,6 +454,8 @@ export function useHome({
   })
 
   return {
+    isCtaReady,
+    handleHeroAnimationEnd,
     isUploadOpen,
     isRouteScreenOpen,
     isDesktopSnap,

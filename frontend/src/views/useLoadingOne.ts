@@ -1,6 +1,12 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock'
+import { clearUploadFlow } from '@/utils/flowContext'
+
+
+
+
 
 interface UseLoadingOneOptions {
   networkBackRef: Ref<HTMLElement | null>
@@ -45,9 +51,11 @@ export function useLoadingOne({
   modalHomeRef,
   modalQuestionnaireRef,
   fileInputRef,
-  questionTitleRef,
-  homeTitleRef,
+  questionTitleRef: _questionTitleRef,
+  homeTitleRef: _homeTitleRef,
 }: UseLoadingOneOptions) {
+  const router = useRouter()
+
   // 畫面與狀態
   const activeScreen = ref<'loading' | 'questionnaire' | 'home'>('loading')
   const isExcludeOpen = ref(false)
@@ -144,6 +152,10 @@ export function useLoadingOne({
     unlockBodyScroll()
   }
 
+  const isPreviewContext = () => {
+    return typeof window !== 'undefined' && window.location.hash.includes('/preview/')
+  }
+
   // 流程推進 (還原來源 later 與累積 elapsed 時序)
   const runLoading = (mode: 'success' | 'exclude' = 'success') => {
     if (isDisposed) return
@@ -171,26 +183,39 @@ export function useLoadingOne({
     later(() => {
       if (isDisposed || navToken !== currentToken) return
       if (mode === 'exclude') openExclude()
-      else showQuestionnaire('supplement')
+      else {
+        if (isPreviewContext()) {
+          showQuestionnaire('supplement')
+        } else {
+          router.replace('/questionnaire?mode=supplement')
+        }
+      }
     }, elapsed)
   }
 
-  // 問卷切換 (Demo Only 占位，先移轉焦點再關閉排除視窗)
+  // 問卷切換 (Demo Only 占位，支援 Preview 與 Formal 隔離)
   const showQuestionnaire = async (source: 'supplement' | 'full') => {
-    if (isDisposed) return
-    const currentToken = ++navToken
-    clearTimers()
-    questionnaireSource.value = source
-    currentQuestionIndex.value = 0
-    selectedAnswers.value = {}
-    isDemoCompleted.value = false
-    showScreen('questionnaire')
+    if (isPreviewContext()) {
+      if (isDisposed) return
+      const currentToken = ++navToken
+      clearTimers()
+      questionnaireSource.value = source
+      currentQuestionIndex.value = 0
+      selectedAnswers.value = {}
+      isDemoCompleted.value = false
+      showScreen('questionnaire')
 
-    await nextTick()
-    if (isDisposed || navToken !== currentToken || activeScreen.value !== 'questionnaire') return
-
-    questionTitleRef.value?.focus()
-    closeExclude()
+      await nextTick()
+      if (isDisposed || navToken !== currentToken || activeScreen.value !== 'questionnaire') return
+      closeExclude()
+    } else {
+      if (source === 'full') {
+        clearUploadFlow()
+        router.push('/questionnaire?mode=full')
+      } else {
+        router.push('/questionnaire?mode=supplement')
+      }
+    }
   }
 
   const handleSelectOption = (qIndex: number, option: string) => {
@@ -211,22 +236,35 @@ export function useLoadingOne({
     isDemoCompleted.value = false
   }
 
-  // 排除視窗雙按鈕 (DEC-01，先移轉焦點再關閉排除視窗)
+  // 排除視窗雙按鈕 (DEC-01，支援 Preview 與 Formal 隔離)
   const handleModalHome = async () => {
-    if (isDisposed) return
-    const currentToken = ++navToken
-    clearTimers()
-    showScreen('home')
+    clearUploadFlow()
+    if (isPreviewContext()) {
+      if (isDisposed) return
+      const currentToken = ++navToken
+      clearTimers()
+      showScreen('home')
 
-    await nextTick()
-    if (isDisposed || navToken !== currentToken || activeScreen.value !== 'home') return
-
-    homeTitleRef.value?.focus()
-    closeExclude()
+      await nextTick()
+      if (isDisposed || navToken !== currentToken || activeScreen.value !== 'home') return
+      closeExclude()
+    } else {
+      closeExclude()
+      router.push('/home')
+    }
   }
 
   const handleModalQuestionnaire = () => {
-    showQuestionnaire('full')
+    clearUploadFlow()
+    closeExclude()
+    try {
+      sessionStorage.removeItem('careu-questionnaire')
+    } catch (_) {}
+    if (isPreviewContext()) {
+      showQuestionnaire('full')
+    } else {
+      router.push('/questionnaire?mode=full')
+    }
   }
 
   // 首頁外殼互動 (Demo Only)

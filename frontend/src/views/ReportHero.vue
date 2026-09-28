@@ -21,9 +21,9 @@ const emit = defineEmits<{
     <img class="hero-bg" :src="networkBackImg" alt="" aria-hidden="true" />
     <div class="wrap">
       <div class="topbar">
-        <a class="brand" href="#reportTop" aria-label="Care U 報告頂端">
+        <div class="brand" aria-label="Care U 品牌商標">
           <img class="brand-lockup" alt="Care U" :src="logoLockupSvg" />
-        </a>
+        </div>
         <div class="nav-actions">
           <button
             class="icon-button"

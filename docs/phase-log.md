@@ -344,4 +344,5 @@
 | **Phase 4 Batch 4** | 問卷頁與 Loading頁-2 遷移至 Vue（含 Loading-1 背景同步） | `3d9c22a` | `CONFIRMED` (User Accepted) |
 | **Phase 4 Batch 5** | 報告頁與會員登入視窗遷移至 Vue（含全字集與 UI 修正） | `5dd2998` | `CONFIRMED` (User Accepted) |
 | **Phase 5** | 共用元件與全站資產模組化 (`BrandMark`, `AppModal`, `AppToast`, `DataCanvas`, `LoadingStageVisual`, `LoginModal`, `useBodyScrollLock`, `useToast`, `tokens.css`, `fonts.css`, `common.css`) | 待本批 Commit | `CONFIRMED` (User Accepted) |
-| **Next MVP Scope** | 整站正式流程與路由串接 (Phase 6 Router & Site Flow) | - | **`TBD / NOT YET AUTHORIZED`** |
+| **Phase 6** | 正式整站路由、導航守衛、Flow Context、問卷 Draft Lifecycle、CSS Leakage 修正與 Transition Polish | 待本批 Commit | `CONFIRMED` (User Acceptance PASS) |
+| **Next MVP Scope** | 資料對齊與 Mock API (Phase 7) | - | **`TBD / NOT YET AUTHORIZED`** |

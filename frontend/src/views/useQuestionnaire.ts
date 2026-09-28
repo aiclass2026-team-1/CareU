@@ -1,5 +1,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { clearUploadFlow } from '@/utils/flowContext'
+
+
 
 export type QuestionnaireMode = 'supplement' | 'full'
 export type QuestionnaireStep =
@@ -103,9 +107,13 @@ export function useQuestionnaire({
   analysisErrorRef,
 }: UseQuestionnaireOptions) {
 
+  const router = useRouter()
+  const route = useRoute()
+
   // 畫面與模式
   const activeScreen = ref<ActiveScreen>('question')
   const currentMode = ref<QuestionnaireMode>('full')
+
   const currentQuestion = ref(0)
   const activeSteps = ref<QuestionnaireStep[]>([...baseSteps, 'complete'])
   const answers = ref<QuestionnaireAnswers>({})
@@ -498,7 +506,11 @@ export function useQuestionnaire({
         showAnalysisError()
       } else {
         changeAnalysisStatus('報告準備完成')
-        later(() => showScreen('report'), 650)
+        later(() => {
+          clearUploadFlow()
+          clearSessionState()
+          router.replace('/report')
+        }, 650)
       }
     }, elapsed)
   }
@@ -547,12 +559,15 @@ export function useQuestionnaire({
 
   onMounted(() => {
     isDisposed = false
+    const modeParam = route.query.mode === 'supplement' ? 'supplement' : 'full'
+    currentMode.value = modeParam
+
     nextTick(() => {
       if (appRef.value) {
         appRef.value.addEventListener('pointermove', handlePointerMove)
         appRef.value.addEventListener('pointerleave', handlePointerLeave)
       }
-      openQuestionnaire('direct', false)
+      openQuestionnaire(modeParam === 'supplement' ? 'analyzed' : 'direct', false)
     })
   })
 
