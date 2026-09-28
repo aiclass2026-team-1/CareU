@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useHome } from './useHome'
-import networkBackImg from '@/assets/home/network-back.png'
+import BrandMark from '@/components/common/BrandMark.vue'
+import AppToast from '@/components/common/AppToast.vue'
+import LoginModal from '@/components/auth/LoginModal.vue'
+import DataCanvas from '@/components/visual/DataCanvas.vue'
+import networkBackImg from '@/assets/images/network-back.png'
 import networkLeftImg from '@/assets/home/network-left.png'
 import networkRightImg from '@/assets/home/network-right.png'
 import '@/assets/home/home.css'
@@ -15,14 +19,14 @@ import '@/assets/home/home.css'
  * 3. 雙屏垂直 Scroll Snap 架構（第一屏 Hero + 第二屏 資料說明頁 #trust）。
  * 4. 品牌進場動畫、打字跳動提示、三層節點視差、Canvas 粒子網絡。
  * 5. 上傳面板（UploadSheet）累加選檔、單檔 25MB、最多 10 檔限制、格式檢查與錯誤 Toast。
- * 6. 狀態純記憶體保存，尚未串接後端 API 或持久化 Store。
+ * 6. Phase 5：整合共用 BrandMark、DataCanvas、AppToast、LoginModal 與共用背景圖。
  */
 
 const networkBackRef = ref<HTMLElement | null>(null)
 const networkLeftRef = ref<HTMLElement | null>(null)
 const networkRightRef = ref<HTMLElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
-const canvasRef = ref<HTMLCanvasElement | null>(null)
+const dataCanvasRef = ref<InstanceType<typeof DataCanvas> | null>(null)
 const heroRef = ref<HTMLElement | null>(null)
 const explanationRef = ref<HTMLElement | null>(null)
 
@@ -37,6 +41,13 @@ const {
   isToastVisible,
   isOnExplanation,
   isDragOver,
+  isAuthModalOpen,
+  authMode,
+  authEmail,
+  authPassword,
+  authConfirmPassword,
+  isPasswordVisible,
+  authErrorMessage,
   formatBytes,
   openUploadSheet,
   closeUploadSheet,
@@ -55,15 +66,29 @@ const {
   handleHeroPointerMove,
   handleHeroPointerLeave,
   handleScrollCueClick,
+  closeAuth,
+  setAuthMode,
+  togglePasswordVisibility,
+  handleAuthSubmit,
+  quickDemoLogin,
 } = useHome({
   networkBackRef,
   networkLeftRef,
   networkRightRef,
   fileInputRef,
-  canvasRef,
   heroRef,
   explanationRef,
 })
+
+const onHeroPointerMove = (e: PointerEvent) => {
+  handleHeroPointerMove(e)
+  dataCanvasRef.value?.handlePointerMove(e)
+}
+
+const onHeroPointerLeave = () => {
+  handleHeroPointerLeave()
+  dataCanvasRef.value?.handlePointerLeave()
+}
 </script>
 
 <template>
@@ -74,10 +99,10 @@ const {
         ref="heroRef"
         class="hero"
         aria-labelledby="hero-title"
-        @pointermove="handleHeroPointerMove"
-        @pointerleave="handleHeroPointerLeave"
+        @pointermove="onHeroPointerMove"
+        @pointerleave="onHeroPointerLeave"
       >
-        <canvas id="dataField" ref="canvasRef" aria-hidden="true" />
+        <DataCanvas ref="dataCanvasRef" canvas-id="dataField" />
 
         <!-- 三層節點裝飾圖 -->
         <div id="networkBack" ref="networkBackRef" class="network-layer network-layer--back" aria-hidden="true">
@@ -96,11 +121,7 @@ const {
         <!-- 頂部品牌動畫區 -->
         <div class="brand-stage" aria-label="Care U">
           <div class="brand-lockup">
-            <svg class="brand-mark" viewBox="0 0 300 378.011" role="img" aria-label="Care U Logo">
-              <path d="M299.989,90.76c-7.253,0-10.187-.218-19.47.2-36.608,1.65-54.184,25.083-54.938,61.78-.565,27.517.078,55.1-1.162,82.57C222.757,272.145,188.034,303.75,150,303.75s-72.757-31.605-74.419-68.439c-1.24-27.475-.6-55.053-1.162-82.57-.754-36.7-18.33-60.13-54.938-61.78-9.283-.419-12.217-.2-19.47-.2C.011,177.278-.43,225.7,4.25,256.881,13.5,318.511,66.564,378.011,150,378.011s136.5-59.5,145.75-121.13C300.43,225.7,299.989,177.278,299.989,90.76Z" fill="#197afc"/>
-              <circle cx="150" cy="54.1" r="54.1" fill="#fb8f54"/>
-              <path d="M184.782,187.729H167V169.947a17,17,0,0,0-34,0v17.782h-17.78a17,17,0,1,0,0,34H133v17.783a17,17,0,0,0,34,0V221.729h17.779a17,17,0,1,0,0-34Z" fill="#197afc"/>
-            </svg>
+            <BrandMark class="brand-mark" dot-class="logo-dot" />
             <span class="wordmark-shell" aria-hidden="true">
               <svg class="brand-wordmark" viewBox="-8 -8 1016 274.897" aria-label="Care U">
                 <path d="M972.486,0C957.427,0,946.2,8.265,946.2,30.082V156.916c0,32.166-19.41,48.334-49.132,48.173-29.166-.157-49.387-16.007-49.387-48.173V30.082C847.683,8.265,840.054.041,821.757,0c-18.52-.041-27.795,8.265-27.795,29.908,0,37.882.056,93.4.056,131.282,0,67.882,50.694,97.707,103.052,97.707C955.191,258.9,1000,229.072,1000,161.19c0-19.312,0-117.656,0-131.108C1000,8.265,989.564,0,972.486,0Z" fill="#07295c"/>
@@ -321,16 +342,27 @@ const {
       <span class="member-login__label">Login</span>
     </button>
 
+    <!-- 會員登入視窗 -->
+    <LoginModal
+      :is-open="isAuthModalOpen"
+      :mode="authMode"
+      :email="authEmail"
+      :password="authPassword"
+      :confirm-password="authConfirmPassword"
+      :is-password-visible="isPasswordVisible"
+      :error-message="authErrorMessage"
+      @close="closeAuth"
+      @set-mode="setAuthMode"
+      @update:email="authEmail = $event"
+      @update:password="authPassword = $event"
+      @update:confirm-password="authConfirmPassword = $event"
+      @toggle-password="togglePasswordVisibility"
+      @submit="handleAuthSubmit"
+      @quick-demo-login="quickDemoLogin"
+    />
+
     <!-- Toast 提示組件 -->
-    <div
-      id="toast"
-      class="toast"
-      :class="{ 'is-visible': isToastVisible, 'is-error': toastKind === 'error' }"
-      role="status"
-      aria-live="polite"
-    >
-      {{ toastMessage }}
-    </div>
+    <AppToast variant="home" :is-open="isToastVisible" :message="toastMessage" :kind="toastKind" />
   </div>
 </template>
 

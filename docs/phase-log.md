@@ -286,8 +286,46 @@
 
 ---
 
-### 6.6 Next MVP Scope
-- **遷移範圍**：**`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`）
+---
+
+### 6.6 Phase 5 共用元件與全站資產模組化歷程（Phase 5 Shared Components & Asset Modularization）
+
+- **遷移與模組化目標**：將 5 份獨立頁面中重複出現之向量標誌、背景動效、模態視窗、提示通知、全域字體與 Design Tokens 抽取為全站共用元件與集中化資產，消除代碼與資產冗餘，確保跨頁視覺與行為 100% 一致。
+- **Git Checkpoint**：待本批 Commit（`refactor: modularize shared frontend components`）
+- **遷移範圍**：
+  - 共用元件：`frontend/src/components/common/BrandMark.vue`、`frontend/src/components/common/AppModal.vue`、`frontend/src/components/common/AppToast.vue`、`frontend/src/components/visual/DataCanvas.vue`、`frontend/src/components/visual/LoadingStageVisual.vue`、`frontend/src/components/auth/LoginModal.vue`
+  - 共用 Composables：`frontend/src/composables/useBodyScrollLock.ts`、`frontend/src/composables/useToast.ts`
+  - 集中化資產與樣式：`frontend/src/assets/brand/`、`frontend/src/assets/images/network-back.png`、`frontend/src/assets/fonts/`、`frontend/src/assets/styles/tokens.css`、`frontend/src/assets/styles/fonts.css`、`frontend/src/assets/styles/common.css`、`frontend/src/assets/styles/base.css`
+- **狀態標籤**：`CONFIRMED` (User Accepted, Parity Verified, Code Hygiene Cleaned)
+
+#### A. 核心實作與 Parity 成果
+1. **共用視覺元件抽離**：
+   - `BrandMark.vue`：官方 VIS 標誌向量元件，支援橘點動畫與自訂 class，跨 5 個頁面統一使用。
+   - `AppModal.vue`：通用模態外殼，整合 `useBodyScrollLock` 多實例安全鎖定，支援 ESC／遮罩關閉與 ExcludeModal（DEC-04）阻擋規範。
+   - `AppToast.vue`：通用浮動提示，支援 Home（右下角氣泡 2800ms）與 Report（中央底部膠囊 3600ms）雙 Variant。
+   - `DataCanvas.vue`：動態粒子網絡畫布，支援全螢幕覆蓋與 Hero 容器約束雙模式，支援 Reduced Motion 靜態降級。
+   - `LoadingStageVisual.vue`：Loading 狀態推進外殼，支援 Loading-1 與 Loading-2 雙 Variant。
+   - `LoginModal.vue`：全域共用會員登入視窗，完整還原 Prototype 最終精修版（寬度 440px、內距 24px 30px、圓角 24px、行高 1.65），密碼眼睛垂直置中，關閉按鈕鎖定為 Home 35×35px 規格。
+2. **全域 CSS 洩漏徹底根除**：
+   - 清理 `report.css` 中殘留之未 Scoped `.auth-layer`、`.auth-logo`、`.form-field`、`.password-wrap`、`.show-pass`、`.toast` 規則。
+   - 移除 Login Modal 之通用 `.icon-button` class，徹底杜絕 `home.css` 與 `report.css` 選擇器覆蓋問題。
+3. **字體載入效能與全字集對齊**：
+   - `fonts.css` 宣告 `CareU LINE Seed TW` Full WOFF（13,918 字元），Login Modal 明確套用，消除 Home 缺字 Fallback 微軟正黑體現象。
+   - 瀏覽器按需懶載入（Lazy Loading），首頁初始載入不提前發起請求，兼顧首屏效能。
+4. **Code Hygiene**：
+   - 清理未使用的 subset WOFF 檔案；移除 `report.css` 重複 `@font-face`。
+
+#### B. 驗收成果（Automated & Parity Verification）
+- `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+- `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+- 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- `git diff --check`：✅ PASS。
+- 跨頁 Parity 檢驗：✅ PASS（Home 與 Report 開啟 Login Modal、Close Button 與 Toast 完全一致）。
+
+---
+
+### 6.7 Next MVP Scope
+- **遷移範圍**：**Phase 6｜Router / Site Flow Implementation**（`TBD / NOT YET AUTHORIZED`）
 - **狀態**：尚未授權，嚴格等待 Technical PM 規劃、Review 與後續指令。
 
 ---
@@ -299,12 +337,11 @@
 | **Phase 0** | 來源基準鎖定、33 份檔案雜湊 Manifest、Git 保護 | `ba4a60e` | `CONFIRMED` |
 | **Phase 1** | 原型程式碼審計、Asset Inventory、Token 分析 | `b96132d` | `CONFIRMED` |
 | **Phase 2** | 5 份架構規格 + 5 份工程頁面規格、DEC-01~04 確立 | `9603ed4` | `CONFIRMED` (Draft Baseline) |
-| **Phase 3** | Vue 3 + Vite + TS + Pinia + Vue Router 專案骨架 | `edfcc90` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
-| **Phase 4 Batch 1** | 入口頁 (Splash Page) 遷移至 Vue | `a40f65c` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
+| **Phase 3** | Vue 3 + Vite + TS + Pinia + Vue Router 專案骨架 | `edfcc90` | Checkpoint Confirmed |
+| **Phase 4 Batch 1** | 入口頁 (Splash Page) 遷移至 Vue | `a40f65c` | Checkpoint Confirmed |
 | **Phase 4 Batch 2** | 首頁與上傳面板 (Home & Upload) 遷移至 Vue | `1df51af` | `CONFIRMED` (User Accepted) |
 | **Phase 4 Batch 3** | Loading-1 與排除視窗遷移至 Vue | `41fb549` | `CONFIRMED` (User Accepted) |
 | **Phase 4 Batch 4** | 問卷頁與 Loading頁-2 遷移至 Vue（含 Loading-1 背景同步） | `3d9c22a` | `CONFIRMED` (User Accepted) |
-| **Phase 4 Batch 5** | 報告頁與會員登入視窗遷移至 Vue（含全字集與 UI 修正） | 待本批 Commit | `CONFIRMED` (User Accepted) |
-| **Next MVP Scope** | 整站流程與前後端整合準備 | - | **`TBD / NOT YET AUTHORIZED`** |
-
-
+| **Phase 4 Batch 5** | 報告頁與會員登入視窗遷移至 Vue（含全字集與 UI 修正） | `5dd2998` | `CONFIRMED` (User Accepted) |
+| **Phase 5** | 共用元件與全站資產模組化 (`BrandMark`, `AppModal`, `AppToast`, `DataCanvas`, `LoadingStageVisual`, `LoginModal`, `useBodyScrollLock`, `useToast`, `tokens.css`, `fonts.css`, `common.css`) | 待本批 Commit | `CONFIRMED` (User Accepted) |
+| **Next MVP Scope** | 整站正式流程與路由串接 (Phase 6 Router & Site Flow) | - | **`TBD / NOT YET AUTHORIZED`** |

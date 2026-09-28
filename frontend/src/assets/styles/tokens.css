@@ -1,0 +1,42 @@
+/* Care U - Design Tokens Baseline (Phase 5) */
+:root {
+  /* Brand Core Colors */
+  --cu-color-primary: #197AFC;
+  --cu-color-primary-hover: #0969E9;
+  --cu-color-primary-dark: #126CDE;
+  --cu-color-accent-orange: #FB8F54;
+  --cu-color-navy: #07295C;
+  --cu-color-sky-blue: #A3D3F7;
+  --cu-color-coral: #EB938E;
+
+  /* Neutral & Surface Colors */
+  --cu-color-surface: #F7F8FA;
+  --cu-color-white: #FFFFFF;
+  --cu-color-text-main: #07295C;
+  --cu-color-text-muted: #687A93;
+  --cu-color-line: rgba(7, 41, 92, 0.12);
+  --cu-color-line-light: #E1E8F1;
+
+  /* Alert / Semantic Colors */
+  --cu-color-alert-red: #E11D48;
+  --cu-color-warn-yellow: #D97706;
+
+  /* Typography Fallbacks */
+  --cu-font-family-base: "CareU LINE Seed TW", "LINE Seed TW", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --cu-font-family-splash: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+
+  /* Easing */
+  --cu-ease-default: cubic-bezier(0.22, 0.8, 0.32, 1);
+  --cu-ease-home: cubic-bezier(0.22, 0.76, 0.22, 1);
+
+  /* Elevation & Shadows */
+  --cu-shadow-card: 0 24px 70px rgba(7, 41, 92, 0.09);
+  --cu-shadow-modal: 0 35px 90px rgba(7, 41, 92, 0.24);
+  --cu-shadow-button-primary: 0 8px 22px rgba(25, 122, 252, 0.13);
+
+  /* Border Radius */
+  --cu-radius-button: 14px;
+  --cu-radius-card: 24px;
+  --cu-radius-modal: 32px;
+  --cu-radius-pill: 999px;
+}

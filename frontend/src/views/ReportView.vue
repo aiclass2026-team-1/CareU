@@ -5,8 +5,10 @@ import ReportChartSection from './ReportChartSection.vue'
 import ReportInsightSection from './ReportInsightSection.vue'
 import ReportRecommendationSection from './ReportRecommendationSection.vue'
 import ReportBundleSection from './ReportBundleSection.vue'
-import LoginModal from './LoginModal.vue'
+import LoginModal from '@/components/auth/LoginModal.vue'
 import CartModal from './CartModal.vue'
+import AppToast from '@/components/common/AppToast.vue'
+import AppModal from '@/components/common/AppModal.vue'
 import { useReport } from './useReport'
 
 const {
@@ -115,7 +117,7 @@ function handleDemoLink(name: string) {
           保健食品推薦
           <svg v-if="!isMember" class="icon" aria-hidden="true"><use href="#i-lock" /></svg>
         </a>
-        <a href="#bundleAnchor" aria-label="專屬保健組合" @click.prevent="scrollToSection('bundleAnchor')">專屬保健組合</a>
+        <a href="#bundleAnchor" aria-label="專屬保健組合" @click.prevent="scrollToSection('bundleTitle', 'bundleAnchor')">專屬保健組合</a>
       </nav>
 
       <main>
@@ -262,42 +264,44 @@ function handleDemoLink(name: string) {
     />
 
     <!-- MEMBER LOGOUT CONFIRMATION MODAL -->
-    <div v-if="isMemberModalOpen" class="dialog-backdrop" id="auxLayer" @click.self="closeMemberModal">
-      <section
-        class="dialog-card cart-dialog"
-        id="auxDialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="auxTitle"
-        tabindex="-1"
+    <AppModal
+      :is-open="isMemberModalOpen"
+      dialog-id="auxDialog"
+      backdrop-class="dialog-backdrop"
+      card-class="dialog-card cart-dialog"
+      aria-labelledby="auxTitle"
+      :close-on-esc="true"
+      :close-on-overlay="true"
+      @close="closeMemberModal"
+    >
+      <button
+        class="icon-button dialog-close"
+        id="auxClose"
+        type="button"
+        aria-label="關閉視窗"
+        @click="closeMemberModal"
       >
-        <button
-          class="icon-button dialog-close"
-          id="auxClose"
-          type="button"
-          aria-label="關閉視窗"
-          @click="closeMemberModal"
-        >
-          <svg class="icon"><use href="#i-close" /></svg>
-        </button>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
 
-        <div id="auxContent">
-          <h2 id="auxTitle" class="dialog-title">示範會員</h2>
-          <p class="dialog-intro">
-            完整分析與選購功能已解鎖。<br />目前沒有建立真實會員帳號。
-          </p>
-          <button
-            class="button outline"
-            id="logoutButton"
-            type="button"
-            style="width: 100%; margin-top: 16px"
-            @click="confirmLogout"
-          >
-            登出示範會員
-          </button>
-        </div>
-      </section>
-    </div>
+      <div id="auxContent">
+        <h2 id="auxTitle" class="dialog-title">示範會員</h2>
+        <p class="dialog-intro">
+          完整分析與選購功能已解鎖。<br />目前沒有建立真實會員帳號。
+        </p>
+        <button
+          class="button outline"
+          id="logoutButton"
+          type="button"
+          style="width: 100%; margin-top: 16px"
+          @click="confirmLogout"
+        >
+          登出示範會員
+        </button>
+      </div>
+    </AppModal>
 
     <!-- CART MODAL -->
     <CartModal
@@ -310,8 +314,6 @@ function handleDemoLink(name: string) {
     />
 
     <!-- TOAST NOTIFICATION -->
-    <div v-if="isToastVisible" class="toast" id="toast" role="status" aria-live="polite">
-      {{ toastMessage }}
-    </div>
+    <AppToast variant="report" :is-open="isToastVisible" :message="toastMessage" />
   </div>
 </template>

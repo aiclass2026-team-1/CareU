@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useLoadingOne, QUESTIONS } from './useLoadingOne'
-import networkBackImg from '@/assets/loading-one/network-back.png'
+import BrandMark from '@/components/common/BrandMark.vue'
+import LoadingStageVisual from '@/components/visual/LoadingStageVisual.vue'
+import DataCanvas from '@/components/visual/DataCanvas.vue'
+import networkBackImg from '@/assets/images/network-back.png'
 import '@/assets/loading-one/loading-one.css'
 
 /**
@@ -12,11 +15,11 @@ import '@/assets/loading-one/loading-one.css'
  * 2. 規格文件：source/page-specs/CareU_Loading頁-1_排除視窗_頁面規格.md, docs/specs/page-specs/03-loading-1-exclude-modal.md
  * 3. 4 階段狀態文字推進、Logo 橘點跳動、動態三點起伏、Canvas 點陣資料場。
  * 4. 排除視窗（ExcludeModal）：落實 DEC-01 雙分支（返回首頁 / 直接填寫問卷）與 DEC-04（不支援 Escape 與遮罩關閉，Tab 焦點鎖定）。
- * 5. 內嵌問卷與首頁外殼僅為頁內展示驗證（Demo Only），不代表正式跨頁資料結構。
+ * 5. Phase 5：整合共用 BrandMark、LoadingStageVisual、DataCanvas 與共用背景圖。
  */
 
 const networkBackRef = ref<HTMLElement | null>(null)
-const canvasRef = ref<HTMLCanvasElement | null>(null)
+const dataCanvasRef = ref<InstanceType<typeof DataCanvas> | null>(null)
 const excludeModalRef = ref<HTMLElement | null>(null)
 const modalHomeRef = ref<HTMLButtonElement | null>(null)
 const modalQuestionnaireRef = ref<HTMLButtonElement | null>(null)
@@ -50,7 +53,6 @@ const {
   handlePointerLeave,
 } = useLoadingOne({
   networkBackRef,
-  canvasRef,
   excludeModalRef,
   modalHomeRef,
   modalQuestionnaireRef,
@@ -58,15 +60,25 @@ const {
   questionTitleRef,
   homeTitleRef,
 })
+
+const onPointerMove = (e: PointerEvent) => {
+  handlePointerMove(e)
+  dataCanvasRef.value?.handlePointerMove(e)
+}
+
+const onPointerLeave = () => {
+  handlePointerLeave()
+  dataCanvasRef.value?.handlePointerLeave()
+}
 </script>
 
 <template>
   <div
     class="loading-one-container"
-    @pointermove="handlePointerMove"
-    @pointerleave="handlePointerLeave"
+    @pointermove="onPointerMove"
+    @pointerleave="onPointerLeave"
   >
-    <canvas id="dataField" ref="canvasRef" aria-hidden="true" />
+    <DataCanvas ref="dataCanvasRef" :fullscreen="true" canvas-id="dataField" />
 
     <!-- 後景節點圖層 -->
     <div id="networkBack" ref="networkBackRef" class="network-layer network-layer--back" aria-hidden="true">
@@ -84,22 +96,13 @@ const {
       :class="{ 'is-active': activeScreen === 'loading' }"
       aria-label="資料處理中"
     >
-      <div class="loading-card">
-        <svg class="loading-logo brand-mark" viewBox="0 0 300 378.011" role="img" aria-label="Care U Logo">
-          <path d="M299.989,90.76c-7.253,0-10.187-.218-19.47.2-36.608,1.65-54.184,25.083-54.938,61.78-.565,27.517.078,55.1-1.162,82.57C222.757,272.145,188.034,303.75,150,303.75s-72.757-31.605-74.419-68.439c-1.24-27.475-.6-55.053-1.162-82.57-.754-36.7-18.33-60.13-54.938-61.78-9.283-.419-12.217-.2-19.47-.2C.011,177.278-.43,225.7,4.25,256.881,13.5,318.511,66.564,378.011,150,378.011s136.5-59.5,145.75-121.13C300.43,225.7,299.989,177.278,299.989,90.76Z" fill="#197afc"/>
-          <circle class="logo-dot" cx="150" cy="54.1" r="54.1" fill="#fb8f54"/>
-          <path d="M184.782,187.729H167V169.947a17,17,0,0,0-34,0v17.782h-17.78a17,17,0,1,0,0,34H133v17.783a17,17,0,0,0,34,0V221.729h17.779a17,17,0,1,0,0-34Z" fill="#197afc"/>
-        </svg>
-
-        <div class="loading-typing-status typing-status" id="loadingStatus" role="status" aria-live="polite" :aria-label="`${statusText}，請稍候`">
-          <p class="status-line">
-            <span class="status-copy typing-status__copy" :class="{ 'is-changing': isStatusFading }" id="statusCopy">{{ statusText }}</span>
-            <span class="typing-status__dots" aria-hidden="true">
-              <i>.</i><i>.</i><i>.</i>
-            </span>
-          </p>
-        </div>
-      </div>
+      <LoadingStageVisual
+        variant="loading-1"
+        :status-text="statusText"
+        :is-status-changing="isStatusFading"
+        status-id="loadingStatusText"
+        :aria-label="`${statusText}，請稍候`"
+      />
 
       <p class="loading-note" id="loadingNote">請保持頁面開啟，我們正在整理你提供的資料。</p>
     </section>
@@ -248,11 +251,7 @@ const {
     >
       <div class="home-shell">
         <div class="home-lockup">
-          <svg viewBox="0 0 300 378.011" aria-hidden="true">
-            <path d="M299.989,90.76c-7.253,0-10.187-.218-19.47.2-36.608,1.65-54.184,25.083-54.938,61.78-.565,27.517.078,55.1-1.162,82.57C222.757,272.145,188.034,303.75,150,303.75s-72.757-31.605-74.419-68.439c-1.24-27.475-.6-55.053-1.162-82.57-.754-36.7-18.33-60.13-54.938-61.78-9.283-.419-12.217-.2-19.47-.2C.011,177.278-.43,225.7,4.25,256.881,13.5,318.511,66.564,378.011,150,378.011s136.5-59.5,145.75-121.13C300.43,225.7,299.989,177.278,299.989,90.76Z" fill="#197afc"/>
-            <circle cx="150" cy="54.1" r="54.1" fill="#fb8f54"/>
-            <path d="M184.782,187.729H167V169.947a17,17,0,0,0-34,0v17.782h-17.78a17,17,0,1,0,0,34H133v17.783a17,17,0,0,0,34,0V221.729h17.779a17,17,0,1,0,0-34Z" fill="#197afc"/>
-          </svg>
+          <BrandMark dot-class="logo-dot" />
           <strong>Care U</strong>
         </div>
         <p class="typing-label">［你的身體］正在輸入訊息……</p>

@@ -1,4 +1,4 @@
-# Care U 前端工程（Phase 4 Page Implementation）
+# Care U 前端工程（Phase 5 Shared Components Modularization）
 
 本目錄為 Care U 保健食品推薦系統的正式前端工程根目錄。
 
@@ -38,18 +38,18 @@ npm run preview
 
 ---
 
-## 3. 目前階段與預覽路由（Phase 4 第五批完成）
+## 3. 目前階段與預覽路由（Phase 5 完成）
 
 ### 3.1 頁面實作進度
 - **入口頁 (Splash Page)**：`src/views/SplashView.vue`（已完成遷移）
   - 預覽路由：`#/preview/splash`
-- **首頁 (Home & Upload Page)**：`src/views/HomeView.vue`（已完成遷移）
+- **首頁 (Home & Upload Page)**：`src/views/HomeView.vue`（已完成遷移，整合共用元件）
   - 預覽路由：`#/preview/home`
-- **Loading頁-1 與排除視窗 (Loading-1 & Exclude Modal)**：`src/views/LoadingOneView.vue`（已完成遷移）
+- **Loading頁-1 與排除視窗 (Loading-1 & Exclude Modal)**：`src/views/LoadingOneView.vue`（已完成遷移，整合共用元件）
   - 預覽路由：`#/preview/loading-1`
-- **問卷頁與 Loading頁-2 (Questionnaire Page & Loading-2)**：`src/views/QuestionnaireView.vue`（已完成遷移）
+- **問卷頁與 Loading頁-2 (Questionnaire Page & Loading-2)**：`src/views/QuestionnaireView.vue`（已完成遷移，整合共用元件）
   - 預覽路由：`#/preview/questionnaire`
-- **報告頁與會員登入視窗 (Report Page & Login Modal)**：`src/views/ReportView.vue`（已完成遷移）
+- **報告頁與會員登入視窗 (Report Page & Login Modal)**：`src/views/ReportView.vue`（已完成遷移，整合共用元件）
   - 預覽路由：`#/preview/report`
 - **骨架驗證頁面**：
   - `#/`：占位首頁 (`src/views/ScaffoldHomeView.vue`)
@@ -58,29 +58,80 @@ npm run preview
 
 ---
 
-## 4. Phase 4 第二批驗收紀錄（Home Page Migration）
+## 4. Phase 5 共用元件與全站資產架構（Shared Components & Assets）
 
-### 4.1 Agent 指令驗證（全數通過）
+### 4.1 共用元件清冊 (Shared Components)
+1. **`BrandMark.vue`** (`src/components/common/BrandMark.vue`)：
+   - 官方 VIS U 型 Logo 向量元件（`viewBox="0 0 300 378.011"`），支援橘點跳動動畫參數（`animateDot` / `dotClass`）與自訂顏色 class。
+   - 消費端：HomeView、LoadingOneView、ReportHero、LoginModal、LoadingStageVisual。
+2. **`AppModal.vue`** (`src/components/common/AppModal.vue`)：
+   - 基礎模態視窗外殼，封裝遮罩點擊關閉（`closeOnOverlay`）、ESC 鍵關閉（`closeOnEsc`）與背景捲動鎖定（`useBodyScrollLock`）。
+   - 支援 ExcludeModal 阻擋關閉規範（DEC-04）與各頁面 Modal 結構。
+   - 消費端：LoginModal、CartModal、ReportView 示範會員確認視窗、LoadingOneView 排除視窗。
+3. **`AppToast.vue`** (`src/components/common/AppToast.vue`)：
+   - 通用浮動提示元件，支援雙 Variant：
+     - `variant="home"`：右下角氣泡提示（`right: 22px; bottom: max(22px, ...)`）、淺白底色帶 `::after` 對話框尖角。
+     - `variant="report"`：中央底部膠囊卡片（`left: 50%; bottom: 30px`，`<=720px` 時 `bottom: 74px; width: max-content`）、實心深海軍藍 `#07295C`、無尖角。
+   - 消費端：HomeView、ReportView。
+4. **`DataCanvas.vue`** (`src/components/visual/DataCanvas.vue`)：
+   - 動態粒子網絡畫布元件，支援全螢幕模式（`:fullscreen="true"`，Loading-1 與 Questionnaire）與容器約束模式（HomeView Hero 區塊）。
+   - 支援指針互動、自適應 Resize 與 `prefers-reduced-motion` 靜態降級。
+   - 消費端：HomeView、LoadingOneView、QuestionnaireView。
+5. **`LoadingStageVisual.vue`** (`src/components/visual/LoadingStageVisual.vue`)：
+   - Loading 狀態推進視覺外殼，支援雙 Variant：
+     - `variant="loading-1"`：4 階段狀態文字推進、品牌 Logo 橘點跳動、動態三點起伏。
+     - `variant="loading-2"`：問卷分析等待卡片視覺。
+   - 消費端：LoadingOneView、QuestionnaireView。
+6. **`LoginModal.vue`** (`src/components/auth/LoginModal.vue`)：
+   - 全域共用會員登入視窗，支援「登入」、「註冊」、「忘記密碼」三種模式、密碼明文切換（眼睛圖示垂直置中）與示範帳號一鍵體驗。
+   - 樣式 100% 自包含封裝（`width: min(440px, 100%)`、`padding: 24px 30px`、`border-radius: 24px`、`line-height: 1.65`、`user-select: text`），關閉按鈕鎖定為 Home 規格（`35 × 35px`、`#f7f8fa`、`stroke-width: 1.7`）。
+   - 消費端：HomeView、ReportView。
+
+### 4.2 共用 Composables
+1. **`useBodyScrollLock.ts`** (`src/composables/useBodyScrollLock.ts`)：
+   - 多實例安全的背景捲動鎖定器，採用引用計數機制，確保所有 Modal 均關閉時才安全還原 `body` 原始 `overflow`。
+2. **`useToast.ts`** (`src/composables/useToast.ts`)：
+   - 通用 Toast 計時器與狀態管理，支援自訂持續時間（Home 2800ms / Report 3600ms）與組件卸載自動清理。
+
+### 4.3 集中化資產與全站樣式架構
+- **`src/assets/styles/tokens.css`**：全站 Design Tokens（顏色、字體 Fallback、陰影、圓角、Easing）。
+- **`src/assets/styles/fonts.css`**：全域 `@font-face` 宣告（`"CareU LINE Seed TW"` 完整全字集 WOFF 400/700 與 `"LINE Seed TW"` 首頁 WOFF）。
+- **`src/assets/styles/common.css`**：通用 Baseline 佈局與共用 Utility。
+- **`src/assets/styles/base.css`**：現代 CSS Reset 與根層級字體排版。
+- **`src/assets/brand/`**：官方 VIS 向量標誌與標準組合。
+- **`src/assets/images/`**：全站共用網絡後景圖 (`network-back.png`)。
+- **`src/assets/fonts/`**：集中管理 WOFF 字體資源（`CareULINESeedTW-*.full.woff` 與 `LINESeedTW-*.woff`），孤立 subset 字體已清理。
+
+---
+
+## 5. Phase 5 驗收與 Parity 成果
+
+### 5.1 自動化驗證（全數通過）
 - `npm --prefix frontend run type-check`：`vue-tsc -b` 0 錯誤、0 警告。
 - `npm --prefix frontend run build`：`vite build` 順利產出，獨立分塊打包正常。
 - `docs/audit/source-manifest.csv` 33 份原始資產 SHA-256 雜湊 100% 吻合（33 PASS, 0 FAIL）。
+- `git diff --check`：0 衝突、0 空白錯誤。
 
-### 4.2 使用者人工驗收（已確認通過）
-- **視覺與動效還原**：頂部標準字、打字狀態六點跳動（`home-dot-hop`）、懸浮登入按鈕過渡動畫（520ms / Hover 陰影）與原型 100% 一致。
-- **向下箭頭**：點擊後維持 `#/preview/home` 路由，不改寫為 `#trust`。
-- **桌面雙屏切換**：在 1005×763 尺寸下 `desktopSnap=true`、根元素 `scroll-snap-type: y mandatory`，滾輪上下雙屏切換正常。
-- **長內容與窄視窗降級**：視窗高度縮短或手機寬度下，自動降級為原生滾動，可完整閱畢第二屏內容至頁尾 Footer。
-- **動態偏好即時同步**：動態切換 `prefers-reduced-motion` 即時生效，Reduced Motion 下點擊箭頭採即時無動畫捲動。
-- **樣式隔離**：離開首頁後完全不影響 Splash 與骨架頁面樣式。
-- **上傳面板**：選檔、格式檢查、累加與上限提示正常。
-- **Favicon 404**：瀏覽器強制重新整理後，已無 `/favicon.ico` 404 請求。
+### 5.2 核心 Parity 驗證成果
+1. **Login Modal 一致性**：
+   - Home 與 Report 開啟之 Login Modal 卡片高度（`514.6px`）、內距、字體、關閉按鈕（`35 × 35px`）、密碼眼睛與按鈕佈局 100% 完全相同。
+   - `Home → Report → Home` 路由切換順序下樣式完全穩定，無任何 CSS 洩漏。
+2. **Report Toast 中央定位還原**：
+   - Report Toast 修正為畫面中央底部（`left: 50%; bottom: 30px`，`<=720px` 為 `bottom: 74px`），實心深海軍藍 `#07295C`，與 Home 右下角氣泡清晰區隔。
+3. **字體載入效能與一致性**：
+   - `"CareU LINE Seed TW"` 全字集字體僅在開啟 Login Modal 時按需載入（On-Demand Lazy Load），首頁初始載入不提前發起請求，兼顧首屏效能與 Modal 漢字零缺字。
+4. **Code Hygiene**：
+   - 移除 `report.css` 重複 `@font-face`；清理未使用的 subset WOFF 檔案；消滅全域選擇器洩漏。
 
-### 4.3 邊界與未驗證事項
-- **未實測項目（保留未驗證）**：多品牌行動真機觸控與高解析度螢幕長時間 Canvas 渲染效能（`[RUNTIME_UNVERIFIED]`）。
-- **階段邊界提醒**：
-  - 會員登入（`#memberLogin`）與問卷入口（`#questionnaireLink`）維持原型 Toast 提示；
-  - 「開始讀取」（`#startReading`）維持頁內模擬轉場面板；
-  - 正式跨頁流程與後端 API 串接留待後續 Phase。
+---
+
+## 6. 階段限制與邊界規範（嚴格遵守）
+
+1. **無業務邏輯**：尚未實作正式問卷計分、OCR、推薦演算法、登入 API 或購物流程。
+2. **無業務 Store**：Pinia 僅完成 `app.use(pinia)` 實例註冊，不建立 Auth/Cart/Report 等業務 Store，不加入持久化外掛（留待 Phase 8）。
+3. **無正式業務路由**：整站業務導航流程（`/home`, `/questionnaire`, `/report` 等）與路由守衛留待 Phase 6，目前 Phase 6 尚未開始。
+4. **Demo != Production**：所有健康分數、受試者 Profile、推薦配對、商品價格、會員登入與購買確認均為 Demo 展示資料，非正式生產邏輯。
+
 
 ---
 
@@ -255,3 +306,87 @@ npm run preview
 5. **Demo != Production**：所有健康分數、受試者 Profile、推薦配對、商品價格、會員登入與購買確認均為 Demo 展示資料，非正式生產邏輯。
 
 
+
+## 4. Phase 5 共用元件與全站資產架構（Shared Components & Assets）
+
+### 4.1 共用元件清冊 (Shared Components)
+1. **`BrandMark.vue`** (`src/components/common/BrandMark.vue`):
+   - 官方 VIS U 型 Logo 向量元件 (`viewBox="0 0 300 378.011"`)，支援橘點跳動動畫參數 (`animateDot` / `dotClass`) 與自訂顏色 class。
+   - 消費端：HomeView、LoadingOneView、ReportHero、LoginModal、LoadingStageVisual。
+2. **`AppModal.vue`** (`src/components/common/AppModal.vue`):
+   - 基礎模態視窗外殼，封裝遮罩點擊關閉 (`closeOnOverlay`)、ESC 鍵關閉 (`closeOnEsc`) 與背景捲動鎖定 (`useBodyScrollLock`)。
+   - 支援 ExcludeModal 阻擋關閉規範 (DEC-04) 與各頁面 Modal 結構。
+   - 消費端：LoginModal、CartModal、ReportView 示範會員確認視窗、LoadingOneView 排除視窗。
+3. **`AppToast.vue`** (`src/components/common/AppToast.vue`):
+   - 通用浮動提示元件，支援雙 Variant：
+     - `variant="home"`：右下角氣泡提示 (`right: 22px; bottom: max(22px, ...)`)、淺白底色帶 `::after` 對話框尖角。
+     - `variant="report"`：中央底部膠囊卡片 (`left: 50%; bottom: 30px`，`<=720px` 時 `bottom: 74px; width: max-content`)、實心深海軍藍 `#07295C`、無尖角。
+   - 消費端：HomeView、ReportView。
+4. **`DataCanvas.vue`** (`src/components/visual/DataCanvas.vue`):
+   - 動態粒子網絡畫布元件，支援全螢幕模式 (`:fullscreen="true"`，Loading-1 與 Questionnaire) 與容器約束模式 (HomeView Hero 區塊)。
+   - 支援指針互動、自適應 Resize 與 `prefers-reduced-motion` 靜態降級。
+   - 消費端：HomeView、LoadingOneView、QuestionnaireView。
+5. **`LoadingStageVisual.vue`** (`src/components/visual/LoadingStageVisual.vue`):
+   - Loading 狀態推進視覺外殼，支援雙 Variant：
+     - `variant="loading-1"`：4 階段狀態文字推進、品牌 Logo 橘點跳動、動態三點起伏。
+     - `variant="loading-2"`：問卷分析等待卡片視覺。
+   - 消費端：LoadingOneView、QuestionnaireView。
+6. **`LoginModal.vue`** (`src/components/auth/LoginModal.vue`):
+   - 全域共用會員登入視窗，支援「登入」、「註冊」、「忘記密碼」三種模式、密碼明文切換（眼睛圖示垂直置中）與示範帳號一鍵體驗。
+   - 樣式 100% 自包含封裝 (`width: min(440px, 100%)`、`padding: 24px 30px`、`border-radius: 24px`、`line-height: 1.65`、`user-select: text`)，關閉按鈕鎖定為 Home 規格 (`35 × 35px`、`#f7f8fa`、`stroke-width: 1.7`)。
+   - 消費端：HomeView、ReportView。
+
+### 4.2 共用 Composables
+1. **`useBodyScrollLock.ts`** (`src/composables/useBodyScrollLock.ts`):
+   - 多實例安全的背景捲動鎖定器，採用引用計數機制，確保所有 Modal 均關閉時才安全還原 `body` 原始 `overflow`。
+2. **`useToast.ts`** (`src/composables/useToast.ts`):
+   - 通用 Toast 計時器與狀態管理，支援自訂持續時間 (Home 2800ms / Report 3600ms) 與組件卸載自動清理。
+
+### 4.3 集中化資產與全站樣式架構
+- **`src/assets/styles/tokens.css`**: 全站 Design Tokens（顏色、字體 Fallback、陰影、圓角、Easing）。
+- **`src/assets/styles/fonts.css`**: 全域 `@font-face` 宣告（`"CareU LINE Seed TW"` 完整全字集 WOFF 400/700 與 `"LINE Seed TW"` 首頁 WOFF）。
+- **`src/assets/styles/common.css`**: 通用 Baseline 佈局與共用 Utility。
+- **`src/assets/styles/base.css`**: 現代 CSS Reset 與根層級字體排版。
+- **`src/assets/brand/`**: 官方 VIS 向量標誌與標準組合。
+- **`src/assets/images/`**: 全站共用網絡後景圖 (`network-back.png`)。
+- **`src/assets/fonts/`**: 集中管理 WOFF 字體資源 (`CareULINESeedTW-*.full.woff` 與 `LINESeedTW-*.woff`)，孤立 subset 字體已清理。
+
+---
+
+## 5. Phase 5 驗收與 Parity 成果
+
+### 5.1 自動化驗證（全數通過）
+- `npm --prefix frontend run type-check`: `vue-tsc -b` 0 錯誤、0 警告。
+- `npm --prefix frontend run build`: `vite build` 順利產出，獨立分塊打包正常。
+- `docs/audit/source-manifest.csv` 33 份原始資產 SHA-256 雜湊 100% 吻合 (33 PASS, 0 FAIL)。
+- `git diff --check`: 0 衝突、0 空白錯誤。
+
+### 5.2 核心 Parity 驗證成果
+1. **Login Modal 一致性**:
+   - Home 與 Report 開啟之 Login Modal 卡片高度 (`514.6px`)、內距、字體、關閉按鈕 (`35 × 35px`)、密碼眼睛與按鈕佈局 100% 完全相同。
+   - `Home → Report → Home` 路由切換順序下樣式完全穩定，無任何 CSS 洩漏。
+2. **Report Toast 中央定位還原**:
+   - Report Toast 修正為畫面中央底部 (`left: 50%; bottom: 30px`，`<=720px` 為 `bottom: 74px; width: max-content`)，實心深海軍藍 `#07295C`，與 Home 右下角氣泡清晰區隔。
+3. **字體載入效能與一致性**:
+   - `"CareU LINE Seed TW"` 全字集字體僅在開啟 Login Modal 時按需載入 (On-Demand Lazy Load)，首頁初始載入不提前發起請求，兼顧首屏效能與 Modal 漢字零缺字。
+4. **Code Hygiene**:
+   - 移除 `report.css` 重複 `@font-face`；清理未使用的 subset WOFF 檔案；消滅全域選擇器洩漏。
+
+---
+
+## 6. 階段限制與邊界規範（嚴格遵守）
+
+1. **無業務邏輯**：尚未實作正式問卷計分、OCR、推薦演算法、登入 API 或購物流程。
+2. **無業務 Store**：Pinia 僅完成 `app.use(pinia)` 實例註冊，不建立 Auth/Cart/Report 等業務 Store，不加入持久化外掛（留待 Phase 8）。
+3. **無正式業務路由**：整站業務導航流程（`/home`, `/questionnaire`, `/report` 等）與路由守衛留待 Phase 6，目前 Phase 6 尚未開始。
+4. **Demo != Production**：所有健康分數、受試者 Profile、推薦配對、商品價格、會員登入與購買確認均為 Demo 展示資料，非正式生產邏輯。
+
+---
+
+## 7. Phase 4 歷史驗收紀錄歸檔
+
+- **第二批（Home Page）**：`1df51af` (CONFIRMED / User Accepted)
+- **第三批（Loading-1 & Exclude Modal）**：`41fb549` (CONFIRMED / User Accepted)
+- **第四批（Questionnaire & Loading-2）**：`3d9c22a` (CONFIRMED / User Accepted)
+- **第五批（Report Page & Login Modal）**：`5dd2998` (CONFIRMED / User Accepted)
+- 完整歷史遷移歷程請參閱 `docs/phase-log.md`。

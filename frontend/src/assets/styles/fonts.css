@@ -1,0 +1,36 @@
+/* Care U - Shared Font Faces (Phase 5) */
+
+/* 1. CareU LINE Seed TW (全字集完整 WOFF，供 Report 與 shared LoginModal 等使用) */
+@font-face {
+  font-family: "CareU LINE Seed TW";
+  src: url("@/assets/fonts/CareULINESeedTW-Regular.full.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CareU LINE Seed TW";
+  src: url("@/assets/fonts/CareULINESeedTW-Bold.full.woff") format("woff");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* 2. LINE Seed TW (用於 Home 頁面) */
+@font-face {
+  font-family: "LINE Seed TW";
+  src: url("@/assets/fonts/LINESeedTW-Regular.woff") format("woff");
+  font-style: normal;
+  font-weight: 100 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LINE Seed TW";
+  src: url("@/assets/fonts/LINESeedTW-Bold.woff") format("woff");
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+}
+

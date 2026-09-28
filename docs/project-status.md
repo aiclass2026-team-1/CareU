@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
 - **最後更新日期**：2026-09-28
-- **當前階段**：Phase 4｜Prototype → Vue Page Migration（已完成）
-- **最近已提交功能 Checkpoint**：`3d9c22a`（完整 SHA：`3d9c22a7f5a7e671d4bf59c36e811caef94a61b8`，`feat: migrate questionnaire and loading-two to Vue`）
-- **功能基線說明**：`3d9c22a` 為建立本工程文件基準前，最近已完成、已驗收並已提交之功能 Checkpoint。
+- **當前階段**：Phase 5｜Shared Component Modularization（已完成）
+- **最近已提交功能 Checkpoint**：`5dd2998`（完整 SHA：`5dd2998 feat: migrate report and login modal to Vue`，本批待提交 Checkpoint：`refactor: modularize shared frontend components`）
+- **功能基線說明**：Phase 5 Shared Components 已完成模組化抽取、集中資產管理、雙端 Parity 還原、Code Hygiene 清理與全套自動化驗證。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 
@@ -40,68 +40,49 @@ Implementation 完成
 | 項目 | 當前狀態事實 | 依據來源 |
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
-| **當前階段 (Current Phase)** | **Phase 4｜Prototype → Vue Page Migration（已完成）** | `frontend/README.md`, Git log |
-| **最近完成之功能批次** | **Phase 4 第五批：報告頁與會員登入視窗（Report Page & Login Modal）** | `frontend/README.md` §7, 使用者人工驗收 PASS |
-| **最近已提交功能 Checkpoint** | `3d9c22a` (`feat: migrate questionnaire and loading-two to Vue`，本批待提交 Checkpoint：`feat: migrate report and login modal to Vue`) | Git HEAD / 當前批次基準 |
+| **當前階段 (Current Phase)** | **Phase 5｜Shared Component Modularization（已完成）** | `frontend/README.md`, Git log |
+| **最近完成之功能批次** | **Phase 5：共用元件與全站資產模組化（Shared Components Modularization）** | `frontend/README.md` §4, §5, 使用者人工驗收 PASS |
+| **最近已提交功能 Checkpoint** | `5dd2998` (`feat: migrate report and login modal to Vue`，本批待提交 Checkpoint：`refactor: modularize shared frontend components`) | Git HEAD / 當前批次基準 |
 | **執行中功能工作** | **無 (None)** | 當前無進行中的功能開發 |
-| **下一批遷移 Scope** | **`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`，未授權，嚴禁自行推測頁面） | Repo 權威文件盤點結果 |
+| **下一批遷移 Scope** | **Phase 6｜Router / Site Flow Implementation（待授權）** | Repo 權威文件盤點結果 |
 
 ---
 
-## 3. Phase 4 頁面遷移批次清冊（Completed Phase 4 Migration Batches）
+## 3. 工程遷移批次清冊（Completed Migration Batches）
 
-| 批次 | 遷移範圍 (Scope) | 預覽路由 | Git Checkpoint | 證據來源 | 驗收狀態與可信度 |
+| 階段 / 批次 | 遷移範圍 (Scope) | 預覽路由 | Git Checkpoint | 證據來源 | 驗收狀態與可信度 |
 | :---: | :--- | :--- | :---: | :--- | :--- |
-| **Batch 1** | **入口頁 (Splash Page)**<br>`src/views/SplashView.vue` | `#/preview/splash` | `a40f65c` | `frontend/src/views/SplashView.vue`<br>`frontend/src/router/index.ts` | **Checkpoint Confirmed**<br>詳細驗收清單：`NEEDS_CONFIRMATION` |
-| **Batch 2** | **首頁 (Home & Upload Page)**<br>`src/views/HomeView.vue`<br>`src/views/useHome.ts`<br>`src/assets/home/` | `#/preview/home` | `1df51af` | `frontend/README.md` §4<br>Git log `1df51af` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Batch 3** | **Loading頁-1 與排除視窗**<br>`src/views/LoadingOneView.vue`<br>`src/views/useLoadingOne.ts`<br>`src/assets/loading-one/` | `#/preview/loading-1` | `41fb549` | `frontend/README.md` §3, §5<br>Git log `41fb549` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue`<br>`src/views/useQuestionnaire.ts`<br>`src/assets/questionnaire/`<br>`src/assets/loading-one/loading-one.css` (背景同步) | `#/preview/questionnaire` | `3d9c22a` | `frontend/README.md` §6<br>Git log `3d9c22a` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Batch 5** | **報告頁與會員登入視窗**<br>`src/views/ReportView.vue` 等組件<br>`src/views/useReport.ts`<br>`src/views/reportData.ts`<br>`src/views/catalogData.json`<br>`src/assets/report/` (4.37M/4.53M WOFF 全字集) | `#/preview/report` | 待本批 Commit | `frontend/README.md` §7 | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
-| **Next MVP Scope** | **整站流程與前後端整合準備** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
-
+| **Phase 4 Batch 1** | **入口頁 (Splash Page)**<br>`src/views/SplashView.vue` | `#/preview/splash` | `a40f65c` | `frontend/src/views/SplashView.vue` | **Checkpoint Confirmed** |
+| **Phase 4 Batch 2** | **首頁 (Home & Upload Page)**<br>`src/views/HomeView.vue` | `#/preview/home` | `1df51af` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
+| **Phase 4 Batch 3** | **Loading頁-1 與排除視窗**<br>`src/views/LoadingOneView.vue` | `#/preview/loading-1` | `41fb549` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
+| **Phase 4 Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue` | `#/preview/questionnaire` | `3d9c22a` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
+| **Phase 4 Batch 5** | **報告頁與會員登入視窗**<br>`src/views/ReportView.vue` | `#/preview/report` | `5dd2998` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
+| **Phase 5** | **共用元件與全站資產模組化**<br>`BrandMark`, `AppModal`, `AppToast`, `DataCanvas`, `LoadingStageVisual`, `LoginModal`, `useBodyScrollLock`, `useToast`, `tokens.css`, `fonts.css`, `common.css` | 全站共用 | 待本批 Commit | `frontend/README.md` §4, §5 | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>Parity Check PASS<br>Code Hygiene PASS |
+| **Next MVP Scope** | **整站正式流程與路由串接 (Phase 6 Router & Site Flow)** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
 
 ---
 
 ## 4. 待處理與未驗證事項（Open Issues & Runtime Unverified）
 
-以下事項依既有工程文件與審計報告如實列出，未經授權不得自行變更嚴重度或標記為通過：
-
 1. **離頁後捲動還原**：`[RUNTIME_UNVERIFIED]`
-   - 描述：離開 Loading-1／排除視窗路由後的瀏覽器捲動位置還原行為尚未進行實機驗證。
-   - 來源：`frontend/README.md` §5.4。
 2. **多裝置與長時間 Canvas 渲染效能**：`[RUNTIME_UNVERIFIED]`
-   - 描述：多品牌行動真機觸控與高解析度螢幕長時間 Canvas 粒子渲染效能尚未進行實機壓力測試。
-   - 來源：`frontend/README.md` §4.3, §5.4、`docs/specs/frontend-requirements.md` §7.2。
-3. **主控台 `/preview` 無匹配 Route 警告**：`[OPEN_ISSUE]`
-   - 描述：存取 `/preview` 根路徑時之無匹配路由警告，已記錄為獨立待處理事項，待後續整站正式路由規劃（Phase 6）統一處理，目前不作片面修改。
-   - 來源：`frontend/README.md` §5.3。
+3. **主控台 `/preview` 無匹配 Route 警告**：`[OPEN_ISSUE]`（留待 Phase 6 路由統一處理）
 4. **弱網環境重試穩定性**：`[RUNTIME_UNVERIFIED]`
-   - 描述：弱網環境（3G / 高延遲）下 Loading-2 重試機制的穩定性與使用者體驗尚未實測。
-   - 來源：`docs/specs/frontend-requirements.md` §7.2。
-5. **Illustrator 二進位原檔**：`[UNVERIFIED_BINARY]`
-   - 描述：`source/assets/brand/vis/CareU_VIS.ai` (2.16MB) 屬專用二進位格式，需專用軟體驗證，不判定為損毀。
-   - 來源：`docs/audit/phase-0-preflight.md` §3.1、`docs/assets/asset-inventory.md` §2。
+5. **Illustrator 二進位原檔**：`[UNVERIFIED_BINARY]` (`CareU_VIS.ai`)
 
 ---
 
 ## 5. 文件歷史差異與風險記錄（Documentation Risks & Historical Differences）
 
-本區塊記錄專案中已知的文件演進差異，**本輪只記錄、不修改歷史檔案**：
-
 ### 5.1 根目錄 README 內容過期（`KNOWN_STALE_DOCUMENTATION`）
-- **現象**：根目錄 `README.md` 仍停留在「Phase 0：Git Source Baseline Preparation」與「尚未建立前端工程專案（No scaffold yet）」之早期敘述。
-- **實際現況**：前端專案已於 Phase 3 建立，且已完成 Phase 4 全五批頁面遷移。
 - **處置原則**：標記為已知過期文件，待後續專案級文件整理指令時再行更新，本輪不修改。
 
 ### 5.2 Phase 推進計畫版本演進（`HISTORICAL_ROADMAP_VERSION_DIFFERENCE`）
-- **現象**：早期文件（根目錄 `README.md` §4.2、`docs/audit/phase-0-preflight.md` §8）記載 8 階段推進計畫（Phase 0 ~ Phase 7）；較新的架構規格（`docs/specs/frontend-requirements.md` §1.2）擴展為 16 階段計畫（Phase 3 ~ Phase 16）。
-- **處置原則**：此為專案推進過程中的規格細化，不構成代碼衝突，保留早期文件原貌，後續以 Technical PM 與最新 specs 定義為準。
+- **處置原則**：保留早期文件原貌，後續以 Technical PM 與最新 specs 定義為準。
 
 ---
 
 ## 6. 當前工程邊界與限制（Current Engineering Boundaries）
-
-為防止過度宣稱與架構混淆，目前專案嚴格遵守以下邊界：
 
 1. **無正式後端與 OCR 整合**：目前 Loading-1 健檢資料讀取僅為前端 4 階段動畫與 Demo 轉場，無正式 OCR 或後端解析服務。
 2. **無正式推薦演算法與計分引擎**：問卷計分、12 項關注方向排序與商品推薦邏輯目前均為前端 Mock/Demo 展示資料，不等於正式後端推薦引擎。
@@ -114,15 +95,11 @@ Implementation 完成
 
 ## 7. 待決策與確認事項（Current TBD / Needs Confirmation）
 
-- **`TBD`**：Next MVP Scope（整站流程／前後端整合準備）之正式工程範圍與驗收標準（等待 Technical PM 定案與授權）。
-- **`NEEDS_CONFIRMATION`**：Phase 3（Scaffold）與 Phase 4 Batch 1（Splash）之詳細逐項人工驗收紀錄因 Repo 內未留存獨立清單，保留待確認標記。
+- **`TBD`**：Phase 6（整站正式流程與路由串接 / site-flow & route navigation）之正式工程範圍與驗收標準（等待 Technical PM 定案與授權）。
 - **`[RUNTIME_UNVERIFIED]`**：真機 Canvas 渲染效能、離頁捲動還原及弱網重試機制。
 
 ---
 
 ## 8. 明確下一步行動（Exact Next Action）
 
-**由 Technical PM／使用者確認並授權下一步 MVP 工程範圍（例如整站正式流程與前後端整合準備 / site-flow & frontend-backend integration preparation）；在 scope 定案以前不得提前開始功能開發。**
-
-
-
+**由 Technical PM／使用者確認並授權 Phase 6（整站正式流程與路由串接 / site-flow & route navigation）；在 Phase 6 scope 定案與授權以前不得提前開始功能開發。**

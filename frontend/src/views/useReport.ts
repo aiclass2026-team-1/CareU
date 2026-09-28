@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { useToast } from '@/composables/useToast'
 import {
   type Category,
   type Product,
@@ -30,9 +31,7 @@ export function useReport() {
   let authCallback: (() => void) | null = null
 
   // Toast & Demo panel
-  const toastMessage = ref<string>('')
-  const isToastVisible = ref<boolean>(false)
-  let toastTimer: ReturnType<typeof setTimeout> | null = null
+  const { isToastVisible, toastMessage, showToast } = useToast(3600)
   const isDemoPanelOpen = ref<boolean>(false)
 
   // Cart dialog state
@@ -244,15 +243,6 @@ export function useReport() {
     }
   }
 
-  function showToast(text: string) {
-    if (toastTimer) clearTimeout(toastTimer)
-    toastMessage.value = text
-    isToastVisible.value = true
-    toastTimer = setTimeout(() => {
-      isToastVisible.value = false
-    }, 3600)
-  }
-
   function openAuth(
     mode: 'login' | 'register' | 'forgot' = 'login',
     callback?: () => void
@@ -404,12 +394,18 @@ export function useReport() {
     showToast('已完成購買示範，未扣款或建立訂單')
   }
 
-  function scrollToSection(targetId: string) {
-    const el = document.getElementById(targetId)
-    if (el) {
-      const top = Math.max(0, window.scrollY + el.getBoundingClientRect().top - 24)
-      window.scrollTo({ top, behavior: 'smooth' })
+  function scrollToSection(targetId: string, fallbackId?: string) {
+    let el = document.getElementById(targetId)
+    if (!el && fallbackId) {
+      el = document.getElementById(fallbackId)
     }
+    if (!el) return
+
+    // 精準定位：若 target 在某個 .section-head 內部，定位到該 .section-head；若 target 本身包含 .section-head，定位到自身 .section-head；否則以 target 頂部為基準
+    const sectionHead = el.closest('.section-head') || el.querySelector('.section-head') || el
+    const top = Math.max(0, window.scrollY + sectionHead.getBoundingClientRect().top - 24)
+    const isReduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top, behavior: isReduced ? 'auto' : 'smooth' })
   }
 
   return {

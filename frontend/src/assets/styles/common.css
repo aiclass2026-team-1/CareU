@@ -1,0 +1,117 @@
+/* Care U - Common Baseline Styles (Phase 5) */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Screen Reader Only Utility */
+.sr-only,
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Common Layout Container */
+.wrap {
+  width: min(1120px, calc(100% - 80px));
+  margin-inline: auto;
+}
+
+/* Common Focus Visible Styling */
+:focus-visible {
+  outline: 3px solid rgba(25, 122, 252, 0.28);
+  outline-offset: 3px;
+}
+
+/* Common Base Button Styles (Page styles retain override priority) */
+.button {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: var(--cu-radius-button, 14px);
+  padding: 11px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.2s, transform 0.2s, border-color 0.2s;
+  background: #eff4fc;
+  color: var(--cu-color-navy, #07295c);
+  text-decoration: none;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #e0ebfa;
+}
+
+.button.primary {
+  background: var(--cu-color-primary-dark, #126cde);
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(25, 122, 252, 0.13);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--cu-color-primary-hover, #0969e9);
+}
+
+.button.outline {
+  border-color: var(--cu-color-line-light, #e1e8f1);
+  background: #ffffff;
+}
+
+.button.outline:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.button.small {
+  min-height: 44px;
+  font-size: 14px;
+  padding: 8px 15px;
+}
+
+.text-button {
+  background: none;
+  border: 0;
+  color: #1466cf;
+  min-height: 44px;
+  padding: 8px 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cu-color-line-light, #e1e8f1);
+  background: #ffffff;
+  color: var(--cu-color-navy, #07295c);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: #eff4fc;
+}

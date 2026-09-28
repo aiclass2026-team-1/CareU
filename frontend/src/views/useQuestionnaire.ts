@@ -39,7 +39,6 @@ export interface QuestionnaireAnswers {
 }
 
 export interface UseQuestionnaireOptions {
-  canvasRef: Ref<HTMLCanvasElement | null>
   networkBackRef: Ref<HTMLElement | null>
   appRef: Ref<HTMLElement | null>
   questionPanelRef: Ref<HTMLElement | null>
@@ -98,7 +97,6 @@ export const analysisStages = [
 ]
 
 export function useQuestionnaire({
-  canvasRef,
   networkBackRef,
   appRef,
   questionPanelRef,
@@ -126,11 +124,6 @@ export function useQuestionnaire({
   // 內部變數與計時器
   let timers: number[] = []
   let isDisposed = false
-  let fieldRaf = 0
-  let fieldPoints: { x: number; y: number; phase: number; alpha: number }[] = []
-  let fieldWidth = 0
-  let fieldHeight = 0
-  let pointer = { x: -9999, y: -9999, active: false }
 
 
 
@@ -537,97 +530,24 @@ export function useQuestionnaire({
     }
   }
 
-  // Canvas 2D Field Background
-  const buildField = () => {
-    if (!canvasRef.value) return
-    const canvas = canvasRef.value
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const ratio = Math.min(window.devicePixelRatio || 1, 2)
-    fieldWidth = window.innerWidth
-    fieldHeight = window.innerHeight
-    canvas.width = Math.round(fieldWidth * ratio)
-    canvas.height = Math.round(fieldHeight * ratio)
-    canvas.style.width = `${fieldWidth}px`
-    canvas.style.height = `${fieldHeight}px`
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-    const rows: { x: number; y: number; phase: number; alpha: number }[][] = []
-    const gap = fieldWidth < 600 ? 30 : 34
-    let rowIndex = 0
-    for (let y = 20; y < fieldHeight; y += gap, rowIndex += 1) {
-      const row: { x: number; y: number; phase: number; alpha: number }[] = []
-      const offset = rowIndex % 2 ? gap / 2 : 0
-      for (let x = 20 + offset; x < fieldWidth; x += gap) {
-        const distanceFromCenter = Math.hypot(x - fieldWidth / 2, y - fieldHeight / 2)
-        const centerFade = Math.min(1, Math.max(0.04, (distanceFromCenter - 135) / 360))
-        row.push({
-          x,
-          y,
-          phase: Math.random() * Math.PI * 2,
-          alpha: (0.045 + Math.random() * 0.075) * centerFade,
-        })
-      }
-      rows.push(row)
-    }
-    fieldPoints = rows.flat()
-    drawField(performance.now())
-  }
-
-  const drawField = (time: number) => {
-    if (!canvasRef.value || isDisposed) return
-    const canvas = canvasRef.value
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const reduced = checkReducedMotion()
-    ctx.clearRect(0, 0, fieldWidth, fieldHeight)
-    fieldPoints.forEach((point) => {
-      const distance = Math.hypot(point.x - pointer.x, point.y - pointer.y)
-      const influence = pointer.active ? Math.max(0, 1 - distance / 125) : 0
-      const pulse = reduced ? 0 : (Math.sin(time / 1350 + point.phase) + 1) * 0.11
-      const radius = 1.05 + pulse + influence * 4.2
-      const color = influence > 0.72 ? '251,143,84' : influence > 0.18 ? '25,122,252' : '163,211,247'
-      ctx.beginPath()
-      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(${color},${Math.min(0.78, point.alpha + influence * 0.58)})`
-      ctx.fill()
-    })
-    if (!reduced && pointer.active && !isDisposed) {
-      fieldRaf = requestAnimationFrame(drawField)
-    }
-  }
-
   const handlePointerMove = (event: PointerEvent) => {
     if (typeof window === 'undefined' || !window.matchMedia('(pointer: fine)').matches) return
-    pointer = { x: event.clientX, y: event.clientY, active: true }
     if (networkBackRef.value) {
       const x = event.clientX / window.innerWidth - 0.5
       const y = event.clientY / window.innerHeight - 0.5
       networkBackRef.value.style.transform = `translate3d(${x * -7}px, ${y * -5}px, 0) scale(1.08)`
     }
-    cancelAnimationFrame(fieldRaf)
-    fieldRaf = requestAnimationFrame(drawField)
   }
 
   const handlePointerLeave = () => {
-    pointer.active = false
     if (networkBackRef.value) {
       networkBackRef.value.style.transform = 'translate3d(0,0,0) scale(1.08)'
     }
-    cancelAnimationFrame(fieldRaf)
-    drawField(performance.now())
-  }
-
-  const handleResize = () => {
-    buildField()
   }
 
   onMounted(() => {
     isDisposed = false
     nextTick(() => {
-      buildField()
-      if (typeof window !== 'undefined') {
-        window.addEventListener('resize', handleResize, { passive: true })
-      }
       if (appRef.value) {
         appRef.value.addEventListener('pointermove', handlePointerMove)
         appRef.value.addEventListener('pointerleave', handlePointerLeave)
@@ -639,10 +559,6 @@ export function useQuestionnaire({
   onUnmounted(() => {
     isDisposed = true
     clearTimers()
-    cancelAnimationFrame(fieldRaf)
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', handleResize)
-    }
     if (appRef.value) {
       appRef.value.removeEventListener('pointermove', handlePointerMove)
       appRef.value.removeEventListener('pointerleave', handlePointerLeave)

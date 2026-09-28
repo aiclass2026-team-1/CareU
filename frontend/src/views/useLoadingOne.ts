@@ -1,22 +1,15 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
+import { useBodyScrollLock } from '@/composables/useBodyScrollLock'
 
 interface UseLoadingOneOptions {
   networkBackRef: Ref<HTMLElement | null>
-  canvasRef: Ref<HTMLCanvasElement | null>
   excludeModalRef: Ref<HTMLElement | null>
   modalHomeRef: Ref<HTMLButtonElement | null>
   modalQuestionnaireRef: Ref<HTMLButtonElement | null>
   fileInputRef: Ref<HTMLInputElement | null>
   questionTitleRef: Ref<HTMLElement | null>
   homeTitleRef: Ref<HTMLElement | null>
-}
-
-interface CanvasPoint {
-  x: number
-  y: number
-  phase: number
-  alpha: number
 }
 
 interface LoadingStage {
@@ -48,7 +41,6 @@ export const QUESTIONS = [
 
 export function useLoadingOne({
   networkBackRef,
-  canvasRef,
   excludeModalRef,
   modalHomeRef,
   modalQuestionnaireRef,
@@ -59,9 +51,10 @@ export function useLoadingOne({
   // 畫面與狀態
   const activeScreen = ref<'loading' | 'questionnaire' | 'home'>('loading')
   const isExcludeOpen = ref(false)
-  const isBodyScrollLocked = ref(false)
   const isDemoPanelOpen = ref(false)
   const currentScenario = ref<'success' | 'exclude'>('success')
+
+  const { isLocked: isBodyScrollLocked, lockBodyScroll, unlockBodyScroll } = useBodyScrollLock()
 
   // Loading 狀態文字
   const statusText = ref(STAGES[0].text)
@@ -79,16 +72,6 @@ export function useLoadingOne({
   let timers: ReturnType<typeof setTimeout>[] = []
   let fadeTimer: ReturnType<typeof setTimeout> | null = null
   let focusTimer: ReturnType<typeof setTimeout> | null = null
-  let rafId = 0
-  let mediaQueryList: MediaQueryList | null = null
-  let originalBodyOverflow = ''
-  let originalBodyOverflowPriority = ''
-
-  // Canvas 資料點陣內部狀態
-  let points: CanvasPoint[] = []
-  let canvasWidth = 0
-  let canvasHeight = 0
-  let pointer = { x: -9999, y: -9999, active: false }
 
   const checkReducedMotion = (): boolean => {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -102,13 +85,6 @@ export function useLoadingOne({
       return window.matchMedia('(pointer: fine)').matches
     }
     return true
-  }
-
-  const cancelRaf = () => {
-    if (rafId) {
-      cancelAnimationFrame(rafId)
-      rafId = 0
-    }
   }
 
   const clearTimers = () => {
@@ -142,16 +118,11 @@ export function useLoadingOne({
     window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
   }
 
-  // 排除視窗控制 (鎖定持有狀態、備份值與 priority、焦點定時器防護)
+  // 排除視窗控制 (鎖定持有狀態、焦點定時器防護)
   const openExclude = () => {
     if (isDisposed) return
     isExcludeOpen.value = true
-    if (!isBodyScrollLocked.value) {
-      originalBodyOverflow = document.body.style.getPropertyValue('overflow')
-      originalBodyOverflowPriority = document.body.style.getPropertyPriority('overflow')
-      document.body.style.setProperty('overflow', 'hidden')
-      isBodyScrollLocked.value = true
-    }
+    lockBodyScroll()
     if (focusTimer) {
       clearTimeout(focusTimer)
       focusTimer = null
@@ -170,14 +141,7 @@ export function useLoadingOne({
       clearTimeout(focusTimer)
       focusTimer = null
     }
-    if (isBodyScrollLocked.value) {
-      if (originalBodyOverflow) {
-        document.body.style.setProperty('overflow', originalBodyOverflow, originalBodyOverflowPriority)
-      } else {
-        document.body.style.removeProperty('overflow')
-      }
-      isBodyScrollLocked.value = false
-    }
+    unlockBodyScroll()
   }
 
   // 流程推進 (還原來源 later 與累積 elapsed 時序)
@@ -335,117 +299,25 @@ export function useLoadingOne({
     // DEC-04: 不支援 Escape 關閉排除視窗
   }
 
-  // Canvas 點陣資料場
-  const buildField = () => {
-    cancelRaf()
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const ratio = Math.min(window.devicePixelRatio || 1, 2)
-    canvasWidth = window.innerWidth
-    canvasHeight = window.innerHeight
-
-    canvas.width = Math.round(canvasWidth * ratio)
-    canvas.height = Math.round(canvasHeight * ratio)
-    canvas.style.width = `${canvasWidth}px`
-    canvas.style.height = `${canvasHeight}px`
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-
-    const gap = canvasWidth < 600 ? 30 : 34
-    const rows: CanvasPoint[][] = []
-    let rowIndex = 0
-
-    for (let y = 20; y < canvasHeight; y += gap, rowIndex += 1) {
-      const row: CanvasPoint[] = []
-      const offset = rowIndex % 2 ? gap / 2 : 0
-      for (let x = 20 + offset; x < canvasWidth; x += gap) {
-        const distanceFromCenter = Math.hypot(x - canvasWidth / 2, y - canvasHeight / 2)
-        const centerFade = Math.min(1, Math.max(0.04, (distanceFromCenter - 135) / 360))
-        row.push({
-          x,
-          y,
-          phase: Math.random() * Math.PI * 2,
-          alpha: (0.045 + Math.random() * 0.075) * centerFade,
-        })
-      }
-      rows.push(row)
-    }
-    points = rows.flat()
-    drawField(performance.now())
-  }
-
-  const drawField = (time: number) => {
-    cancelRaf()
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-    const reduced = checkReducedMotion()
-
-    points.forEach(point => {
-      const distance = Math.hypot(point.x - pointer.x, point.y - pointer.y)
-      const influence = pointer.active ? Math.max(0, 1 - distance / 125) : 0
-      const pulse = reduced ? 0 : (Math.sin(time / 1350 + point.phase) + 1) * 0.11
-      const radius = 1.05 + pulse + influence * 4.2
-      const color = influence > 0.72 ? '251,143,84' : influence > 0.18 ? '25,122,252' : '163,211,247'
-      ctx.beginPath()
-      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(${color},${Math.min(0.78, point.alpha + influence * 0.58)})`
-      ctx.fill()
-    })
-
-    if (!reduced && pointer.active) {
-      rafId = requestAnimationFrame(drawField)
-    }
-  }
-
   const handlePointerMove = (event: PointerEvent) => {
     if (!checkFinePointer()) return
-    pointer = { x: event.clientX, y: event.clientY, active: true }
     const x = event.clientX / window.innerWidth - 0.5
     const y = event.clientY / window.innerHeight - 0.5
 
     if (networkBackRef.value) {
       networkBackRef.value.style.transform = `translate3d(${x * -7}px, ${y * -5}px, 0) scale(1.08)`
     }
-
-    cancelRaf()
-    rafId = requestAnimationFrame(drawField)
   }
 
   const handlePointerLeave = () => {
-    pointer.active = false
     if (networkBackRef.value) {
       networkBackRef.value.style.transform = 'translate3d(0,0,0) scale(1.08)'
-    }
-    cancelRaf()
-    drawField(performance.now())
-  }
-
-  const handleMediaChange = () => {
-    if (checkReducedMotion()) {
-      cancelRaf()
-    } else if (pointer.active) {
-      cancelRaf()
-      rafId = requestAnimationFrame(drawField)
     }
   }
 
   onMounted(() => {
     isDisposed = false
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      mediaQueryList = window.matchMedia('(prefers-reduced-motion: reduce)')
-      mediaQueryList.addEventListener?.('change', handleMediaChange)
-    }
-
-    window.addEventListener('resize', buildField, { passive: true })
     window.addEventListener('keydown', handleKeyDown)
-
-    buildField()
     runLoading('success')
   })
 
@@ -453,14 +325,6 @@ export function useLoadingOne({
     isDisposed = true
     clearTimers()
     closeExclude()
-    cancelRaf()
-
-    if (mediaQueryList) {
-      mediaQueryList.removeEventListener?.('change', handleMediaChange)
-      mediaQueryList = null
-    }
-
-    window.removeEventListener('resize', buildField)
     window.removeEventListener('keydown', handleKeyDown)
   })
 

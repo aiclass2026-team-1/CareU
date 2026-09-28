@@ -1,21 +1,14 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Ref } from 'vue'
+import { useToast } from '@/composables/useToast'
 
 interface UseHomeOptions {
   networkBackRef: Ref<HTMLElement | null>
   networkLeftRef: Ref<HTMLElement | null>
   networkRightRef: Ref<HTMLElement | null>
   fileInputRef: Ref<HTMLInputElement | null>
-  canvasRef: Ref<HTMLCanvasElement | null>
   heroRef: Ref<HTMLElement | null>
   explanationRef: Ref<HTMLElement | null>
-}
-
-interface CanvasPoint {
-  x: number
-  y: number
-  phase: number
-  alpha: number
 }
 
 export function useHome({
@@ -23,7 +16,6 @@ export function useHome({
   networkLeftRef,
   networkRightRef,
   fileInputRef,
-  canvasRef,
   heroRef,
   explanationRef,
 }: UseHomeOptions) {
@@ -33,16 +25,22 @@ export function useHome({
   const isDesktopSnap = ref(false)
   const selectedFiles = ref<File[]>([])
   const uploadErrorMessage = ref('')
-  const toastMessage = ref('')
-  const toastKind = ref<'info' | 'error'>('info')
-  const isToastVisible = ref(false)
   const isOnExplanation = ref(false)
   const isDragOver = ref(false)
 
-  let toastTimer: ReturnType<typeof setTimeout> | null = null
+  // Auth 彈窗狀態 (Phase 5 共用 LoginModal，維持 Demo Auth 邊界)
+  const isAuthModalOpen = ref(false)
+  const authMode = ref<'login' | 'register' | 'forgot'>('login')
+  const authEmail = ref('')
+  const authPassword = ref('')
+  const authConfirmPassword = ref('')
+  const isPasswordVisible = ref(false)
+  const authErrorMessage = ref('')
+
+  // Toast 狀態 (使用共用 useToast)
+  const { isToastVisible, toastMessage, toastKind, showToast } = useToast(2800)
   let wheelTimer: ReturnType<typeof setTimeout> | null = null
   let wheelLocked = false
-  let rafId = 0
   let mediaQueryList: MediaQueryList | null = null
   let isDisposed = false
 
@@ -52,11 +50,6 @@ export function useHome({
   }
   const prevStyles: Record<string, StyleBackup> = {}
   const styleProps = ['scroll-behavior', 'scroll-snap-type', 'overscroll-behavior-y']
-
-  let points: CanvasPoint[] = []
-  let canvasWidth = 0
-  let canvasHeight = 0
-  let pointer = { x: -9999, y: -9999, active: false }
 
   const checkReducedMotion = (): boolean => {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -70,13 +63,6 @@ export function useHome({
       return window.matchMedia('(pointer: fine)').matches
     }
     return true
-  }
-
-  const cancelRaf = () => {
-    if (rafId) {
-      cancelAnimationFrame(rafId)
-      rafId = 0
-    }
   }
 
   const saveOriginalScrollStyles = () => {
@@ -135,12 +121,6 @@ export function useHome({
 
   const handleMediaChange = () => {
     updateSnapMode()
-    if (checkReducedMotion()) {
-      cancelRaf()
-    } else if (pointer.active) {
-      cancelRaf()
-      rafId = requestAnimationFrame(drawField)
-    }
   }
 
   const restoreOriginalScrollStyles = () => {
@@ -164,16 +144,6 @@ export function useHome({
     return /^(application\/pdf|image\/(jpeg|png))$/.test(file.type) || /\.(pdf|jpe?g|png)$/i.test(file.name)
   }
 
-  const showToast = (message: string, kind: 'info' | 'error' = 'info') => {
-    if (toastTimer) clearTimeout(toastTimer)
-    toastMessage.value = message
-    toastKind.value = kind
-    isToastVisible.value = true
-    toastTimer = setTimeout(() => {
-      isToastVisible.value = false
-    }, 2800)
-  }
-
   const openUploadSheet = () => {
     uploadErrorMessage.value = ''
     isUploadOpen.value = true
@@ -186,7 +156,6 @@ export function useHome({
   const triggerFileInput = () => {
     fileInputRef.value?.click()
   }
-
 
   const processIncomingFiles = (incoming: File[]) => {
     if (!incoming.length) return
@@ -246,8 +215,68 @@ export function useHome({
     showToast('原型提示：此處將前往健康問卷頁')
   }
 
+  // 會員登入視窗控制 (Phase 5 共用 LoginModal，維持 Demo Auth 規範)
+  const openAuth = (mode: 'login' | 'register' | 'forgot' = 'login') => {
+    authMode.value = mode
+    authErrorMessage.value = ''
+    isPasswordVisible.value = false
+    authEmail.value = ''
+    authPassword.value = ''
+    authConfirmPassword.value = ''
+    isAuthModalOpen.value = true
+  }
+
+  const closeAuth = () => {
+    isAuthModalOpen.value = false
+    authErrorMessage.value = ''
+  }
+
+  const setAuthMode = (mode: 'login' | 'register' | 'forgot') => {
+    authMode.value = mode
+    authErrorMessage.value = ''
+    authPassword.value = ''
+    authConfirmPassword.value = ''
+    isPasswordVisible.value = false
+  }
+
+  const togglePasswordVisibility = () => {
+    isPasswordVisible.value = !isPasswordVisible.value
+  }
+
+  const handleAuthSubmit = () => {
+    const email = authEmail.value.trim()
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      authErrorMessage.value = '請輸入正確的電子郵件格式'
+      return
+    }
+
+    if (authMode.value === 'forgot') {
+      closeAuth()
+      showToast('重設密碼預覽已送出（示範體驗）')
+      return
+    }
+
+    if (!authPassword.value || authPassword.value.length < 8) {
+      authErrorMessage.value = '密碼長度至少需要 8 碼'
+      return
+    }
+
+    if (authMode.value === 'register' && authPassword.value !== authConfirmPassword.value) {
+      authErrorMessage.value = '兩次輸入的密碼不一致'
+      return
+    }
+
+    closeAuth()
+    showToast('登入成功（示範體驗）')
+  }
+
+  const quickDemoLogin = () => {
+    closeAuth()
+    showToast('已使用示範帳號登入（示範體驗）')
+  }
+
   const handleMemberLoginClick = () => {
-    showToast('原型提示：此處將開啟會員登入')
+    openAuth('login')
   }
 
   const handleDemoLinkClick = (event: MouseEvent) => {
@@ -283,83 +312,11 @@ export function useHome({
     processIncomingFiles(files)
   }
 
-  const buildField = () => {
-    cancelRaf()
-    const canvas = canvasRef.value
-    const hero = heroRef.value
-    if (!canvas || !hero) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = hero.getBoundingClientRect()
-    const ratio = Math.min(window.devicePixelRatio || 1, 2)
-    canvasWidth = rect.width
-    canvasHeight = rect.height
-
-    canvas.width = Math.round(canvasWidth * ratio)
-    canvas.height = Math.round(canvasHeight * ratio)
-    canvas.style.width = `${canvasWidth}px`
-    canvas.style.height = `${canvasHeight}px`
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-
-    const gap = canvasWidth < 600 ? 30 : 34
-    const rows: CanvasPoint[][] = []
-    let rowIndex = 0
-
-    for (let y = 20; y < canvasHeight; y += gap, rowIndex += 1) {
-      const row: CanvasPoint[] = []
-      const offset = rowIndex % 2 ? gap / 2 : 0
-      for (let x = 20 + offset; x < canvasWidth; x += gap) {
-        const distanceFromCenter = Math.hypot(x - canvasWidth / 2, y - canvasHeight / 2)
-        const centerFade = Math.min(1, Math.max(0.04, (distanceFromCenter - 135) / 360))
-        row.push({
-          x,
-          y,
-          phase: Math.random() * Math.PI * 2,
-          alpha: (0.045 + Math.random() * 0.075) * centerFade,
-        })
-      }
-      rows.push(row)
-    }
-    points = rows.flat()
-    drawField(performance.now())
-  }
-
-  const drawField = (time: number) => {
-    cancelRaf()
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-    const reduced = checkReducedMotion()
-
-    points.forEach(point => {
-      const distance = Math.hypot(point.x - pointer.x, point.y - pointer.y)
-      const influence = pointer.active ? Math.max(0, 1 - distance / 125) : 0
-      const pulse = reduced ? 0 : (Math.sin(time / 1350 + point.phase) + 1) * 0.11
-      const radius = 1.05 + pulse + influence * 4.2
-      const color = influence > 0.72 ? '251,143,84' : influence > 0.18 ? '25,122,252' : '163,211,247'
-      ctx.beginPath()
-      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(${color},${Math.min(0.78, point.alpha + influence * 0.58)})`
-      ctx.fill()
-    })
-
-    if (!reduced && pointer.active) {
-      rafId = requestAnimationFrame(drawField)
-    }
-  }
-
   const handleHeroPointerMove = (event: PointerEvent) => {
     if (!checkFinePointer()) return
     const hero = heroRef.value
     if (!hero) return
 
-    const rect = hero.getBoundingClientRect()
-    pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top, active: true }
     const x = event.clientX / window.innerWidth - 0.5
     const y = event.clientY / window.innerHeight - 0.5
 
@@ -372,13 +329,9 @@ export function useHome({
     if (networkRightRef.value) {
       networkRightRef.value.style.transform = `translate3d(${x * 28}px, ${y * 19}px, 0) scale(1)`
     }
-
-    cancelRaf()
-    rafId = requestAnimationFrame(drawField)
   }
 
   const handleHeroPointerLeave = () => {
-    pointer.active = false
     if (networkBackRef.value) {
       networkBackRef.value.style.transform = 'translate3d(0,0,0) scale(1.08)'
     }
@@ -388,9 +341,6 @@ export function useHome({
     if (networkRightRef.value) {
       networkRightRef.value.style.transform = 'translate3d(0,0,0) scale(1)'
     }
-
-    cancelRaf()
-    drawField(performance.now())
   }
 
   const handleScroll = () => {
@@ -398,8 +348,8 @@ export function useHome({
   }
 
   const handleWheel = (event: WheelEvent) => {
-    // 只有在真正接管整屏切換的桌面環境下才攔截
-    if (!isDesktopSnap.value || isUploadOpen.value || isRouteScreenOpen.value) {
+    // 只有在真正接管整屏切換的桌面環境下才攔截，彈窗開啟時不觸發雙屏滾動
+    if (!isDesktopSnap.value || isUploadOpen.value || isRouteScreenOpen.value || isAuthModalOpen.value) {
       return
     }
     if (Math.abs(event.deltaY) < 8) return
@@ -427,7 +377,6 @@ export function useHome({
 
   const handleResize = () => {
     updateSnapMode()
-    buildField()
   }
 
   onMounted(() => {
@@ -445,7 +394,6 @@ export function useHome({
     window.addEventListener('keydown', handleKeyDown)
 
     updateSnapMode()
-    buildField()
     handleScroll()
 
     if (typeof document !== 'undefined' && document.fonts?.ready) {
@@ -470,8 +418,6 @@ export function useHome({
     window.removeEventListener('resize', handleResize)
     window.removeEventListener('keydown', handleKeyDown)
 
-    cancelRaf()
-    if (toastTimer) clearTimeout(toastTimer)
     if (wheelTimer) clearTimeout(wheelTimer)
   })
 
@@ -486,6 +432,13 @@ export function useHome({
     isToastVisible,
     isOnExplanation,
     isDragOver,
+    isAuthModalOpen,
+    authMode,
+    authEmail,
+    authPassword,
+    authConfirmPassword,
+    isPasswordVisible,
+    authErrorMessage,
     formatBytes,
     showToast,
     openUploadSheet,
@@ -505,6 +458,12 @@ export function useHome({
     handleDrop,
     handleHeroPointerMove,
     handleHeroPointerLeave,
+    openAuth,
+    closeAuth,
+    setAuthMode,
+    togglePasswordVisibility,
+    handleAuthSubmit,
+    quickDemoLogin,
   }
 }
 
