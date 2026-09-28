@@ -101,8 +101,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(.38) contrast(.86) blur(6px);
+  filter: saturate(.45) contrast(.9) blur(2px);
 }
+
 
 .loading-one-container .soft-orb {
   position: fixed;

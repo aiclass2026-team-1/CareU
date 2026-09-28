@@ -48,6 +48,14 @@ const routes: RouteRecordRaw[] = [
       hideLayout: true,
     },
   },
+  {
+    path: '/preview/questionnaire',
+    name: 'preview-questionnaire',
+    component: () => import('@/views/QuestionnaireView.vue'),
+    meta: {
+      hideLayout: true,
+    },
+  },
 ]
 
 const router = createRouter({

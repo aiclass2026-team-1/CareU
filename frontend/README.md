@@ -38,7 +38,7 @@ npm run preview
 
 ---
 
-## 3. 目前階段與預覽路由（Phase 4 第三批）
+## 3. 目前階段與預覽路由（Phase 4 第四批）
 
 ### 3.1 頁面實作進度
 - **入口頁 (Splash Page)**：`src/views/SplashView.vue`（已完成遷移）
@@ -47,16 +47,12 @@ npm run preview
   - 預覽路由：`#/preview/home`
 - **Loading頁-1 與排除視窗 (Loading-1 & Exclude Modal)**：`src/views/LoadingOneView.vue`（已完成遷移）
   - 預覽路由：`#/preview/loading-1`
-  - 核心規格：
-    - 4 階段狀態文字推進（`讀取檔案中` 1.8s → `正在分析資料` 2.4s → `正在整理需補充資訊` 2.2s → `正在準備下一步` 1.1s），文字具備 230ms 平滑切換淡入淡出。
-    - Logo 暖橘圓點跳動（`loading-logo-dot-hop` 1.45s）、動態三點起伏（`loading-dot-hop` 1.2s）、Canvas 全螢幕粒子資料場與後景視差。
-    - 排除視窗（`ExcludeModal`）：落實 DEC-01 雙分支（「返回首頁」與「直接填寫問卷」）與 DEC-04（不支援 Escape 鍵與遮罩點擊關閉，Tab 鍵焦點鎖定於雙按鈕間）。
-    - 示範問卷與首頁外殼：內嵌 3 題問卷與首頁返回畫面僅供頁內轉場示範（Demo Only），不代表正式跨頁資料。排除後進入之問卷對應未來 `full` 模式，被排除檔案不視為有效健檢資料。
-    - 素材抽離至 `src/assets/loading-one/`（2 組 CareU LINE Seed TW WOFF 字體與 1 張後景圖 PNG，解碼雜湊 100% 吻合）。
-    - 樣式完整隔離：CSS 選擇器限定於 `.loading-one-container`，Keyframes 前綴為 `loading-*`，卸載時具備 `isDisposed` 保護。
+- **問卷頁與 Loading頁-2 (Questionnaire Page & Loading-2)**：`src/views/QuestionnaireView.vue`（已完成遷移）
+  - 預覽路由：`#/preview/questionnaire`
 - **骨架驗證頁面**：
   - `#/`：占位首頁 (`src/views/ScaffoldHomeView.vue`)
   - `#/scaffold-verify`：路由切換驗證頁 (`src/views/ScaffoldAboutView.vue`)
+
 
 ---
 
@@ -141,10 +137,67 @@ npm run preview
 
 ---
 
-## 6. 階段限制與邊界規範（嚴格遵守）
+## 6. Phase 4 第四批驗收紀錄（Questionnaire & Loading-2 Page Migration）
 
-1. **無業務邏輯**：尚未實作問卷計分、OCR、推薦演算法、登入 API 或購物流程。
+### 6.1 核心規格與實作確認
+- **預覽路由**：`#/preview/questionnaire`（設置 `meta: { hideLayout: true }`）
+- **問卷雙模式支援**：
+  - **資料補充模式 (`supplement`)**：6 填答步驟 ＋ complete（7 畫面，固定 7 槽進度條），腰圍單欄實測，血壓欄位自動隱藏。
+  - **完整問卷模式 (`full`)**：6 填答步驟 ＋ complete（7 畫面，固定 8 槽進度條），生理性別選擇女性時動態插入第 7 步安全資訊（8 畫面，固定 8 槽進度條）；男性／其他略過安全題時，完成頁直接映射至第 8 槽（100%），進度條長度維持 8 槽固定防倒退。
+- **題型互動與互斥校驗**：
+  - 基本資料：年齡、生理性別（女性／男性／其他）、體重。
+  - 生活習慣：蔬果、活動、睡眠單選選項卡片。
+  - 身體測量：腰圍、居家血壓（收縮壓／舒張壓）與「目前不知道」雙向互斥（勾選不知道清除數值；聚焦或輸入數值取消不知道）。
+  - 過敏原清單：11 項多選項目，「無已知過敏」與具體項目互斥，「其他」條件文字欄位展開與非空白校驗。
+  - 安全資訊：懷孕（是／否）、哺乳（是／否）。
+  - 完成確認：完成圖示、標題「問卷填寫完成」、450ms「正在送出」微動態。
+- **答案暫存機制（`sessionStorage` Key: `careu-questionnaire`）**：
+  - 作答過程即時寫入暫存，重新整理（F5）依模式比對精準還原答案與題目進度。
+  - 送出問卷後暫存保留（供分析失敗時返回問卷恢復作答），僅在 Demo 控制面板點擊「重新開始」時清除。
+- **Loading頁-2 推進與異常處理**：
+  - 4 階段狀態文字時序推進（`正在整理你提供的資料` 1.6s → `正在理解你的身體訊息` 1.8s → `正在整理適合你的保健方向` 1.8s → `正在準備你的個人化報告` 1.2s），文字具備 220ms 更新延遲與 230ms CSS 過渡。
+  - Logo 暖橘圓點跳動（`questionnaire-logo-dot-hop` 1.45s）、狀態三點起伏（`questionnaire-dot-hop` 1.2s）。
+  - 正常完成後顯示「報告準備完成」（停留 650ms）並平滑轉入報告頁 Placeholder（`REPORT READY`，標記「你的個人化報告已準備完成」）。
+  - 分析失敗卡片（`#analysisError`，標題「這次分析沒有順利完成」），支援「返回問卷」（完整還原填答進度）與「再試一次」（重播 Loading-2）。
+- **視覺與背景定案**：
+  - Questionnaire ＋ Loading-2 網絡背景圖層正式定案為 `filter: saturate(.45) contrast(.9) blur(2px)`。
+  - Loading-1 網絡背景圖層已同步更新為相同柔焦效果（`blur(2px)`），Logo、氣泡與排版無回退。
+  - 白色問卷主方框於桌面全題目固定維持 900px（`.question-shell { width: 900px; max-width: 100%; }`），消除寬度跳動。
+  - 「目前不知道」選項維持 Prototype 原生純文字 Choice Chip 簡潔視覺（無額外 checkbox 方格）。
+- **鍵盤與可及性架構（MVP 範圍定義）**：
+  - 所有表單控制項與按鈕遵循瀏覽器原生標準行為，支援 Tab 走訪與 Enter/Space 選取，具備 `:focus-visible` 品牌藍焦點外框。
+  - 非 MVP 之自訂鍵盤功能（如強制 Focus Loop 攔截、自訂 Modality 追蹤、換題自動移焦）已自 MVP 範圍移除（標記為 Post-MVP / not required for MVP，不視為缺陷）。
+- **專屬資產抽離**：字體 WOFF 與網絡後景圖抽離至 `src/assets/questionnaire/`，解碼雜湊 100% 吻合。
+
+### 6.2 驗收狀態
+- `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+- `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+- 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- **使用者人工驗收確認通過事項**：
+  - ✅ 問卷雙模式（補充 7 槽／完整 8 槽）與女性安全題動態插入通過；
+  - ✅ 測量資料「目前不知道」與數值欄位雙向互斥通過；
+  - ✅ 過敏原「無已知過敏」與具體項目互斥、「其他」展開輸入通過；
+  - ✅ 答案暫存寫入、F5 還原與 Demo 重新開始清除通過；
+  - ✅ Loading-2 4 階段推進時序、Logo 與三點動態通過；
+  - ✅ Loading-2 Logo、狀態氣泡與底部提示位置排版通過；
+  - ✅ 分析失敗狀態卡片、「返回問卷」答案保留與「再試一次」重播通過；
+  - ✅ 背景網絡圖層 `blur(2px)` 柔焦視覺定案通過；
+  - ✅ Loading-1 背景同步 `blur(2px)` 且無排版回退通過；
+  - ✅ 白色問卷卡片桌面固定 900px 無尺寸跳動通過；
+  - ✅ 「目前不知道」純文字 Chip 視覺還原通過；
+  - ✅ 瀏覽器原生鍵盤與滑鼠操作體驗通過。
+- **保留之未驗證項目**：
+  - 多品牌行動真機長時間 Canvas 粒子渲染效能（`[RUNTIME_UNVERIFIED]`）。
+  - 行動端虛擬鍵盤彈起時之滾動置中（`[RUNTIME_UNVERIFIED]`）。
+
+---
+
+## 7. 階段限制與邊界規範（嚴格遵守）
+
+1. **無業務邏輯**：尚未實作正式問卷計分、OCR、推薦演算法、登入 API 或購物流程。
 2. **無業務 Store**：Pinia 僅完成 `app.use(pinia)` 實例註冊，不建立 Auth/Cart/Report 等業務 Store，不加入持久化外掛（留待 Phase 8）。
 3. **無正式路由**：整站業務路由（`/home`, `/questionnaire`, `/report` 等）與路由守衛留待 Phase 6。
 4. **無 UI 庫**：不引入 Element Plus、Ant Design Vue 等第三方大型 UI 庫，亦不在此階段建立正式 Design Tokens。
+5. **Demo != Production**：Loading-2 為固定計時器模擬，sessionStorage 僅為 Demo 暫存，非正式敏感健康資料持久化方案。
+
 

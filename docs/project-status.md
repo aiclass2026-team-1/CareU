@@ -41,8 +41,8 @@ Implementation 完成
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
 | **當前階段 (Current Phase)** | **Phase 4｜Prototype → Vue Page Migration** | `frontend/README.md`, Git log |
-| **最近完成之功能批次** | **Phase 4 第三批：Loading-1 與排除視窗** | `frontend/README.md` §5, Commit `41fb549` |
-| **最近已提交功能 Checkpoint** | `41fb549` (`fix: finalize loading-one layout and exclusion modal`) | Git HEAD（功能工作基準） |
+| **最近完成之功能批次** | **Phase 4 第四批：問卷頁與 Loading頁-2（Questionnaire & Loading-2）** | `frontend/README.md` §6, 使用者人工驗收 PASS |
+| **最近已提交功能 Checkpoint** | `41fb549` (`fix: finalize loading-one layout and exclusion modal`，本批待提交 Checkpoint：`feat: migrate questionnaire and loading-two to Vue`) | Git HEAD / 當前批次基準 |
 | **執行中功能工作** | **無 (None)** | 當前無進行中的功能開發 |
 | **下一批遷移 Scope** | **`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`，未授權，嚴禁自行推測頁面） | Repo 權威文件盤點結果 |
 
@@ -55,7 +55,9 @@ Implementation 完成
 | **Batch 1** | **入口頁 (Splash Page)**<br>`src/views/SplashView.vue` | `#/preview/splash` | `a40f65c` | `frontend/src/views/SplashView.vue`<br>`frontend/src/router/index.ts` | **Checkpoint Confirmed**<br>詳細驗收清單：`NEEDS_CONFIRMATION` |
 | **Batch 2** | **首頁 (Home & Upload Page)**<br>`src/views/HomeView.vue`<br>`src/views/useHome.ts`<br>`src/assets/home/` | `#/preview/home` | `1df51af` | `frontend/README.md` §4<br>Git log `1df51af` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
 | **Batch 3** | **Loading頁-1 與排除視窗**<br>`src/views/LoadingOneView.vue`<br>`src/views/useLoadingOne.ts`<br>`src/assets/loading-one/` | `#/preview/loading-1` | `41fb549` | `frontend/README.md` §3, §5<br>Git log `41fb549` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
+| **Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue`<br>`src/views/useQuestionnaire.ts`<br>`src/assets/questionnaire/`<br>`src/assets/loading-one/loading-one.css` (背景同步) | `#/preview/questionnaire` | 待本批 Commit | `frontend/README.md` §6 | **CONFIRMED**<br>Type-check PASS, Build PASS<br>33/33 Manifest Hash PASS<br>使用者人工驗收 PASS |
 | **Next Phase 4 migration batch** | **下一批次** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
+
 
 ---
 
@@ -119,6 +121,7 @@ Implementation 完成
 
 ## 8. 明確下一步行動（Exact Next Action）
 
-**由 Technical PM／使用者確認並授權下一個 Phase 4 migration batch 的正式 scope；在 scope 定案以前不得開始功能 Preflight 或 Implementation。**
+**由 Technical PM／使用者確認並授權下一個最高價值的 Phase 4 / MVP migration batch 正式 scope（例如報告頁與會員登入視窗）；在 scope 定案以前不得開始功能 Preflight 或 Implementation。**
+
 
 

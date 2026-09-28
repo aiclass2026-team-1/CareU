@@ -204,7 +204,46 @@
 
 ---
 
-### 6.4 Next Phase 4 migration batch
+### 6.4 Phase 4 第四批：問卷頁與 Loading頁-2 遷移（Questionnaire & Loading-2 Migration）
+- **完成日期**：2026-09-28
+- **Git Checkpoint**：待提交（`feat: migrate questionnaire and loading-two to Vue`）
+- **遷移範圍**：`frontend/src/views/QuestionnaireView.vue`、`frontend/src/views/useQuestionnaire.ts`、`frontend/src/assets/questionnaire/`、`frontend/src/assets/loading-one/loading-one.css`（背景同步）
+- **預覽路由**：`#/preview/questionnaire`
+- **證據來源**：`frontend/README.md` §6、使用者人工驗收紀錄
+- **狀態標籤**：`CONFIRMED`
+
+#### A. 已記錄之工程實作與自動化驗證（Documented Implementation & Automated Validation）
+- **自動化驗證**：
+  - `npm --prefix frontend run type-check`：✅ PASS (`vue-tsc -b` 0 錯誤、0 警告)。
+  - `npm --prefix frontend run build`：✅ PASS (`vite build` 順利產出)。
+  - 33 份來源檔案 Manifest 雜湊：✅ 33/33 PASS。
+- **工程實作細節（依據 `frontend/README.md` §6.1）**：
+  - 問卷雙模式架構：資料補充模式（6 步驟＋complete，7 畫面，固定 7 槽）與完整模式（6 步驟＋complete，7 畫面，固定 8 槽；女性動態插入安全題，8 畫面，固定 8 槽；男性／其他略過安全題直達第 8 槽 100%，槽位固定防倒退）。
+  - 題型互動與互斥校驗：基本資料（年齡、性別、體重）、生活習慣單選、身體測量腰圍／血壓與「目前不知道」雙向互斥（勾選清空數值，聚焦或輸入數值取消勾選）、過敏原多選清單（11 項多選、「無已知過敏」互斥、「其他」展開輸入與非空白校驗）、安全資訊（懷孕／哺乳）。
+  - 答案暫存機制：`sessionStorage`（Key: `careu-questionnaire`）作答即時寫入、F5 模式比對精準還原、送出問卷後暫存保留供分析失敗返回問卷恢復填答、Demo 重新開始清除。
+  - Loading-2 推進與異常處理：4 階段時序推進（1600ms / 1800ms / 1800ms / 1200ms），文字淡入淡出切換，Logo 暖橘圓點跳動（1.45s）、狀態三點起伏（1.2s），完成後顯示「報告準備完成」（650ms）並轉入報告頁 Placeholder（`REPORT READY`）；分析失敗卡片（「這次分析沒有順利完成」）支援「返回問卷」（還原答案）與「再試一次」（重播 Loading-2）。
+  - 視覺與背景定案：Questionnaire ＋ Loading-2 網絡背景圖層定案為 `blur(2px)`（`filter: saturate(.45) contrast(.9) blur(2px)`）；Loading-1 網絡背景圖層同步更新為相同效果；問卷白色主方框於桌面全題目固定維持 900px（`.question-shell { width: 900px; max-width: 100%; }`），消除寬度跳動；「目前不知道」選項維持 Prototype 原生純文字 Choice Chip 視覺。
+  - 鍵盤與可及性架構（MVP 定義）：表單控制項與按鈕遵循瀏覽器原生標準行為，支援 Tab 走訪與 Enter/Space 選取，具備 `:focus-visible` 品牌藍外框；非 MVP 之自訂 Focus Loop 與換題自動強制移焦已自 MVP 範圍移除（標記為 Post-MVP / not required for MVP，不視為缺陷）。
+  - 專屬素材抽離至 `src/assets/questionnaire/`（2 組 CareU LINE Seed TW WOFF 字體與 1 張後景圖 PNG，解碼雜湊 100% 吻合）。
+
+#### B. 使用者人工驗收成果（User Acceptance，依據 `frontend/README.md` §6.2）
+- ✅ **雙模式與進度槽**：補充模式（7 槽）與完整模式（8 槽，女性安全題動態插入，男性略過直達 100% 不倒退）通過。
+- ✅ **表單互斥與防呆**：測量「目前不知道」雙向互斥、過敏原「無已知過敏」互斥、「其他」展開非空白校驗通過。
+- ✅ **暫存與還原**：作答即時暫存、F5 還原與 Demo 重新開始清除通過。
+- ✅ **Loading-2 排版與動效**：4 階段時序推進、Logo 橘點與三點跳動、Logo 居中與氣泡垂直對齊排版通過。
+- ✅ **分析失敗重試**：失敗卡片、「返回問卷」答案保留與「再試一次」重播通過。
+- ✅ **視覺與背景**：Questionnaire 與 Loading-1 背景同步 `blur(2px)` 通過。
+- ✅ **卡片尺寸穩定性**：桌面切換各題目白色外框固定為 900px 無跳動通過。
+- ✅ **「目前不知道」外觀**：純文字 Chip 視覺還原（無額外 checkbox 方格）通過。
+- ✅ **鍵盤與滑鼠操作**：瀏覽器原生標準交互體驗通過。
+
+#### C. 保留之未驗證事項（Runtime Unverified Items）
+- 多品牌行動真機長時間 Canvas 粒子渲染效能（`[RUNTIME_UNVERIFIED]`）。
+- 行動端虛擬鍵盤彈起時之滾動置中（`[RUNTIME_UNVERIFIED]`）。
+
+---
+
+### 6.5 Next Phase 4 migration batch
 - **遷移範圍**：**`TBD / NOT YET AUTHORIZED`**（`NO_AUTHORITATIVE_NEXT_BATCH_SCOPE_FOUND`）
 - **狀態**：尚未授權，嚴格等待 Technical PM 規劃、Review 與後續指令。
 
@@ -221,5 +260,7 @@
 | **Phase 4 Batch 1** | 入口頁 (Splash Page) 遷移至 Vue | `a40f65c` | Checkpoint Confirmed / `NEEDS_CONFIRMATION` |
 | **Phase 4 Batch 2** | 首頁與上傳面板 (Home & Upload) 遷移至 Vue | `1df51af` | `CONFIRMED` (User Accepted) |
 | **Phase 4 Batch 3** | Loading-1 與排除視窗遷移至 Vue | `41fb549` | `CONFIRMED` (User Accepted) |
+| **Phase 4 Batch 4** | 問卷頁與 Loading頁-2 遷移至 Vue（含 Loading-1 背景同步） | 待本批 Commit | `CONFIRMED` (User Accepted) |
 | **Next Phase 4 migration batch** | 下一批次 | - | **`TBD / NOT YET AUTHORIZED`** |
+
 
