@@ -191,3 +191,126 @@ Key error codes:
 4. **`NUMERIC_SCORE_RULE_UNRESOLVED`**: Numeric questions preserve validated values and record `score: null` until medical scoring thresholds (e.g., waist cm cutoffs) are formalized by the domain team.
 5. **Assessment Orchestration**: Formula 2 scoring and assessment persistence remain deferred to Batch 7 (`assessment_results`).
 
+
+---
+
+## 9. Authenticated-Only Production Deployment Plan (PROPOSED_NOT_EXECUTED)
+
+### 9.1 Rollout Strategy: Phase 1 (Authenticated-Only Technical Pilot)
+- **Pilot Purpose**: Prove the end-to-end production round-trip under strict security controls before opening guest access:
+  `Authenticated User -> build-questionnaire-plan -> TargetQuestionnairePlan -> submit-questionnaire -> questionnaire_submissions -> Persisted UUID`.
+- **Supported Scope in Pilot**:
+  - `mode: 'full'`, `reportId: null`
+  - Authenticated JWT required (`verify_jwt = true`)
+- **Unsupported in Pilot**:
+  - Public Guest Full flow (`PUBLIC_GUEST_FULL_NOT_ENABLED_IN_PILOT`)
+  - Guest Supplement flow (`GUEST_SESSION_AUTH_UNRESOLVED`)
+  - Authenticated Supplement flow (backend-capable, but excluded from Phase 1 pilot acceptance)
+
+### 9.2 Gateway JWT Decision & Security Label
+- **Gateway Setting**: Deploy both `build-questionnaire-plan` and `submit-questionnaire` with `verify_jwt = true`.
+- **Security Label**: `PUBLIC_GUEST_FULL_NOT_ENABLED_IN_PILOT`.
+- **Function-Side Enforcement**: Function-side `supabase.auth.getUser(token)` and `validateReportOwnership` remain active as defense-in-depth.
+
+### 9.3 Direct Database Write PASS Criteria
+- **Anon Direct INSERT**: Direct table mutation using the anon key MUST fail (via SQL permission denied or RLS check violation), resulting in **0 rows created**.
+- **Authenticated Direct INSERT**: Direct table mutation using an authenticated user session MUST fail (via SQL permission denied or RLS check violation), resulting in **0 rows created**.
+- **Service-Role Edge Function Write**: Persistence succeeds exclusively through the backend `submit-questionnaire` function.
+
+### 9.4 Pre/Post-Migration SQL & Snapshot (READ_ONLY_VERIFICATION)
+- **Migration File**: `supabase/migrations/20260929_tighten_questionnaire_submissions_security.sql`
+- **Pre-Migration Snapshot Queries** (`READ_ONLY_VERIFICATION`):
+  ```sql
+  SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+  FROM pg_policies WHERE schemaname = 'public' AND tablename = 'questionnaire_submissions';
+
+  SELECT grantee, privilege_type
+  FROM information_schema.role_table_grants
+  WHERE table_schema = 'public' AND table_name = 'questionnaire_submissions';
+
+  SELECT relname, relrowsecurity, relforcerowsecurity
+  FROM pg_class WHERE relname = 'questionnaire_submissions';
+  ```
+- **Proposed Migration SQL** (`PROPOSED_NOT_EXECUTED`):
+  ```sql
+  DROP POLICY IF EXISTS "Allow public insert submissions" ON public.questionnaire_submissions;
+  DROP POLICY IF EXISTS "Users can manage own submissions" ON public.questionnaire_submissions;
+  CREATE POLICY "Users can read own submissions"
+    ON public.questionnaire_submissions
+    FOR SELECT
+    TO authenticated
+    USING (auth.uid() = user_id);
+  REVOKE INSERT, UPDATE, DELETE ON public.questionnaire_submissions FROM anon, authenticated;
+  GRANT SELECT ON public.questionnaire_submissions TO authenticated;
+  ```
+- **Post-Migration Verification Queries** (`READ_ONLY_VERIFICATION`):
+  ```sql
+  SELECT policyname, cmd, roles, qual, with_check
+  FROM pg_policies WHERE schemaname = 'public' AND tablename = 'questionnaire_submissions';
+
+  SELECT grantee, privilege_type
+  FROM information_schema.role_table_grants
+  WHERE table_schema = 'public' AND table_name = 'questionnaire_submissions';
+  ```
+
+### 9.5 Emergency Rollback & Safety Warning
+- **Rollback SQL** (`PROPOSED_NOT_EXECUTED`):
+  ```sql
+  -- EMERGENCY_ROLLBACK_ONLY / RESTORES_KNOWN_INSECURE_BASELINE
+  CREATE POLICY "Allow public insert submissions"
+    ON public.questionnaire_submissions
+    FOR INSERT
+    TO public
+    WITH CHECK (true);
+  DROP POLICY IF EXISTS "Users can read own submissions" ON public.questionnaire_submissions;
+  CREATE POLICY "Users can manage own submissions"
+    ON public.questionnaire_submissions
+    FOR ALL
+    TO public
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+  GRANT DELETE, INSERT, SELECT, UPDATE ON public.questionnaire_submissions TO authenticated;
+  ```
+- **Incident Rollback Procedure**:
+  1. Rollback or disable newly deployed Edge Functions.
+  2. Investigate application / payload issue.
+  3. Maintain tightened database security.
+  4. Restore insecure public INSERT only as an explicitly approved last-resort emergency action.
+
+### 9.6 Deployment Order
+1. Record pre-migration snapshot of policies and grants.
+2. Execute security migration SQL (`20260929_tighten_questionnaire_submissions_security.sql`).
+3. Execute post-migration verification queries and direct DB write failure tests (anon & authenticated).
+4. Deploy `build-questionnaire-plan` Edge Function with `verify_jwt = true`.
+5. Deploy `submit-questionnaire` Edge Function with `verify_jwt = true`.
+6. Run full authenticated pilot smoke test suite (Tests A through J).
+7. Authorize Batch 6 Frontend Live Integration upon successful pilot verification.
+
+### 9.7 Authenticated Pilot Smoke Test Sequence
+- **Test A (JWT Required)**: Request without Authorization header -> Expect gateway HTTP 401 Unauthorized.
+- **Test B (Authenticated Full Plan)**: POST `/build-questionnaire-plan` with valid JWT, `{ "reportId": null, "mode": "full", "profile": { "gender": "FEMALE" } }` -> Expect HTTP 200 & valid `TargetQuestionnairePlan`.
+- **Test C (Authenticated Submission)**: POST `/submit-questionnaire` with valid JWT and `TargetQuestionnaireSubmissionPayload` -> Expect HTTP 201 & `{ "success": true, "submissionId": "<uuid>" }`.
+- **Test D (DB Persistence)**: Query `questionnaire_submissions` -> Verify exactly 1 row created, `user_id = auth.uid()`, `report_id = null`, `source = 'USER_INPUT'`, server timestamps.
+- **Test E (Anon Direct Table INSERT)**: Attempt direct table INSERT using anon key -> Must fail, **0 rows created**.
+- **Test F (Authenticated Direct Table INSERT)**: Attempt direct table INSERT using authenticated session -> Must fail, **0 rows created**.
+- **Test G (Invalid Option Rejected)**: Submit invalid option key with valid JWT -> Expect HTTP 400 `INVALID_OPTION`.
+- **Test H (Browser Score Ignored)**: Submit client-provided score -> Verify database stores server-derived score or null, ignoring client score.
+- **Test I (Unauthenticated Supplement Blocked)**: Submit supplement request without JWT -> Blocked by gateway (HTTP 401).
+- **Test J (Authenticated Supplement Excluded)**: Excluded from Phase 1 pilot acceptance.
+
+### 9.8 Future Guest Identity Architecture
+- **Desired Goal**: Guest users can complete health check upload and questionnaire flows without requiring upfront login.
+- **Preferred Architecture Candidate**: **Supabase Anonymous Auth** (`anonymous user session -> JWT with anon auth.uid() -> verify_jwt = true -> guest-owned lab_reports & questionnaire_submissions`).
+- **Current Status**: `GUEST_SESSION_AUTH_UNRESOLVED` (Deferred to Phase 2 guest identity milestone; current upload flow remains untouched).
+
+
+### 9.9 Pre-Migration Snapshot & Rollback Reconcile Policy
+- **Live State Preservation**: Before executing migration, operator must capture and preserve actual live state for `pg_policies`, `role_table_grants`, and RLS enabled/forced state across `PUBLIC`, `anon`, and `authenticated` roles.
+- **Grant vs Policy Distinction**: RLS policy role `public` is NOT equivalent to a PostgreSQL table GRANT. The static rollback snippet must be reconciled against the actual pre-migration snapshot before execution.
+- **Emergency Classification**: Rollback is classified as `EMERGENCY_ROLLBACK_ONLY` / `RESTORES_KNOWN_INSECURE_BASELINE`. Preferred incident response is disabling/rolling back Edge Functions while keeping tightened database security. Reopening public INSERT is a last-resort emergency action only.
+
+### 9.10 Authenticated Pilot Execution & Vercel Note
+- **Pilot Client Requirement**: Initial backend smoke testing requires a real Supabase Auth test user and valid JWT, executed via trusted test clients (e.g. `curl`, Postman). Frontend Vercel authentication is not required for this backend test.
+- **Function JWT Config**: Operator must verify that Supabase CLI/config deploys both `build-questionnaire-plan` and `submit-questionnaire` with `verify_jwt = true`.
+- **Vercel Production Host**: `https://care-u-sigma.vercel.app`. Before Batch 6 Vercel live integration, verify that CORS permits the Vercel origin, frontend uses only safe client environment variables, and no service-role secret is exposed to the client bundle.
+
