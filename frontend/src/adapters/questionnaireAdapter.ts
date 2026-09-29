@@ -14,12 +14,23 @@ import type {
   QuestionnaireAnswer,
   QuestionnaireSubmissionPayload,
   QuestionnaireAnswerValue,
+  TargetQuestionnairePlan,
+  TargetQuestionnaireItemRuntime,
+  TargetQuestionnairePlanOption,
+  TargetQuestionnaireSubmissionPayload,
+  TargetQuestionnaireAnswerInput,
 } from '@/types'
 
 export interface QuestionnaireViewOption {
+  key: string | number
   label: string
   score: number
   controlValue: string | number
+  exclusive?: boolean
+  detailInput?: {
+    required?: boolean
+    placeholder?: string
+  }
 }
 
 export interface QuestionnaireViewItem {
@@ -29,7 +40,20 @@ export interface QuestionnaireViewItem {
   category: string
   questionText: string
   scoringDesc?: string
+  controlType?: 'single_choice' | 'multi_choice' | 'number' | 'text'
   options: QuestionnaireViewOption[]
+  numericConfig?: {
+    unit?: string
+    min?: number
+    max?: number
+    step?: number
+    unknownOption?: {
+      key: string | number
+      label: string
+    }
+  }
+  required?: boolean
+  groupKey?: string
   applicableGender: 'ALL' | 'MALE' | 'FEMALE'
   autoMapField?: string
   isActive: boolean
@@ -60,6 +84,7 @@ export function adaptQuestionnairePlan(plan: QuestionnairePlan): QuestionnairePl
       questionText: item.questionText,
       scoringDesc: item.scoringDesc,
       options: item.options.map((opt: QuestionnaireOption, idx: number): QuestionnaireViewOption => ({
+        key: opt.value ?? idx,
         label: opt.label,
         score: opt.score,
         controlValue: opt.value ?? idx,
@@ -125,6 +150,135 @@ export function createMockQuestionnairePlanFixture(reportId: string | null = nul
         ],
         applicableGender: 'ALL',
         autoMapField: 'diet_red_meat',
+        isActive: true,
+      },
+    ],
+  }
+}
+/**
+ * 將 Backend 頒發之 TargetQuestionnairePlan 轉換為 UI View Model
+ */
+export function adaptTargetQuestionnairePlan(plan: TargetQuestionnairePlan): QuestionnairePlanViewModel {
+  return {
+    reportId: plan.reportId,
+    mode: plan.mode,
+    recognizedMetrics: [...plan.recognizedMetrics],
+    missingMetrics: [...plan.missingMetrics],
+    questions: plan.questions.map((item: TargetQuestionnaireItemRuntime): QuestionnaireViewItem => ({
+      id: item.id,
+      efficacyId: item.efficacyId,
+      efficacyName: item.efficacyName,
+      category: item.category,
+      questionText: item.questionText,
+      scoringDesc: item.scoringDesc,
+      controlType: item.controlType,
+      options: item.options.map((opt: TargetQuestionnairePlanOption): QuestionnaireViewOption => ({
+        key: opt.key,
+        label: opt.label,
+        score: opt.score,
+        controlValue: opt.key,
+        exclusive: opt.exclusive,
+        detailInput: opt.detailInput,
+      })),
+      numericConfig: item.numericConfig,
+      required: item.required,
+      groupKey: item.groupKey,
+      applicableGender: item.applicableGender,
+      autoMapField: item.autoMapField,
+      isActive: item.isActive,
+    })),
+  }
+}
+
+/**
+ * 將 UI 收集之作答記錄轉換為合規之 TargetQuestionnaireSubmissionPayload
+ */
+export function adaptTargetAnswersToSubmission(
+  reportId: string | null,
+  mode: 'supplement' | 'full',
+  rawAnswers: Record<number | string, { value: QuestionnaireAnswerValue; detailText?: string }>
+): TargetQuestionnaireSubmissionPayload {
+  const answers: TargetQuestionnaireAnswerInput[] = Object.entries(rawAnswers).map(([questionIdStr, data]) => {
+    return {
+      questionId: Number(questionIdStr),
+      value: data.value,
+      detailText: data.detailText,
+    }
+  })
+
+  return {
+    reportId,
+    mode,
+    answers,
+    submittedAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * 用於驗證 TARGET Adapter 支援多控制型態、數值配置與多選互斥之 Development Fixture
+ */
+export function createMockTargetQuestionnairePlanFixture(reportId: string | null = null, mode: 'supplement' | 'full' = 'full'): TargetQuestionnairePlan {
+  return {
+    reportId,
+    mode,
+    recognizedMetrics: ['total_cholesterol', 'waist'],
+    missingMetrics: ['fasting_glucose'],
+    questions: [
+      {
+        id: 101,
+        efficacyId: 1,
+        efficacyName: '調節血脂',
+        category: 'RISK_FACTOR',
+        questionText: '平均每週紅肉或油炸食物攝取頻率？',
+        scoringDesc: '0=低 1=中 2=偏高 3=高',
+        controlType: 'single_choice',
+        options: [
+          { key: 'low', label: '低 (0-1次/週)', score: 0 },
+          { key: 'medium', label: '中 (2-3次/週)', score: 1 },
+          { key: 'high', label: '偏高 (4-5次/週)', score: 2 },
+        ],
+        required: true,
+        groupKey: 'diet',
+        applicableGender: 'ALL',
+        autoMapField: 'diet_red_meat',
+        isActive: true,
+      },
+      {
+        id: 106,
+        efficacyId: 6,
+        efficacyName: '不易形成體脂肪',
+        category: 'OBJECTIVE_VALUE',
+        questionText: '請輸入您的腰圍實測值 (cm)',
+        controlType: 'number',
+        options: [],
+        numericConfig: {
+          unit: 'cm',
+          min: 40,
+          max: 200,
+          step: 0.1,
+          unknownOption: { key: 'unknown', label: '目前不知道' },
+        },
+        required: true,
+        groupKey: 'measurements',
+        applicableGender: 'ALL',
+        autoMapField: 'waist',
+        isActive: true,
+      },
+      {
+        id: 108,
+        efficacyId: 8,
+        efficacyName: '輔助調整過敏體質',
+        category: 'CONTRAINDICATION',
+        questionText: '您是否對下列任一項目有已知過敏反應？（可複選）',
+        controlType: 'multi_choice',
+        options: [
+          { key: 'milk', label: '牛奶及乳製品', score: 3 },
+          { key: 'other', label: '其他', score: 3, detailInput: { required: true, placeholder: '請輸入過敏原名稱' } },
+          { key: 'none', label: '無已知過敏', score: 0, exclusive: true },
+        ],
+        required: true,
+        groupKey: 'allergies',
+        applicableGender: 'ALL',
         isActive: true,
       },
     ],

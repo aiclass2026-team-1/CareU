@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
 - **最後更新日期**：2026-09-29
-- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 2（進行中 IN PROGRESS）
-- **最近已提交功能 Checkpoint**：`78dbf85`（完整 SHA：`78dbf8548a47ff769c8cd5d51bcbc50bcf9db795`，本批待 amend Checkpoint：`feat: prepare questionnaire contract adapter`）
-- **功能基線說明**：Phase 7 Batch 1 已完成後端整合與資料合約基準（`docs/specs/backend-integration-contracts.md`）、TypeScript 領域/API 合約（`frontend/src/types/index.ts`），確立 Assessment Orchestration、Dynamic Questionnaire、Formula 2 與 Partial Lab Coverage 規則，並完成 `health_food_products` 18 欄位 Schema 驗證。Batch 2 已完成 Questionnaire Contract Adapter Preparation（`frontend/src/adapters/questionnaireAdapter.ts`），支援將 `QuestionnairePlan` 映射為 UI ViewModel、作答狀態安全轉為 `QuestionnaireSubmissionPayload`（含數值型 Question ID 與 nullable `reportId` 支援；Runtime Questionnaire 維持不變）。
+- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 3（進行中 IN PROGRESS）
+- **最近已提交功能 Checkpoint**：`b26045d`（完整 SHA：`b26045d81b3227eb43e727524125f0827e970aca`，本批待提交 Checkpoint：`feat: complete questionnaire runtime contract`）
+- **功能基線說明**：Phase 7 Batch 3 已完成 Questionnaire Runtime Contract Completion（擴充 `TargetQuestionnairePlan`、`TargetQuestionnaireItemRuntime` 與 `TargetQuestionnaireSubmissionPayload`，支援 controlType、numericConfig、required、groupKey、多選與互斥選項中繼資料；更新 `questionnaireAdapter.ts` 支援 Target Plan 適配與擴充 fixture；完成 Runtime Compatibility Spike 閉環與合約缺口定義；Runtime Questionnaire 維持不變）。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 

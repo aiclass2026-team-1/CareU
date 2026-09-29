@@ -204,6 +204,26 @@
 
 ---
 
+---
+
+## 6. 問卷運行期相容性 Spike 與 TARGET 擴充合約 (Questionnaire Runtime Compatibility Spike & TARGET Extensions)
+
+### 6.1 Spike 發現與阻塞原因
+- **結果**：`IMPLEMENTATION_BLOCKED_BY_CONTRACT_GAP`
+- **原因**：現行 canonical `QuestionnairePlan` 採用平鋪式的單選/計分題型，缺乏多控制型態（如數值輸入、多選複選、互斥選項、其他文字補充）、分組/多欄位步驟（`basic`, `measurements`, `safety`）以及必填與數值範圍驗證所需的 presentation metadata，因此無法在不使用前端 hardcode 啟發式規則（Heuristics）下直接驅動現有 Vue Questionnaire runtime。
+
+### 6.2 TARGET Runtime Contract DTO 規範
+- **Presentation-Neutral Domain vs Render DTO**：保持 canonical `QuestionnaireItem` 僅包含領域與題庫語意（`id`, `efficacyId`, `category`, `questionText`, `options`, 等），並透過 `TargetQuestionnaireItemRuntime` 與 `TargetQuestionnairePlan` 引入 TARGET 渲染中繼資料：
+  - `controlType`: `'single_choice' | 'multi_choice' | 'number' | 'text'`
+  - `numericConfig`: 支援單位、上下置、步進值與「目前不知道」選項映射。
+  - `required`: 顯式必填標記。
+  - `groupKey`: 支援多欄位表單步驟分組（如 `diet`, `measurements`, `allergies`）。
+- **Basic Profile 隔離**：基本資料（年齡、性別、體重）與 32 題 domain question bank 保持獨立，不假造虛擬 question ID。
+- **OCR_AUTO 與 Scoring 信任邊界**：後端擁有題目選擇與 OCR 自動對應；前端提交僅傳遞 `TargetQuestionnaireAnswerInput`（含 `questionId`, `value`, `detailText`），權威分數由後端衍生與驗證，前端不發明 score 或 fabricate OCR_AUTO。
+- **Runtime 狀態**：`ADAPTER_PREPARED_RUNTIME_NOT_INTEGRATED`（`questionnaireAdapter.ts` 已擴充支援 Target DTO 與 fixture，但 Vue Runtime 保持不變）。
+
+---
+
 ## 6. 已知差距與推遲項目 (Known Mismatches & Deferred Items)
 1. **`health_food_products`**：`PLANNED / NOT CREATED`（現行前端 `catalogData.json` 僅為 Demo 示範，非正式生產 DB）。
 2. **Dynamic Questionnaire UI Integration**：`DEFER`（前端現行展示用 6~7 步驟保持不變，待後端 `QuestionnairePlan` 服務成熟後再行對接）。

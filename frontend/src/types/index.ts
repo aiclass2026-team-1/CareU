@@ -165,6 +165,72 @@ export interface QuestionnaireSubmissionPayload {
 }
 
 // ==========================================
+// 4b. TARGET Questionnaire Runtime Contracts & Submission Input
+// ==========================================
+
+export type QuestionnaireControlType = 'single_choice' | 'multi_choice' | 'number' | 'text'
+
+export interface TargetQuestionnairePlanOption {
+  key: string | number
+  label: string
+  score: number
+  exclusive?: boolean
+  detailInput?: {
+    required?: boolean
+    placeholder?: string
+  }
+}
+
+export interface TargetNumericConfig {
+  unit?: string
+  min?: number
+  max?: number
+  step?: number
+  unknownOption?: {
+    key: string | number
+    label: string
+  }
+}
+
+export interface TargetQuestionnaireItemRuntime {
+  id: number
+  efficacyId: number
+  efficacyName?: string
+  category: QuestionnaireCategory
+  questionText: string
+  scoringDesc?: string
+  controlType: QuestionnaireControlType
+  options: TargetQuestionnairePlanOption[]
+  numericConfig?: TargetNumericConfig
+  required: boolean
+  groupKey: string
+  applicableGender: QuestionnaireGender
+  autoMapField?: string
+  isActive: boolean
+}
+
+export interface TargetQuestionnairePlan {
+  reportId: string | null
+  mode: 'supplement' | 'full'
+  recognizedMetrics: string[]
+  missingMetrics: string[]
+  questions: TargetQuestionnaireItemRuntime[]
+}
+
+export interface TargetQuestionnaireAnswerInput {
+  questionId: number
+  value: QuestionnaireAnswerValue
+  detailText?: string
+}
+
+export interface TargetQuestionnaireSubmissionPayload {
+  reportId: string | null
+  mode: 'supplement' | 'full'
+  answers: TargetQuestionnaireAnswerInput[]
+  submittedAt: string
+}
+
+// ==========================================
 // 5. Assessment Entities (CURRENT DB Schema vs TARGET Orchestration)
 // ==========================================
 
