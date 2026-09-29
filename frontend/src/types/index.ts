@@ -128,8 +128,8 @@ export interface QuestionnaireOption {
 }
 
 export interface QuestionnaireItem {
-  id: string
-  efficacyId?: string
+  id: number // question_bank id (integer)
+  efficacyId: number // question_bank efficacy_id (integer, non-null)
   efficacyName?: string
   category: QuestionnaireCategory
   questionText: string
@@ -141,22 +141,24 @@ export interface QuestionnaireItem {
 }
 
 export interface QuestionnairePlan {
-  reportId: string
+  reportId: string | null // Nullable for direct full questionnaire flow without health report
   mode: 'supplement' | 'full'
   recognizedMetrics: string[]
   missingMetrics: string[]
   questions: QuestionnaireItem[]
 }
 
+export type QuestionnaireAnswerValue = string | number | string[]
+
 export interface QuestionnaireAnswer {
-  questionId: string
-  score: number
+  questionId: number // questionnaire_submissions.answers question_id (integer)
+  score: number // Required score; missing scores are invalid
   source: QuestionnaireAnswerSource
-  value?: string | number | string[]
+  value?: QuestionnaireAnswerValue
 }
 
 export interface QuestionnaireSubmissionPayload {
-  reportId: string
+  reportId: string | null
   mode: 'supplement' | 'full'
   answers: QuestionnaireAnswer[]
   submittedAt: string
@@ -192,7 +194,7 @@ export interface CurrentAssessmentEfficacyRank {
 
 /** TARGET: Assessment Orchestrator Request */
 export interface TargetSubmitAssessmentRequest {
-  reportId?: string
+  reportId?: string | null
   submissionId?: string
   answers?: QuestionnaireAnswer[]
 }
