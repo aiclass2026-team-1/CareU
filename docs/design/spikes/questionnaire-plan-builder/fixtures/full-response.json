@@ -1,0 +1,141 @@
+{
+  "reportId": null,
+  "mode": "full",
+  "recognizedMetrics": [],
+  "missingMetrics": [],
+  "questions": [
+    {
+      "id": 1,
+      "efficacyId": 1,
+      "efficacyName": "調節血脂",
+      "category": "RISK_FACTOR",
+      "questionText": "平均每週紅肉/油炸食物攝取頻率？",
+      "scoringDesc": "0=低 1=中 2=偏高 3=高",
+      "controlType": "single_choice",
+      "options": [
+        { "key": "low", "label": "低 (0次)", "score": 0 },
+        { "key": "moderate", "label": "中 (1-2次)", "score": 1 },
+        { "key": "elevated", "label": "偏高 (3-4次)", "score": 2 },
+        { "key": "high", "label": "高 (5次以上)", "score": 3 }
+      ],
+      "required": true,
+      "groupKey": "lifestyle",
+      "applicableGender": "ALL",
+      "isActive": true
+    },
+    {
+      "id": 13,
+      "efficacyId": 6,
+      "efficacyName": "不易形成體脂肪",
+      "category": "OBJECTIVE_VALUE",
+      "questionText": "腰圍實測值(cm，直接輸入)",
+      "scoringDesc": "依標準分級：男≥90/女≥80 記3分",
+      "controlType": "number",
+      "options": [],
+      "numericConfig": {
+        "unit": "cm",
+        "min": 30,
+        "max": 250,
+        "step": 0.1,
+        "unknownOption": { "key": "unknown", "label": "目前不知道" }
+      },
+      "required": true,
+      "groupKey": "measurements",
+      "applicableGender": "ALL",
+      "autoMapField": "WAIST",
+      "isActive": true
+    },
+    {
+      "id": 26,
+      "efficacyId": 11,
+      "efficacyName": "輔助調節血鐵",
+      "category": "RISK_FACTOR",
+      "questionText": "(女性)月經量是否偏多？",
+      "scoringDesc": "0=正常 3=偏多",
+      "controlType": "single_choice",
+      "options": [
+        { "key": "normal", "label": "正常", "score": 0 },
+        { "key": "heavy", "label": "偏多", "score": 3 }
+      ],
+      "required": true,
+      "groupKey": "measurements",
+      "applicableGender": "FEMALE",
+      "isActive": true
+    },
+    {
+      "id": 27,
+      "efficacyId": 12,
+      "efficacyName": "輔助調節血壓",
+      "category": "OBJECTIVE_VALUE",
+      "questionText": "居家血壓實測值(mmHg，直接輸入)",
+      "scoringDesc": "依標準分級：SBP≥130 或 DBP≥85 記3分",
+      "controlType": "text",
+      "options": [],
+      "required": true,
+      "groupKey": "measurements",
+      "applicableGender": "ALL",
+      "autoMapField": "SBP",
+      "isActive": true
+    },
+    {
+      "id": 30,
+      "efficacyId": 0,
+      "efficacyName": "安全禁忌與過敏篩選",
+      "category": "CONTRAINDICATION",
+      "questionText": "您目前是否懷孕？（是／否）",
+      "scoringDesc": "0=否 1=是（觸發孕期禁忌成分與警語過濾）",
+      "controlType": "single_choice",
+      "options": [
+        { "key": "no", "label": "否", "score": 0 },
+        { "key": "yes", "label": "是", "score": 1 }
+      ],
+      "required": true,
+      "groupKey": "safety",
+      "applicableGender": "FEMALE",
+      "isActive": true
+    },
+    {
+      "id": 31,
+      "efficacyId": 0,
+      "efficacyName": "安全禁忌與過敏篩選",
+      "category": "CONTRAINDICATION",
+      "questionText": "您目前是否正在哺乳（授乳）中？",
+      "scoringDesc": "0=否 1=是（觸發哺乳期禁忌成分與警語過濾）",
+      "controlType": "single_choice",
+      "options": [
+        { "key": "no", "label": "否", "score": 0 },
+        { "key": "yes", "label": "是", "score": 1 }
+      ],
+      "required": true,
+      "groupKey": "safety",
+      "applicableGender": "FEMALE",
+      "isActive": true
+    },
+    {
+      "id": 32,
+      "efficacyId": 0,
+      "efficacyName": "安全禁忌與過敏篩選",
+      "category": "CONTRAINDICATION",
+      "questionText": "您是否對下列任一項目有已知過敏反應？",
+      "scoringDesc": "可複選，用於比對產品標示過敏原與注意事項進行排除",
+      "controlType": "multi_choice",
+      "options": [
+        { "key": "none_known", "label": "無已知過敏", "score": 0, "exclusive": true },
+        { "key": "dairy", "label": "牛奶及乳製品", "score": 1 },
+        { "key": "soy", "label": "大豆及其製品", "score": 1 },
+        { "key": "sesame", "label": "芝麻", "score": 1 },
+        { "key": "black_beans", "label": "黑豆", "score": 1 },
+        { "key": "fish", "label": "魚類及其製品", "score": 1 },
+        { "key": "gluten", "label": "含麩質穀物", "score": 1 },
+        { "key": "lactose_intolerance", "label": "乳糖不耐", "score": 1 },
+        { "key": "fungi", "label": "真菌類(如菇蕈類)", "score": 1 },
+        { "key": "peanuts_tree_nuts", "label": "花生／堅果", "score": 1 },
+        { "key": "other", "label": "其他", "score": 1, "detailInput": { "required": true, "placeholder": "請輸入過敏原名稱" } }
+      ],
+      "required": true,
+      "groupKey": "safety",
+      "applicableGender": "ALL",
+      "isActive": true
+    }
+  ]
+}

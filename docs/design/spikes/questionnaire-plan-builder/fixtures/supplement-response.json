@@ -1,0 +1,23 @@
+{
+  "reportId": "11111111-1111-4111-8111-111111111111",
+  "mode": "supplement",
+  "recognizedMetrics": ["WAIST"],
+  "missingMetrics": ["SBP", "DBP"],
+  "questions": [
+    {
+      "id": 27,
+      "efficacyId": 12,
+      "efficacyName": "輔助調節血壓",
+      "category": "OBJECTIVE_VALUE",
+      "questionText": "居家血壓實測值(mmHg，直接輸入)",
+      "scoringDesc": "依標準分級：SBP≥130 或 DBP≥85 記3分",
+      "controlType": "text",
+      "options": [],
+      "required": true,
+      "groupKey": "measurements",
+      "applicableGender": "ALL",
+      "autoMapField": "SBP",
+      "isActive": true
+    }
+  ]
+}

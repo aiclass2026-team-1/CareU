@@ -1,0 +1,119 @@
+[
+  {
+    "id": 1,
+    "efficacy_id": 1,
+    "efficacy_name": "調節血脂",
+    "category": "RISK_FACTOR",
+    "question_text": "平均每週紅肉/油炸食物攝取頻率？",
+    "scoring_desc": "0=低 1=中 2=偏高 3=高",
+    "applicable_gender": "ALL",
+    "is_active": true,
+    "options_json": [
+      { "label": "低 (0次)", "score": 0 },
+      { "label": "中 (1-2次)", "score": 1 },
+      { "label": "偏高 (3-4次)", "score": 2 },
+      { "label": "高 (5次以上)", "score": 3 }
+    ],
+    "auto_map_field": null
+  },
+  {
+    "id": 13,
+    "efficacy_id": 6,
+    "efficacy_name": "不易形成體脂肪",
+    "category": "OBJECTIVE_VALUE",
+    "question_text": "腰圍實測值(cm，直接輸入)",
+    "scoring_desc": "依標準分級：男≥90/女≥80 記3分",
+    "applicable_gender": "ALL",
+    "is_active": true,
+    "options_json": [
+      { "label": "正常 (男<90cm / 女<80cm)", "score": 0 },
+      { "label": "超標 (男≥90cm / 女≥80cm)", "score": 3 }
+    ],
+    "auto_map_field": "WAIST"
+  },
+  {
+    "id": 26,
+    "efficacy_id": 11,
+    "efficacy_name": "輔助調節血鐵",
+    "category": "RISK_FACTOR",
+    "question_text": "(女性)月經量是否偏多？",
+    "scoring_desc": "0=正常 3=偏多",
+    "applicable_gender": "FEMALE",
+    "is_active": true,
+    "options_json": [
+      { "label": "正常", "score": 0 },
+      { "label": "偏多", "score": 3 }
+    ],
+    "auto_map_field": null
+  },
+  {
+    "id": 27,
+    "efficacy_id": 12,
+    "efficacy_name": "輔助調節血壓",
+    "category": "OBJECTIVE_VALUE",
+    "question_text": "居家血壓實測值(mmHg，直接輸入)",
+    "scoring_desc": "依標準分級：SBP≥130 或 DBP≥85 記3分",
+    "applicable_gender": "ALL",
+    "is_active": true,
+    "options_json": [
+      { "label": "正常 (<120/80 mmHg)", "score": 0 },
+      { "label": "偏高 (120-129/<80 mmHg)", "score": 1 },
+      { "label": "超標 (≥130 或 ≥85 mmHg)", "score": 3 }
+    ],
+    "auto_map_field": "SBP"
+  },
+  {
+    "id": 30,
+    "efficacy_id": 0,
+    "efficacy_name": "安全禁忌與過敏篩選",
+    "category": "CONTRAINDICATION",
+    "question_text": "您目前是否懷孕？（是／否）",
+    "scoring_desc": "0=否 1=是（觸發孕期禁忌成分與警語過濾）",
+    "applicable_gender": "FEMALE",
+    "is_active": true,
+    "options_json": [
+      { "label": "否", "score": 0 },
+      { "label": "是", "score": 1 }
+    ],
+    "auto_map_field": null
+  },
+  {
+    "id": 31,
+    "efficacy_id": 0,
+    "efficacy_name": "安全禁忌與過敏篩選",
+    "category": "CONTRAINDICATION",
+    "question_text": "您目前是否正在哺乳（授乳）中？",
+    "scoring_desc": "0=否 1=是（觸發哺乳期禁忌成分與警語過濾）",
+    "applicable_gender": "FEMALE",
+    "is_active": true,
+    "options_json": [
+      { "label": "否", "score": 0 },
+      { "label": "是", "score": 1 }
+    ],
+    "auto_map_field": null
+  },
+  {
+    "id": 32,
+    "efficacy_id": 0,
+    "efficacy_name": "安全禁忌與過敏篩選",
+    "category": "CONTRAINDICATION",
+    "question_text": "您是否對下列任一項目有已知過敏反應？",
+    "scoring_desc": "可複選，用於比對產品標示過敏原與注意事項進行排除",
+    "applicable_gender": "ALL",
+    "is_active": true,
+    "options_json": [
+      { "label": "無已知過敏", "score": 0 },
+      { "label": "牛奶及乳製品", "score": 1 },
+      { "label": "大豆及其製品", "score": 1 },
+      { "label": "芝麻", "score": 1 },
+      { "label": "黑豆", "score": 1 },
+      { "label": "魚類及其製品", "score": 1 },
+      { "label": "含麩質穀物", "score": 1 },
+      { "label": "乳糖不耐", "score": 1 },
+      { "label": "真菌類(如菇蕈類)", "score": 1 },
+      { "label": "花生／堅果", "score": 1 },
+      { "label": "其他", "score": 1 }
+    ],
+    "auto_map_field": null
+  }
+]
