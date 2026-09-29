@@ -75,8 +75,53 @@ export function clearSubmissionId() {
   delete memoryStore[SUBMISSION_ID_KEY]
 }
 
+const REPORT_ID_KEY = 'careu-report-id'
+
+let pendingUploadFile: File | null = null
+
+export function setPendingUploadFile(file: File | null) {
+  pendingUploadFile = file
+}
+
+export function getPendingUploadFile(): File | null {
+  return pendingUploadFile
+}
+
+export function clearPendingUploadFile() {
+  pendingUploadFile = null
+}
+
+export function setReportId(reportId: string) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(REPORT_ID_KEY, reportId)
+      return
+    }
+  } catch (_) {}
+  memoryStore[REPORT_ID_KEY] = reportId
+}
+
+export function getReportId(): string | null {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem(REPORT_ID_KEY)
+    }
+  } catch (_) {}
+  return memoryStore[REPORT_ID_KEY] ?? null
+}
+
+export function clearReportId() {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(REPORT_ID_KEY)
+    }
+  } catch (_) {}
+  delete memoryStore[REPORT_ID_KEY]
+}
+
 const ASSESSMENT_ID_KEY = 'careu-assessment-id'
 const LIVE_REPORT_KEY = 'careu-live-report'
+
 
 export function setAssessmentId(assessmentId: string) {
   try {

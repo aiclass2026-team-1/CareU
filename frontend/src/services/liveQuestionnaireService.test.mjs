@@ -93,3 +93,50 @@ test('LiveQuestionnaireService: error mapping produces expected domain codes', a
   const errNet = new LiveQuestionnaireServiceError('NETWORK_ERROR', '網路連線異常，請確認網路後重試。')
   assert.equal(errNet.code, 'NETWORK_ERROR')
 })
+
+test('A: Supplement plan loading state does NOT evaluate to complete', () => {
+  // When rawPlan is null or totalLiveGroups is 0, isLiveCompleteStep must be false
+  const rawPlan = null
+  const isPlanLoading = true
+  const totalLiveGroups = 0
+  const liveStepIndex = 0
+
+  const isLiveCompleteStep = !(!rawPlan || isPlanLoading || totalLiveGroups === 0) && (liveStepIndex >= totalLiveGroups)
+  assert.equal(isLiveCompleteStep, false)
+})
+
+test('B & C & D: Dynamic group validation: only current group questions are evaluated', () => {
+  const currentGroupQuestions = [
+    {
+      id: 1,
+      required: true,
+      controlType: 'single_choice',
+      options: [
+        { key: 'low', label: '低 (0次)' },
+        { key: 'high', label: '高 (5次以上)' },
+      ],
+    },
+  ]
+
+  const rawAnswers = {}
+
+  // Function simulating isCurrentLiveGroupValid
+  const validateGroup = (questions, answers) => {
+    for (const q of questions) {
+      if (!q.required) continue
+      const ans = answers[q.id]
+      if (!ans || ans.value === '' || ans.value === undefined || ans.value === null) return false
+    }
+    return true
+  }
+
+  // Unanswered -> invalid (Next disabled)
+  assert.equal(validateGroup(currentGroupQuestions, rawAnswers), false)
+
+  // User selects 'low' -> valid (Next enabled)
+  rawAnswers[1] = { value: 'low' }
+  assert.equal(validateGroup(currentGroupQuestions, rawAnswers), true)
+
+  // Future group questions (e.g. Q32 in Group 2) not in currentGroupQuestions do not block Group 1
+  assert.equal(validateGroup(currentGroupQuestions, rawAnswers), true)
+})

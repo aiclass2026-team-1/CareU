@@ -9,6 +9,7 @@ export const presentationConfigV1: PresentationConfig = {
       required: true,
       groupKey: 'lifestyle',
       optionKeys: ['low', 'moderate', 'elevated', 'high'],
+      alwaysIncludeInSupplement: true,
     },
     '13': {
       controlType: 'number',
@@ -31,6 +32,7 @@ export const presentationConfigV1: PresentationConfig = {
       required: true,
       groupKey: 'measurements',
       optionKeys: ['normal', 'heavy'],
+      supplementMetrics: ['HB'],
     },
     '27': {
       controlType: 'text',
@@ -43,12 +45,14 @@ export const presentationConfigV1: PresentationConfig = {
       required: true,
       groupKey: 'safety',
       optionKeys: ['no', 'yes'],
+      alwaysIncludeInSupplement: true,
     },
     '31': {
       controlType: 'single_choice',
       required: true,
       groupKey: 'safety',
       optionKeys: ['no', 'yes'],
+      alwaysIncludeInSupplement: true,
     },
     '32': {
       controlType: 'multi_choice',
@@ -74,6 +78,7 @@ export const presentationConfigV1: PresentationConfig = {
           placeholder: '請輸入過敏原名稱',
         },
       },
+      alwaysIncludeInSupplement: true,
     },
   },
 }

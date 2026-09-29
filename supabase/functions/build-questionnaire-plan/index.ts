@@ -57,10 +57,10 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
       return errorResponse('REPORT_REQUIRED', 'supplement mode requires a valid reportId', 400)
     }
 
-    // Verify report existence and ownership in lab_reports
+    // Verify report existence, status and ownership in lab_reports
     const { data: report, error: reportErr } = await supabaseClient
       .from('lab_reports')
-      .select('id, user_id, session_id, status')
+      .select('id, user_id, status, subject_gender, has_red_flags')
       .eq('id', body.reportId)
       .single()
 
@@ -68,10 +68,33 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
       return errorResponse('REPORT_NOT_FOUND', `Report '${body.reportId}' not found`, 404)
     }
 
-    const ownership = validateReportOwnership(report, authIdentity)
-    if (!ownership.allowed) {
-      return errorResponse(ownership.code || 'REPORT_ACCESS_DENIED', ownership.message || 'Access denied', 403)
+    // Strict ownership: report.user_id must equal auth.uid()
+    if (!report.user_id || report.user_id !== authIdentity.userId) {
+      return errorResponse('REPORT_ACCESS_DENIED', 'Access denied to this report', 403)
     }
+
+    // Require completed report status
+    if (report.status !== 'completed') {
+      return errorResponse('REPORT_NOT_COMPLETED', 'Report is not in completed status', 400)
+    }
+
+    // Trusted gender enforcement (Fail closed if not MALE or FEMALE)
+    if (report.subject_gender !== 'MALE' && report.subject_gender !== 'FEMALE') {
+      return errorResponse(
+        'REPORT_GENDER_REQUIRED',
+        `Report subject_gender '${report.subject_gender}' is missing or invalid`,
+        422
+      )
+    }
+    const trustedGender: 'MALE' | 'FEMALE' = report.subject_gender
+    if (body.profile?.gender && body.profile.gender !== trustedGender) {
+      return errorResponse(
+        'PROFILE_REPORT_MISMATCH',
+        `Profile gender '${body.profile.gender}' does not match report subject gender '${trustedGender}'`,
+        400
+      )
+    }
+    body.profile = { gender: trustedGender }
 
     // Query lab_report_metrics for recognized metrics
     const { data: metrics, error: metricsErr } = await supabaseClient
@@ -84,12 +107,28 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
     }
 
     const recognizedCodes = (metrics || []).map((m: { metric_code: string }) => m.metric_code)
-    // Note: Missing metrics are defined by the required domain metric set not present in recognizedCodes
+
+    // Query missing metrics from report_missing_core_metrics (Fail closed on error)
+    const { data: missingRows, error: missingErr } = await supabaseClient
+      .from('report_missing_core_metrics')
+      .select('missing_metric_code')
+      .eq('report_id', body.reportId)
+
+    if (missingErr) {
+      return errorResponse('DB_QUERY_FAILED', 'Failed to query missing metrics', 500)
+    }
+
+    const missingCodes = (missingRows || [])
+      .map((m: any) => m.missing_metric_code || m.metric_code || '')
+      .filter(Boolean)
+
     trustedContext = {
       reportId: body.reportId,
       recognizedMetrics: recognizedCodes,
-      missingMetrics: [], // Populated by domain missing resolver where applicable
+      missingMetrics: missingCodes,
     }
+
+
   }
 
   // Load active question_bank rows
@@ -118,11 +157,11 @@ if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
     try {
       return await handleBuildPlan(req)
     } catch (err: any) {
+      console.error('Unhandled build-plan exception:', err)
       return new Response(
         JSON.stringify({
           error: 'UNHANDLED_EXCEPTION',
-          message: err?.message || String(err),
-          stack: err?.stack,
+          message: '系統發生未預期的錯誤，請稍後再試。',
         }),
         {
           status: 500,

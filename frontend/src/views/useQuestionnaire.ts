@@ -7,7 +7,9 @@ import {
   getSubmissionId,
   setAssessmentId,
   setLiveReportData,
+  getReportId,
 } from '@/utils/flowContext'
+
 import { adaptTargetQuestionnairePlan, adaptTargetAnswersToSubmission } from '@/adapters/questionnaireAdapter'
 import { liveQuestionnaireService } from '@/services/liveQuestionnaireService'
 import { liveReportService } from '@/services/liveReportService'
@@ -160,11 +162,20 @@ export function useQuestionnaire({
     return !isPreviewContext.value && currentMode.value === 'full'
   })
 
+  // LIVE supplement mode is active ONLY for formal /questionnaire route with mode=supplement
+  const isLiveSupplementMode = computed(() => {
+    return !isPreviewContext.value && currentMode.value === 'supplement'
+  })
+
+  const isLiveMode = computed(() => {
+    return isLiveFullMode.value || isLiveSupplementMode.value
+  })
+
   const livePlanViewModel = computed(() => {
     if (!rawPlan.value) {
       return adaptTargetQuestionnairePlan({
         reportId: null,
-        mode: 'full',
+        mode: currentMode.value === 'supplement' ? 'supplement' : 'full',
         recognizedMetrics: [],
         missingMetrics: [],
         questions: [],
@@ -183,7 +194,12 @@ export function useQuestionnaire({
   })
 
   const totalLiveGroups = computed(() => liveGroupKeys.value.length)
-  const currentLiveGroupIndex = computed(() => Math.max(0, liveStepIndex.value - 1))
+  const currentLiveGroupIndex = computed(() => {
+    if (isLiveFullMode.value) {
+      return Math.max(0, liveStepIndex.value - 1)
+    }
+    return liveStepIndex.value
+  })
   const currentLiveGroupKey = computed(() => liveGroupKeys.value[currentLiveGroupIndex.value] || 'default')
   const currentLiveGroupQuestions = computed(() => {
     return livePlanViewModel.value.questions.filter(
@@ -192,12 +208,32 @@ export function useQuestionnaire({
   })
 
   const isLivePlanStep = computed(() => {
-    return isLiveFullMode.value && liveStepIndex.value > 0 && liveStepIndex.value <= totalLiveGroups.value
+    if (!rawPlan.value || isPlanLoading.value || totalLiveGroups.value === 0) {
+      return false
+    }
+    if (isLiveFullMode.value) {
+      return liveStepIndex.value > 0 && liveStepIndex.value <= totalLiveGroups.value
+    }
+    if (isLiveSupplementMode.value) {
+      return liveStepIndex.value < totalLiveGroups.value
+    }
+    return false
   })
 
   const isLiveCompleteStep = computed(() => {
-    return isLiveFullMode.value && liveStepIndex.value > totalLiveGroups.value
+    if (!rawPlan.value || isPlanLoading.value || totalLiveGroups.value === 0) {
+      return false
+    }
+    if (isLiveFullMode.value) {
+      return liveStepIndex.value > totalLiveGroups.value
+    }
+    if (isLiveSupplementMode.value) {
+      return liveStepIndex.value >= totalLiveGroups.value
+    }
+    return false
   })
+
+
 
 
   // 內部變數與計時器
@@ -288,9 +324,9 @@ export function useQuestionnaire({
   }
 
   const currentStep = computed<QuestionnaireStep>(() => {
-    if (isLiveFullMode.value) {
-      if (liveStepIndex.value === 0) return 'basic'
-      if (liveStepIndex.value > totalLiveGroups.value) return 'complete'
+    if (isLiveMode.value) {
+      if (isLiveFullMode.value && liveStepIndex.value === 0) return 'basic'
+      if (isLiveCompleteStep.value) return 'complete'
       return 'measurements'
     }
     return activeSteps.value[currentQuestion.value] || 'basic'
@@ -302,6 +338,11 @@ export function useQuestionnaire({
       const current = liveStepIndex.value + 1
       return Math.min(100, Math.round((current / totalSteps) * 100))
     }
+    if (isLiveSupplementMode.value) {
+      const totalSteps = Math.max(1, totalLiveGroups.value + 1) // groups + complete
+      const current = liveStepIndex.value + 1
+      return Math.min(100, Math.round((current / totalSteps) * 100))
+    }
     const progressOrder = currentMode.value === 'supplement' ? supplementProgressOrder : fullProgressOrder
     const step = currentStep.value
     const position = Math.max(0, progressOrder.indexOf(step))
@@ -309,9 +350,16 @@ export function useQuestionnaire({
   })
 
   const questionHeaderInfo = computed(() => {
-    if (currentMode.value === 'supplement') {
+    if (isLiveSupplementMode.value) {
+      if (isLiveCompleteStep.value) {
+        return {
+          eyebrow: '資料補充 — 完成',
+          title: '問卷填寫完成',
+          intro: '確認送出後，將結合您的健檢資料進行整合分析並準備個人化報告。',
+        }
+      }
       return {
-        eyebrow: '資料補充',
+        eyebrow: `資料補充 — 階段 ${currentLiveGroupIndex.value + 1}/${totalLiveGroups.value}`,
         title: '我們已讀取你提供的體檢資料',
         intro: '接下來只需要補充幾項資訊，幫助我們更完整地了解你的日常狀況。',
       }
@@ -337,12 +385,20 @@ export function useQuestionnaire({
         intro: '請根據您近期的真實日常狀態與身體數值作答。',
       }
     }
+    if (currentMode.value === 'supplement') {
+      return {
+        eyebrow: '資料補充',
+        title: '我們已讀取你提供的體檢資料',
+        intro: '接下來只需要補充幾項資訊，幫助我們更完整地了解你的日常狀況。',
+      }
+    }
     return {
       eyebrow: '健康問卷',
       title: '先從幾個日常問題開始',
       intro: '沒有體檢資料也沒關係，我們會從你的生活習慣與健康狀況開始了解。',
     }
   })
+
 
 
   const isCurrentLiveGroupValid = computed(() => {
@@ -382,7 +438,7 @@ export function useQuestionnaire({
   })
 
   const isStepValid = (step: QuestionnaireStep): boolean => {
-    if (isLiveFullMode.value) {
+    if (isLiveMode.value) {
       return isCurrentLiveGroupValid.value
     }
     if (step === 'basic') {
@@ -417,11 +473,12 @@ export function useQuestionnaire({
   }
 
   const isCurrentStepValid = computed<boolean>(() => {
-    if (isLiveFullMode.value) {
+    if (isLiveMode.value) {
       return isCurrentLiveGroupValid.value
     }
     return isStepValid(currentStep.value)
   })
+
 
 
   const focusFirstInput = () => {
@@ -441,18 +498,20 @@ export function useQuestionnaire({
     }, 60)
   }
 
-  const fetchLivePlan = async (gender: 'MALE' | 'FEMALE') => {
+  const fetchLivePlan = async (options: { mode: 'full' | 'supplement'; reportId?: string | null; gender?: 'MALE' | 'FEMALE' }) => {
     isPlanLoading.value = true
     planError.value = null
     validationMessage.value = ''
     try {
       const plan = await liveQuestionnaireService.getPlan({
-        reportId: null,
-        mode: 'full',
-        profile: { gender },
+        reportId: options.reportId ?? null,
+        mode: options.mode,
+        profile: options.gender ? { gender: options.gender } : undefined,
       })
       rawPlan.value = plan
-      planLoadedGender.value = gender
+      if (options.gender) {
+        planLoadedGender.value = options.gender
+      }
       // Initialize raw answers for all questions
       plan.questions.forEach((q) => {
         if (!rawAnswers.value[q.id]) {
@@ -471,8 +530,7 @@ export function useQuestionnaire({
     }
   }
 
-  const openQuestionnaire = (source: 'analyzed' | 'direct', reset = false) => {
-
+  const openQuestionnaire = async (source: 'analyzed' | 'direct', reset = false) => {
     clearTimers()
     currentMode.value = source === 'analyzed' ? 'supplement' : 'full'
     if (reset) {
@@ -493,7 +551,16 @@ export function useQuestionnaire({
     isSubmitting.value = false
     panelAnimationKey.value++
     showScreen('question')
+
+    // If live supplement mode, fetch plan immediately
+    if (isLiveSupplementMode.value && !rawPlan.value) {
+      const repId = getReportId()
+      if (repId) {
+        await fetchLivePlan({ mode: 'supplement', reportId: repId })
+      }
+    }
   }
+
 
   // Live question handlers
   const setLiveSingle = (questionId: number, key: string | number) => {
@@ -688,7 +755,7 @@ export function useQuestionnaire({
 
   // Navigation handlers
   const handlePrevious = () => {
-    if (isLiveFullMode.value) {
+    if (isLiveMode.value) {
       if (liveStepIndex.value > 0) {
         liveStepIndex.value--
         panelAnimationKey.value++
@@ -705,7 +772,7 @@ export function useQuestionnaire({
   }
 
   const handleNext = async () => {
-    if (isLiveFullMode.value) {
+    if (isLiveMode.value) {
       if (!isCurrentLiveGroupValid.value) {
         validationMessage.value = '請完成這個步驟的必填項目後再繼續。'
         focusFirstInput()
@@ -713,11 +780,11 @@ export function useQuestionnaire({
       }
       validationMessage.value = ''
 
-      // If completing basic step, fetch canonical live plan
-      if (liveStepIndex.value === 0) {
+      // Full mode Step 0: Basic
+      if (isLiveFullMode.value && liveStepIndex.value === 0) {
         const gender: 'MALE' | 'FEMALE' = answers.value.basic?.sex === 'female' ? 'FEMALE' : 'MALE'
         if (!rawPlan.value || planLoadedGender.value !== gender) {
-          const ok = await fetchLivePlan(gender)
+          const ok = await fetchLivePlan({ mode: 'full', gender })
           if (!ok) return
         }
         liveStepIndex.value++
@@ -726,25 +793,28 @@ export function useQuestionnaire({
         return
       }
 
-      // If moving through question groups
-      if (liveStepIndex.value < totalLiveGroups.value) {
+      // Moving through question groups
+      const maxGroupIndex = isLiveFullMode.value ? totalLiveGroups.value : totalLiveGroups.value - 1
+      if (liveStepIndex.value < maxGroupIndex) {
         liveStepIndex.value++
         panelAnimationKey.value++
         persistState()
         return
       }
 
-      // If reaching complete step
-      if (liveStepIndex.value === totalLiveGroups.value) {
+      // Reaching complete step
+      if (liveStepIndex.value === maxGroupIndex) {
         liveStepIndex.value++
         panelAnimationKey.value++
         persistState()
         return
       }
 
-      // If submitting from complete step
+      // Submitting from complete step
       if (isLiveCompleteStep.value) {
-        const payload = adaptTargetAnswersToSubmission(null, 'full', rawAnswers.value)
+        const activeReportId = isLiveSupplementMode.value ? getReportId() : null
+        const activeMode = isLiveSupplementMode.value ? 'supplement' : 'full'
+        const payload = adaptTargetAnswersToSubmission(activeReportId, activeMode, rawAnswers.value)
         isSubmitting.value = true
         validationMessage.value = ''
         try {
@@ -788,14 +858,27 @@ export function useQuestionnaire({
   }
 
   const retryLoadPlan = async () => {
-    const gender: 'MALE' | 'FEMALE' = answers.value.basic?.sex === 'female' ? 'FEMALE' : 'MALE'
-    const ok = await fetchLivePlan(gender)
-    if (ok) {
-      liveStepIndex.value = 1
-      panelAnimationKey.value++
-      persistState()
+    if (isLiveSupplementMode.value) {
+      const repId = getReportId()
+      if (repId) {
+        const ok = await fetchLivePlan({ mode: 'supplement', reportId: repId })
+        if (ok) {
+          liveStepIndex.value = 0
+          panelAnimationKey.value++
+          persistState()
+        }
+      }
+    } else {
+      const gender: 'MALE' | 'FEMALE' = answers.value.basic?.sex === 'female' ? 'FEMALE' : 'MALE'
+      const ok = await fetchLivePlan({ mode: 'full', gender })
+      if (ok) {
+        liveStepIndex.value = 1
+        panelAnimationKey.value++
+        persistState()
+      }
     }
   }
+
 
 
 
@@ -951,7 +1034,9 @@ export function useQuestionnaire({
     isCurrentStepValid,
 
     // Live Integration State
+    isLiveMode,
     isLiveFullMode,
+    isLiveSupplementMode,
     isPlanLoading,
     planError,
     isLivePlanStep,
@@ -961,6 +1046,7 @@ export function useQuestionnaire({
     totalLiveGroups,
     currentLiveGroupQuestions,
     rawAnswers,
+
 
     // Live Handlers
     setLiveSingle,

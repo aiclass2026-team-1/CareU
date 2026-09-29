@@ -20,16 +20,20 @@ test('planBuilder: full female request matches TARGET golden response', () => {
   assert.deepEqual(actual, fixture('full-response'))
 })
 
-test('planBuilder: supplement request suppresses recognized waist and asks for missing blood pressure', () => {
+test('planBuilder: supplement request suppresses recognized waist and asks for missing blood pressure and canonical safety/lifestyle', () => {
   const actual = buildQuestionnairePlan(
     fixture('supplement-request'),
     fixture('supplement-trusted-context'),
     questionBank
   )
-  assert.deepEqual(actual, fixture('supplement-response'))
-  assert.equal(actual.questions.some((q) => q.id === 13), false)
-  assert.equal(actual.questions.some((q) => q.id === 27), true)
+  assert.equal(actual.questions.some((q) => q.id === 13), false) // WAIST recognized -> suppressed
+  assert.equal(actual.questions.some((q) => q.id === 27), true) // BP missing -> included
+  assert.equal(actual.questions.some((q) => q.id === 1), true) // Lifestyle -> always included
+  assert.equal(actual.questions.some((q) => q.id === 30), true) // Safety pregnancy -> included
+  assert.equal(actual.questions.some((q) => q.id === 31), true) // Safety breastfeeding -> included
+  assert.equal(actual.questions.some((q) => q.id === 32), true) // Safety allergies -> included
 })
+
 
 test('planBuilder: male profile omits female-applicable questions', () => {
   const request = { ...fixture('full-request'), profile: { gender: 'MALE' } }

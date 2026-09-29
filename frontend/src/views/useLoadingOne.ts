@@ -2,7 +2,14 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock'
-import { clearUploadFlow } from '@/utils/flowContext'
+import {
+  clearUploadFlow,
+  getPendingUploadFile,
+  clearPendingUploadFile,
+  setReportId,
+} from '@/utils/flowContext'
+import { liveHealthReportService } from '@/services/liveHealthReportService'
+
 
 
 
@@ -168,6 +175,13 @@ export function useLoadingOne({
     statusText.value = STAGES[0].text
     isStatusFading.value = false
 
+    // If formal route and pending file exists, trigger live upload/parse in parallel
+    let parsePromise: Promise<any> | null = null
+    const pendingFile = getPendingUploadFile()
+    if (!isPreviewContext() && pendingFile && mode !== 'exclude') {
+      parsePromise = liveHealthReportService.uploadAndParseReport(pendingFile)
+    }
+
     let elapsed = 0
     const endAt = mode === 'exclude' ? 2 : STAGES.length
     for (let i = 1; i < endAt; i++) {
@@ -180,18 +194,37 @@ export function useLoadingOne({
       }, elapsed)
     }
     elapsed += STAGES[endAt - 1].time
-    later(() => {
+    later(async () => {
       if (isDisposed || navToken !== currentToken) return
-      if (mode === 'exclude') openExclude()
-      else {
-        if (isPreviewContext()) {
-          showQuestionnaire('supplement')
-        } else {
+      if (mode === 'exclude') {
+        openExclude()
+        return
+      }
+
+      if (parsePromise) {
+        try {
+          const parseResult = await parsePromise
+          clearPendingUploadFile()
+          if (parseResult.reportId) {
+            setReportId(parseResult.reportId)
+          }
           router.replace('/questionnaire?mode=supplement')
+        } catch (err: any) {
+          console.error('OCR parse failed:', err)
+          clearPendingUploadFile()
+          openExclude()
         }
+        return
+      }
+
+      if (isPreviewContext()) {
+        showQuestionnaire('supplement')
+      } else {
+        router.replace('/questionnaire?mode=supplement')
       }
     }, elapsed)
   }
+
 
   // 問卷切換 (Demo Only 占位，支援 Preview 與 Formal 隔離)
   const showQuestionnaire = async (source: 'supplement' | 'full') => {

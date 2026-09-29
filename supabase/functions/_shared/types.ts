@@ -95,10 +95,12 @@ export interface PresentationItemConfig {
   groupKey: string
   optionKeys?: (string | number)[]
   supplementMetrics?: string[]
+  alwaysIncludeInSupplement?: boolean
   numericConfig?: TargetNumericConfig
   exclusiveKeys?: (string | number)[]
   detailInputs?: Record<string, { required?: boolean; placeholder?: string }>
 }
+
 
 export interface PresentationConfig {
   version: number

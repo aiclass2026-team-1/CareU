@@ -42,7 +42,7 @@ const {
   isDemoPanelOpen,
 
   // Live Integration State & Handlers
-  isLiveFullMode,
+  isLiveMode,
   isPlanLoading,
   planError,
   isLivePlanStep,
@@ -58,6 +58,8 @@ const {
   updateLiveDetail,
   isLiveMultiSelected,
   retryLoadPlan,
+
+
 
   updateBasicField,
   setSingleChoice,
@@ -214,8 +216,9 @@ const onPointerLeave = () => {
 
 
 
-              <!-- Live Full Plan Dynamic Steps -->
-              <div v-else-if="isLiveFullMode && isLivePlanStep">
+              <!-- Live Dynamic Plan Steps (Full / Supplement) -->
+              <div v-else-if="isLiveMode && isLivePlanStep">
+
                 <div v-for="q in currentLiveGroupQuestions" :key="q.id" class="question-block" style="margin-bottom: 28px;">
                   <h2 id="activeQuestion" tabindex="-1" style="margin-bottom: 12px;">
                     {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
@@ -536,7 +539,7 @@ const onPointerLeave = () => {
 
 
               <!-- Step: Complete -->
-              <div v-else-if="currentStep === 'complete'" class="completion-state">
+              <div v-else-if="currentStep === 'complete' || isLiveCompleteStep" class="completion-state">
                 <div class="completion-mark" aria-hidden="true">
                   <svg viewBox="0 0 48 48" fill="none">
                     <path
@@ -566,7 +569,7 @@ const onPointerLeave = () => {
                 class="button secondary"
                 id="previousQuestion"
                 type="button"
-                :disabled="isLiveFullMode ? liveStepIndex === 0 : currentQuestion === 0"
+                :disabled="isLiveMode ? liveStepIndex === 0 : currentQuestion === 0"
                 @click="handlePrevious"
               >
                 上一題
@@ -579,9 +582,10 @@ const onPointerLeave = () => {
                 :disabled="!isCurrentStepValid || isSubmitting || isPlanLoading"
                 @click="handleNext"
               >
-                {{ (isLiveFullMode ? isLiveCompleteStep : currentStep === 'complete') ? '送出問卷' : '下一步' }}
+                {{ (isLiveMode ? isLiveCompleteStep : currentStep === 'complete') ? '送出問卷' : '下一步' }}
               </button>
             </div>
+
 
 
           </div>

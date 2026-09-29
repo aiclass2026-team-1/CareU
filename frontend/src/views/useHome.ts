@@ -2,7 +2,8 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
-import { setUploadFlowActive, clearUploadFlow } from '@/utils/flowContext'
+import { setUploadFlowActive, clearUploadFlow, setPendingUploadFile } from '@/utils/flowContext'
+
 
 
 interface UseHomeOptions {
@@ -217,9 +218,11 @@ export function useHome({
   const startReadingFiles = () => {
     if (!selectedFiles.value.length) return
     isUploadOpen.value = false
+    setPendingUploadFile(selectedFiles.value[0])
     setUploadFlowActive()
     router.push('/loading-1')
   }
+
 
   const closeRouteScreen = () => {
     isRouteScreenOpen.value = false

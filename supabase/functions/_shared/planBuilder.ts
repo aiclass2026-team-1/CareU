@@ -113,11 +113,14 @@ export function buildQuestionnairePlan(
     if (question.applicable_gender !== 'ALL' && question.applicable_gender !== request.profile.gender) continue
 
     if (request.mode === 'supplement') {
+      const isAlways = Boolean(presentation.alwaysIncludeInSupplement)
       const metricCodes = presentation.supplementMetrics ?? []
-      if (metricCodes.length === 0 || !metricCodes.some((code) => missing.includes(code))) {
+      const isMissingMatch = metricCodes.length > 0 && metricCodes.some((code) => missing.includes(code))
+      if (!isAlways && !isMissingMatch) {
         continue
       }
     }
+
 
     const item: TargetQuestionnaireItemRuntime = {
       id: question.id,
