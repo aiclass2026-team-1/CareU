@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import ContractQuestionnairePreview from './ContractQuestionnairePreview.vue'
 import { ref } from 'vue'
 import networkBackImg from '@/assets/images/network-back.png'
 import LoadingStageVisual from '@/components/visual/LoadingStageVisual.vue'
@@ -15,6 +18,11 @@ const networkBackRef = ref<HTMLElement | null>(null)
 const appRef = ref<HTMLElement | null>(null)
 const questionPanelRef = ref<HTMLElement | null>(null)
 const analysisErrorRef = ref<HTMLElement | null>(null)
+
+const route = useRoute()
+const isContractFixture = computed(() => {
+  return route.path === '/preview/questionnaire' && route.query.source === 'contract-fixture'
+})
 
 const {
   activeScreen,
@@ -67,7 +75,8 @@ const onPointerLeave = () => {
 </script>
 
 <template>
-  <div class="questionnaire-container" @pointermove="onPointerMove" @pointerleave="onPointerLeave">
+  <ContractQuestionnairePreview v-if="isContractFixture" />
+  <div v-else class="questionnaire-container" @pointermove="onPointerMove" @pointerleave="onPointerLeave">
     <main class="app" id="app" ref="appRef">
       <DataCanvas ref="dataCanvasRef" :fullscreen="true" canvas-id="dataField" />
       <div class="network-layer network-layer--back" id="networkBack" ref="networkBackRef" aria-hidden="true">

@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
 - **最後更新日期**：2026-09-29
-- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 3（進行中 IN PROGRESS）
-- **最近已提交功能 Checkpoint**：`b26045d`（完整 SHA：`b26045d81b3227eb43e727524125f0827e970aca`，本批待提交 Checkpoint：`feat: complete questionnaire runtime contract`）
-- **功能基線說明**：Phase 7 Batch 3 已完成 Questionnaire Runtime Contract Completion（擴充 `TargetQuestionnairePlan`、`TargetQuestionnaireItemRuntime` 與 `TargetQuestionnaireSubmissionPayload`，支援 controlType、numericConfig、required、groupKey、多選與互斥選項中繼資料；更新 `questionnaireAdapter.ts` 支援 Target Plan 適配與擴充 fixture；完成 Runtime Compatibility Spike 閉環與合約缺口定義；Runtime Questionnaire 維持不變）。
+- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 4（進行中 IN PROGRESS）
+- **最近已提交功能 Checkpoint**：`6239cf5`（完整 SHA：`6239cf5ab42f842cad2274c98f04735ee9ece004`，本批待提交 Checkpoint：`feat: integrate questionnaire contract fixture runtime`）
+- **功能基線說明**：Phase 7 Batch 4 已完成 Fixture-backed Questionnaire Runtime Integration。建立 `frontend/src/views/ContractQuestionnairePreview.vue` 與 `frontend/src/views/useContractQuestionnairePreview.ts`，並於 `QuestionnaireView.vue` 加入 `?source=contract-fixture` 預覽路由判斷，支援將 `TargetQuestionnairePlan` fixture 經轉型與 ViewModel 驅動介面互動、分組導航、必填校驗、多選/互斥/數值/不確定輸入，最終產出合規之 `TargetQuestionnaireSubmissionPayload`（不含任何權威分數或來源）。正式問卷運行期與正式路由保持 100% 不變。Human Acceptance PASS。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 
