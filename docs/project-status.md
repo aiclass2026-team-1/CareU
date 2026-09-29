@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
-- **最後更新日期**：2026-09-28
-- **當前階段**：Phase 6｜Formal Routing & Site Flow Implementation（已完成）
-- **最近已提交功能 Checkpoint**：`ac99318`（完整 SHA：`ac99318864ebab4f37ee55c66367bf72f05dfa05`，本批待提交 Checkpoint：`feat: establish formal site routing and flow`）
-- **功能基線說明**：Phase 6 已完成正式業務路由建置（Splash, Home, Loading-1, Questionnaire, Report）、導航守衛防呆、臨時 flow-context 狀態管理、問卷 draft lifecycle、Home 捲動還原、Report CSS leakage 修正以及 Splash->Home / CTA 小幅 UI 修正與全套自動化驗證。
+- **最後更新日期**：2026-09-29
+- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 1（進行中 IN PROGRESS）
+- **最近已提交功能 Checkpoint**：`ac99318`（完整 SHA：`ac99318864ebab4f37ee55c66367bf72f05dfa05`，本批待提交 Checkpoint：`feat: establish backend integration contracts`）
+- **功能基線說明**：Phase 7 Batch 1 已完成後端整合與資料合約基準（`docs/specs/backend-integration-contracts.md`）、TypeScript 領域/API 合約（`frontend/src/types/index.ts`），確立 Assessment Orchestration、Dynamic Questionnaire、Formula 2 與 Partial Lab Coverage 規則，並完成 `health_food_products` 18 欄位 Schema 驗證。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 
@@ -40,11 +40,11 @@ Implementation 完成
 | 項目 | 當前狀態事實 | 依據來源 |
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
-| **當前階段 (Current Phase)** | **Phase 6｜Formal Routing & Site Flow Implementation（已完成）** | `frontend/README.md`, Git log |
-| **最近完成之功能批次** | **Phase 6：正式整站路由、導航守衛、Flow Context、問卷 Draft Lifecycle 與 UI Transition 修正** | 人工驗收 PASS, Type-check / Build PASS |
-| **最近已提交功能 Checkpoint** | `ac99318` (`refactor: modularize shared frontend components`，本批待提交 Checkpoint：`feat: establish formal site routing and flow`) | Git HEAD / 當前批次基準 |
-| **執行中功能工作** | **無 (None)** | 當前無進行中的功能開發 |
-| **下一批遷移 Scope** | **Phase 7｜Data & Mock API Alignment（待授權）** | Repo 權威文件盤點結果 |
+| **當前階段 (Current Phase)** | **Phase 7｜Data Model & Backend Integration Batch 1（進行中 IN PROGRESS）** | `docs/specs/backend-integration-contracts.md`, Git status |
+| **最近完成之功能批次** | **Phase 7 Batch 1：Backend Integration Contract Baseline、TypeScript Domain/API Contracts 與健康食品資料表 Schema 驗證** | 人工驗收 PASS, Type-check / Build PASS |
+| **最近已提交功能 Checkpoint** | `ac99318`（本批待提交 Checkpoint：`feat: establish backend integration contracts`） | Git HEAD / 當前批次基準 |
+| **執行中功能工作** | **Phase 7 契約與架構對齊（不進行 UI 或 Supabase 整合）** | 專案進度規範 |
+| **下一批遷移 Scope** | **Phase 7 Batch 2 / 後續整合階段（待授權）** | Repo 權威文件盤點結果 |
 
 ---
 
