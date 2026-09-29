@@ -1,18 +1,28 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
-  createMockTargetQuestionnairePlanFixture,
   adaptTargetQuestionnairePlan,
   adaptTargetAnswersToSubmission,
 } from '@/adapters/questionnaireAdapter'
-import type { QuestionnaireAnswerValue, TargetQuestionnaireSubmissionPayload } from '@/types'
+import { mockQuestionnaireService } from '@/services/mockQuestionnaireService'
+import type { QuestionnaireRequestStatus } from '@/services/questionnaireService'
+import type { QuestionnaireAnswerValue, TargetQuestionnaireSubmissionPayload, TargetQuestionnairePlan } from '@/types'
 
 export function useContractQuestionnairePreview() {
-  const rawPlan = createMockTargetQuestionnairePlanFixture(null, 'full')
-  const viewModel = adaptTargetQuestionnairePlan(rawPlan)
+  const planStatus = ref<QuestionnaireRequestStatus>('idle')
+  const submissionStatus = ref<QuestionnaireRequestStatus>('idle')
+  const errorMessage = ref<string | null>(null)
+
+  const rawPlan = ref<TargetQuestionnairePlan | null>(null)
+  const viewModel = computed(() => {
+    if (!rawPlan.value) {
+      return adaptTargetQuestionnairePlan({ reportId: null, mode: 'full', recognizedMetrics: [], missingMetrics: [], questions: [] })
+    }
+    return adaptTargetQuestionnairePlan(rawPlan.value)
+  })
 
   const groupKeys = computed(() => {
     const keys: string[] = []
-    viewModel.questions.forEach(q => {
+    viewModel.value.questions.forEach(q => {
       const gk = q.groupKey || 'default'
       if (!keys.includes(gk)) keys.push(gk)
     })
@@ -22,12 +32,24 @@ export function useContractQuestionnairePreview() {
   const currentGroupIndex = ref(0)
   const totalGroups = computed(() => groupKeys.value.length)
   const currentGroupKey = computed(() => groupKeys.value[currentGroupIndex.value] || 'default')
-  const currentGroupQuestions = computed(() => viewModel.questions.filter(q => (q.groupKey || 'default') === currentGroupKey.value))
+  const currentGroupQuestions = computed(() => viewModel.value.questions.filter(q => (q.groupKey || 'default') === currentGroupKey.value))
   const progressPercent = computed(() => Math.round(((currentGroupIndex.value + 1) / totalGroups.value) * 100))
 
   const rawAnswers = ref<Record<number, { value: QuestionnaireAnswerValue; detailText?: string }>>({})
-  viewModel.questions.forEach(q => {
-    rawAnswers.value[q.id] = { value: q.controlType === 'multi_choice' ? [] : '' }
+
+  onMounted(async () => {
+    planStatus.value = 'loading'
+    errorMessage.value = null
+    try {
+      rawPlan.value = await mockQuestionnaireService.getPlan({ mode: 'full', reportId: null })
+      planStatus.value = 'success'
+      viewModel.value.questions.forEach(q => {
+        rawAnswers.value[q.id] = { value: q.controlType === 'multi_choice' ? [] : '' }
+      })
+    } catch (err: any) {
+      planStatus.value = 'error'
+      errorMessage.value = err?.message || 'PLAN_LOAD_FAILED'
+    }
   })
 
   const validationMessage = ref('')
@@ -58,7 +80,7 @@ export function useContractQuestionnairePreview() {
     if (isEx) {
       arr = arr.includes(optKey) ? [] : [optKey]
     } else {
-      const q = viewModel.questions.find(i => i.id === id)
+      const q = viewModel.value.questions.find(i => i.id === id)
       const exKeys = q?.options.filter(o => o.exclusive).map(o => o.key) || []
       arr = arr.filter(k => !exKeys.includes(k))
       arr = arr.includes(optKey) ? arr.filter(k => k !== optKey) : [...arr, optKey]
@@ -74,7 +96,7 @@ export function useContractQuestionnairePreview() {
 
   const isComplete = ref(false)
   const submissionPayload = ref<TargetQuestionnaireSubmissionPayload | null>(null)
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isCurrentGroupValid.value) {
       validationMessage.value = '請完成這個步驟的必填項目後再繼續。'
       return
@@ -83,19 +105,34 @@ export function useContractQuestionnairePreview() {
     if (currentGroupIndex.value < totalGroups.value - 1) {
       currentGroupIndex.value++
     } else {
-      submissionPayload.value = adaptTargetAnswersToSubmission(viewModel.reportId, viewModel.mode, rawAnswers.value)
-      isComplete.value = true
+      const payload = adaptTargetAnswersToSubmission(viewModel.value.reportId, viewModel.value.mode, rawAnswers.value)
+      submissionStatus.value = 'loading'
+      errorMessage.value = null
+      try {
+        await mockQuestionnaireService.submitAnswers(payload)
+        submissionStatus.value = 'success'
+        submissionPayload.value = payload
+        isComplete.value = true
+      } catch (err: any) {
+        submissionStatus.value = 'error'
+        errorMessage.value = err?.message || 'SUBMISSION_FAILED'
+        validationMessage.value = '作答提交失敗，請重試。'
+      }
     }
   }
   const handleRestart = () => {
     isComplete.value = false
     submissionPayload.value = null
     currentGroupIndex.value = 0
-    viewModel.questions.forEach(q => { rawAnswers.value[q.id] = { value: q.controlType === 'multi_choice' ? [] : '' } })
+    submissionStatus.value = 'idle'
+    viewModel.value.questions.forEach(q => { rawAnswers.value[q.id] = { value: q.controlType === 'multi_choice' ? [] : '' } })
   }
 
   return {
     viewModel,
+    planStatus,
+    submissionStatus,
+    errorMessage,
     currentGroupIndex,
     totalGroups,
     currentGroupQuestions,
