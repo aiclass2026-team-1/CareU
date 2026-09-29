@@ -1,3 +1,4 @@
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { resolveAuthIdentity, validateReportOwnership } from '../_shared/auth.ts'
 import { validateAndDeriveSubmission } from '../_shared/submissionValidator.ts'
@@ -32,13 +33,9 @@ export async function handleSubmitQuestionnaire(req: Request, createClientOverri
     return errorResponse('SERVER_CONFIG_ERROR', 'Supabase environment variables not configured', 500)
   }
 
-  let supabaseClient: any
-  if (createClientOverride) {
-    supabaseClient = createClientOverride(supabaseUrl, supabaseKey)
-  } else {
-    const { createClient } = await import('npm:@supabase/supabase-js@2')
-    supabaseClient = createClient(supabaseUrl, supabaseKey)
-  }
+  const supabaseClient = createClientOverride
+    ? createClientOverride(supabaseUrl, supabaseKey)
+    : createClient(supabaseUrl, supabaseKey)
 
   const authIdentity = await resolveAuthIdentity(req, supabaseClient)
 
@@ -81,10 +78,34 @@ export async function handleSubmitQuestionnaire(req: Request, createClientOverri
     )
   }
 
+  // Ensure minimal user_profiles row exists for any verified auth user (including Anonymous Auth)
+  let submissionUserId: string | null = null
+  if (authIdentity.userId) {
+    const { data: profile } = await supabaseClient
+      .from('user_profiles')
+      .select('id')
+      .eq('id', authIdentity.userId)
+      .maybeSingle()
+
+    if (!profile) {
+      await supabaseClient
+        .from('user_profiles')
+        .upsert(
+          {
+            id: authIdentity.userId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        )
+    }
+    submissionUserId = authIdentity.userId
+  }
+
   // Insert into questionnaire_submissions
   // Note: CURRENT_MVP_DUPLICATES_POSSIBLE (idempotency token is not yet supported in current DB schema)
   const insertPayload = {
-    user_id: authIdentity.userId,
+    user_id: submissionUserId,
     report_id: payload.reportId ?? null,
     session_id: authIdentity.sessionId ?? null,
     answers: validationResult.validatedAnswers,
@@ -113,5 +134,21 @@ export async function handleSubmitQuestionnaire(req: Request, createClientOverri
 }
 
 if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
-  Deno.serve(handleSubmitQuestionnaire)
+  Deno.serve(async (req: Request) => {
+    try {
+      return await handleSubmitQuestionnaire(req)
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({
+          error: 'UNHANDLED_EXCEPTION',
+          message: err?.message || String(err),
+          stack: err?.stack,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+  })
 }

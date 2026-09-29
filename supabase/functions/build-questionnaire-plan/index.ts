@@ -1,3 +1,4 @@
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { resolveAuthIdentity, validateReportOwnership } from '../_shared/auth.ts'
 import { buildQuestionnairePlan, PlanBuilderError } from '../_shared/planBuilder.ts'
@@ -34,13 +35,14 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
     return errorResponse('SERVER_CONFIG_ERROR', 'Supabase environment variables not configured', 500)
   }
 
-  let supabaseClient: any
-  if (createClientOverride) {
-    supabaseClient = createClientOverride(supabaseUrl, supabaseKey)
-  } else {
-    const { createClient } = await import('npm:@supabase/supabase-js@2')
-    supabaseClient = createClient(supabaseUrl, supabaseKey)
-  }
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
+  const supabaseClient = createClientOverride
+    ? createClientOverride(supabaseUrl, supabaseKey)
+    : createClient(supabaseUrl, supabaseKey, {
+        global: {
+          headers: authHeader ? { Authorization: authHeader } : {},
+        },
+      })
 
   const authIdentity = await resolveAuthIdentity(req, supabaseClient)
 
@@ -112,5 +114,21 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
 }
 
 if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
-  Deno.serve(handleBuildPlan)
+  Deno.serve(async (req: Request) => {
+    try {
+      return await handleBuildPlan(req)
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({
+          error: 'UNHANDLED_EXCEPTION',
+          message: err?.message || String(err),
+          stack: err?.stack,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+  })
 }
