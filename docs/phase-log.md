@@ -9,6 +9,18 @@
 
 ---
 
+## Frontend Productionization & Demo Isolation Checkpoint (2026-09-30)
+- **範圍**：Frontend Productionization / Demo Isolation HUMAN PASS。
+- **核心成果**：
+  1. 建立嚴格的 Demo 模式規則 (`VITE_ENABLE_DEMO_MODE === 'true' && ?demo=1`)。
+  2. 正式路由（`/home`）移除 Footer 原型字樣與字型標註，並隱藏模擬登入懸浮按鈕與無作用的 Demo 連結 Toast。
+  3. 正式路由（`/report`）隱藏 Demo Controller 控制面板。
+  4. 完整還原報告頁原始規格（非會員預設鎖定 rank #1/#2 與推薦項目，訪客可完整預覽前 2 名解鎖排版），並在 Demo 模式下支援模擬登入解鎖與情境切換。
+  5. 30 天保留／自動刪除文案維持原樣保留，列為後續 PM/團隊討論項目；完整會員系統與未來 LINE Login 保持暫緩與方向保留。
+- **驗證狀態**：Type-check PASS, Build PASS, git diff --check PASS, Human Acceptance PASS。
+
+---
+
 ## 1. 記錄原則與標籤規範（Recording Rules & Evidence Tags）
 
 本文件採用嚴格的事實與證據等級標籤，禁止無依據的主觀推測：

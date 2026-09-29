@@ -10,6 +10,9 @@ import networkLeftImg from '@/assets/home/network-left.png'
 import networkRightImg from '@/assets/home/network-right.png'
 import '@/assets/home/home.css'
 
+import { checkDemoMode } from '@/utils/demoMode'
+const isDemo = checkDemoMode()
+
 /**
  * Care U｜首頁 (Home & Upload Page) View
  *
@@ -228,7 +231,7 @@ const onHeroPointerLeave = () => {
         </div>
         <footer class="footer">
           <div class="footer__inner">
-            <span>&copy; Care U Prototype &bull; Typeface: LINE Seed TW</span>
+            <span>&copy; Care U</span>
             <nav class="footer__links" aria-label="頁尾連結">
               <a href="#privacy-demo" data-demo-link @click="handleDemoLinkClick">隱私權政策</a>
               <a href="#source-demo" data-demo-link @click="handleDemoLinkClick">資料來源</a>
@@ -305,7 +308,7 @@ const onHeroPointerLeave = () => {
           </button>
         </div>
         <p class="sheet-privacy">
-          原型僅模擬檔案選擇與流程，不會上傳或分析你的健康資料。正式版本須在此提供完整的資料保存與刪除規則。
+          請確認上傳檔案為正確的健康檢查報告格式（支援 PDF、JPG、PNG）。
         </p>
       </div>
     </div>
@@ -329,6 +332,7 @@ const onHeroPointerLeave = () => {
 
     <!-- 會員登入懸浮按鈕 -->
     <button
+      v-if="isDemo"
       id="memberLogin"
       class="member-login"
       :class="{ 'is-on-explanation': isOnExplanation }"

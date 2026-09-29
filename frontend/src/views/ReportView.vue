@@ -10,6 +10,9 @@ import CartModal from './CartModal.vue'
 import AppToast from '@/components/common/AppToast.vue'
 import AppModal from '@/components/common/AppModal.vue'
 import { useReport } from './useReport'
+import { checkDemoMode } from '@/utils/demoMode'
+const isDemo = checkDemoMode()
+
 
 const {
   activeProfileKey,
@@ -202,7 +205,7 @@ function handleDemoLink(name: string) {
     </div>
 
     <!-- DEMO CONTROLLER -->
-    <aside class="demo-controller" id="demoController" aria-label="原型展示控制">
+    <aside v-if="isDemo" class="demo-controller" id="demoController" aria-label="原型展示控制">
       <div v-if="isDemoPanelOpen" class="demo-panel" id="demoPanel">
         <h3>Demo Controller</h3>
         <p>切換展示情境。個人分析為預設示範資料，不進行真實健康評分。</p>

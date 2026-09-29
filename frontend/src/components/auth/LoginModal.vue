@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import BrandMark from '@/components/common/BrandMark.vue'
 import AppModal from '@/components/common/AppModal.vue'
+import { checkDemoMode } from '@/utils/demoMode'
+const isDemo = checkDemoMode()
+
 
 /**
  * Care U｜全域共用會員登入視窗 (LoginModal)
@@ -177,19 +180,20 @@ const emit = defineEmits<{
       </template>
     </p>
 
-    <p class="demo-auth-note" id="authDemoNote">
-      本次為模擬登入，請勿輸入真實密碼。<br />不傳送註冊資料，也不儲存電子郵件或密碼。
-    </p>
-
-    <button
-      v-if="mode !== 'forgot'"
-      class="button outline small demo-auth-button"
-      id="quickDemoLogin"
-      type="button"
-      @click="emit('quickDemoLogin')"
-    >
-      使用示範帳號體驗
-    </button>
+    <template v-if="isDemo">
+      <p class="demo-auth-note" id="authDemoNote">
+        本次為模擬登入，請勿輸入真實密碼。<br />不傳送註冊資料，也不儲存電子郵件或密碼。
+      </p>
+      <button
+        v-if="mode !== 'forgot'"
+        class="button outline small demo-auth-button"
+        id="quickDemoLogin"
+        type="button"
+        @click="emit('quickDemoLogin')"
+      >
+        使用示範帳號體驗
+      </button>
+    </template>
   </AppModal>
 </template>
 

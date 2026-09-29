@@ -303,7 +303,6 @@ export function useHome({
 
   const handleDemoLinkClick = (event: MouseEvent) => {
     event.preventDefault()
-    showToast('此連結將在正式版本開啟完整說明')
   }
 
   const handleScrollCueClick = (event: MouseEvent) => {

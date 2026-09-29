@@ -41,7 +41,7 @@ Implementation 完成
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
 | **當前階段 (Current Phase)** | **Phase 7｜Data Model & Backend Integration（Questionnaire Formalization 人工驗收 HUMAN PASS）** | `docs/specs/backend-integration-contracts.md`, Git status |
-| **最近完成之功能批次** | **Phase 7 Questionnaire Formalization & Live Integration：Dual Path Live E2E（Path A Full 與 Path B Upload/Supplement 完整走完至 Live Report），動態混合分頁、Q27 複合式血壓與未知選項互斥、UI 狀態優化（PREPARING 藍色動態指示、腰圍/血壓輸入焦點與 cm/mmHg 單位處理）全面通過驗收。** | 人工驗收 PASS, 49/49 測試 PASS, Type-check / Build PASS |
+- **最近完成之功能批次**：**Frontend Productionization / Demo Isolation HUMAN PASS。實作 strict Demo Mode 規則（`VITE_ENABLE_DEMO_MODE === 'true' && ?demo=1`），正式路由（`/home`, `/report`）隱藏原型 Remnants、模擬登入與 Demo Controller，完整還原報告頁 rank #1/#2 與推薦項目的訪客鎖定行為，同時在 Demo 模式下完整保留展示互動功能。** | 人工驗收 PASS, Type-check PASS, Build PASS |
 | **最近已提交功能 Checkpoint** | `5f93fca`（本批待提交 Checkpoint：`feat: finalize live questionnaire integration`） | Git HEAD / 當前批次基準 |
 | **執行中功能工作** | **Phase 7 結算與後續架構收尾預備（準備進入 Supplement 測試矩陣、Function 整合與 Vercel E2E）** | 專案進度規範 |
 | **下一批遷移 Scope** | **Supplement 測試矩陣與 Function Consolidation / Security Preflight** | Repo 權威文件盤點結果 |
