@@ -1,7 +1,11 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { clearUploadFlow } from '@/utils/flowContext'
+import { clearUploadFlow, setSubmissionId } from '@/utils/flowContext'
+import { adaptTargetQuestionnairePlan, adaptTargetAnswersToSubmission } from '@/adapters/questionnaireAdapter'
+import { liveQuestionnaireService } from '@/services/liveQuestionnaireService'
+import type { TargetQuestionnairePlan, QuestionnaireAnswerValue } from '@/types'
+
 
 
 
@@ -129,6 +133,65 @@ export function useQuestionnaire({
   // Demo 控制面板
   const isDemoPanelOpen = ref(false)
 
+  // ==========================================
+  // LIVE FULL MODE CANARY INTEGRATION STATE
+  // ==========================================
+  const isPlanLoading = ref(false)
+  const planError = ref<string | null>(null)
+  const rawPlan = ref<TargetQuestionnairePlan | null>(null)
+  const rawAnswers = ref<Record<number, { value: QuestionnaireAnswerValue; detailText?: string }>>({})
+  const liveStepIndex = ref(0) // 0: basic, 1..N: live question groups, N+1: complete
+  const planLoadedGender = ref<'MALE' | 'FEMALE' | null>(null)
+
+  const isPreviewContext = computed(() => {
+    return route.path.startsWith('/preview/')
+  })
+
+  // LIVE full mode is active ONLY for formal /questionnaire route with mode=full
+  const isLiveFullMode = computed(() => {
+    return !isPreviewContext.value && currentMode.value === 'full'
+  })
+
+  const livePlanViewModel = computed(() => {
+    if (!rawPlan.value) {
+      return adaptTargetQuestionnairePlan({
+        reportId: null,
+        mode: 'full',
+        recognizedMetrics: [],
+        missingMetrics: [],
+        questions: [],
+      })
+    }
+    return adaptTargetQuestionnairePlan(rawPlan.value)
+  })
+
+  const liveGroupKeys = computed(() => {
+    const keys: string[] = []
+    livePlanViewModel.value.questions.forEach((q) => {
+      const gk = q.groupKey || 'default'
+      if (!keys.includes(gk)) keys.push(gk)
+    })
+    return keys
+  })
+
+  const totalLiveGroups = computed(() => liveGroupKeys.value.length)
+  const currentLiveGroupIndex = computed(() => Math.max(0, liveStepIndex.value - 1))
+  const currentLiveGroupKey = computed(() => liveGroupKeys.value[currentLiveGroupIndex.value] || 'default')
+  const currentLiveGroupQuestions = computed(() => {
+    return livePlanViewModel.value.questions.filter(
+      (q) => (q.groupKey || 'default') === currentLiveGroupKey.value
+    )
+  })
+
+  const isLivePlanStep = computed(() => {
+    return isLiveFullMode.value && liveStepIndex.value > 0 && liveStepIndex.value <= totalLiveGroups.value
+  })
+
+  const isLiveCompleteStep = computed(() => {
+    return isLiveFullMode.value && liveStepIndex.value > totalLiveGroups.value
+  })
+
+
   // 內部變數與計時器
   let timers: number[] = []
   let isDisposed = false
@@ -170,6 +233,8 @@ export function useQuestionnaire({
           mode: currentMode.value,
           answers: answers.value,
           currentQuestion: currentQuestion.value,
+          liveStepIndex: liveStepIndex.value,
+          rawAnswers: rawAnswers.value,
         }),
       )
     } catch (_) {}
@@ -183,12 +248,18 @@ export function useQuestionnaire({
         if (saved?.mode === mode && saved?.answers) {
           answers.value = saved.answers
           currentQuestion.value = Number.isInteger(saved.currentQuestion) ? saved.currentQuestion : 0
+          liveStepIndex.value = Number.isInteger(saved.liveStepIndex) ? saved.liveStepIndex : 0
+          if (saved.rawAnswers && typeof saved.rawAnswers === 'object') {
+            rawAnswers.value = saved.rawAnswers
+          }
           return
         }
       }
     } catch (_) {}
     answers.value = {}
     currentQuestion.value = 0
+    liveStepIndex.value = 0
+    rawAnswers.value = {}
   }
 
   const clearSessionState = () => {
@@ -209,10 +280,20 @@ export function useQuestionnaire({
   }
 
   const currentStep = computed<QuestionnaireStep>(() => {
+    if (isLiveFullMode.value) {
+      if (liveStepIndex.value === 0) return 'basic'
+      if (liveStepIndex.value > totalLiveGroups.value) return 'complete'
+      return 'measurements'
+    }
     return activeSteps.value[currentQuestion.value] || 'basic'
   })
 
   const progressPercent = computed<number>(() => {
+    if (isLiveFullMode.value) {
+      const totalSteps = 1 + totalLiveGroups.value + 1 // basic + groups + complete
+      const current = liveStepIndex.value + 1
+      return Math.min(100, Math.round((current / totalSteps) * 100))
+    }
     const progressOrder = currentMode.value === 'supplement' ? supplementProgressOrder : fullProgressOrder
     const step = currentStep.value
     const position = Math.max(0, progressOrder.indexOf(step))
@@ -227,6 +308,27 @@ export function useQuestionnaire({
         intro: '接下來只需要補充幾項資訊，幫助我們更完整地了解你的日常狀況。',
       }
     }
+    if (isLiveFullMode.value) {
+      if (liveStepIndex.value === 0) {
+        return {
+          eyebrow: '健康問卷',
+          title: '先從幾個日常問題開始',
+          intro: '沒有體檢資料也沒關係，我們會從你的生活習慣與健康狀況開始了解。',
+        }
+      }
+      if (isLiveCompleteStep.value) {
+        return {
+          eyebrow: '健康問卷 — 完成',
+          title: '問卷填寫完成',
+          intro: '確認送出後，將為您進行整合分析並準備個人化報告。',
+        }
+      }
+      return {
+        eyebrow: `健康問卷 — 階段 ${currentLiveGroupIndex.value + 1}/${totalLiveGroups.value}`,
+        title: '健康與生活型態對應問卷',
+        intro: '請根據您近期的真實日常狀態與身體數值作答。',
+      }
+    }
     return {
       eyebrow: '健康問卷',
       title: '先從幾個日常問題開始',
@@ -234,7 +336,47 @@ export function useQuestionnaire({
     }
   })
 
+
+  const isCurrentLiveGroupValid = computed(() => {
+    if (liveStepIndex.value === 0) {
+      return Boolean(answers.value.basic?.age && answers.value.basic?.sex && answers.value.basic?.weight)
+    }
+    if (isLiveCompleteStep.value) {
+      return true
+    }
+    for (const q of currentLiveGroupQuestions.value) {
+      if (!q.required) continue
+      const ans = rawAnswers.value[q.id]
+      if (!ans) return false
+      if (q.controlType === 'multi_choice') {
+        const arr = ans.value as (string | number)[]
+        if (!arr || arr.length === 0) return false
+        for (const optKey of arr) {
+          const opt = q.options.find((o) => o.key === optKey)
+          if (opt?.detailInput?.required && !ans.detailText?.trim()) return false
+        }
+      } else if (q.controlType === 'number') {
+        if (ans.value === q.numericConfig?.unknownOption?.key) {
+          continue
+        }
+        if (ans.value === '' || ans.value === undefined || ans.value === null) return false
+        const numVal = Number(ans.value)
+        if (isNaN(numVal)) return false
+        if (q.numericConfig?.min !== undefined && numVal < q.numericConfig.min) return false
+        if (q.numericConfig?.max !== undefined && numVal > q.numericConfig.max) return false
+      } else if (q.controlType === 'text') {
+        if (typeof ans.value !== 'string' || !ans.value.trim()) return false
+      } else {
+        if (ans.value === '' || ans.value === undefined || ans.value === null) return false
+      }
+    }
+    return true
+  })
+
   const isStepValid = (step: QuestionnaireStep): boolean => {
+    if (isLiveFullMode.value) {
+      return isCurrentLiveGroupValid.value
+    }
     if (step === 'basic') {
       return Boolean(answers.value.basic?.age && answers.value.basic?.sex && answers.value.basic?.weight)
     }
@@ -267,8 +409,12 @@ export function useQuestionnaire({
   }
 
   const isCurrentStepValid = computed<boolean>(() => {
+    if (isLiveFullMode.value) {
+      return isCurrentLiveGroupValid.value
+    }
     return isStepValid(currentStep.value)
   })
+
 
   const focusFirstInput = () => {
     if (questionPanelRef.value) {
@@ -287,12 +433,47 @@ export function useQuestionnaire({
     }, 60)
   }
 
+  const fetchLivePlan = async (gender: 'MALE' | 'FEMALE') => {
+    isPlanLoading.value = true
+    planError.value = null
+    validationMessage.value = ''
+    try {
+      const plan = await liveQuestionnaireService.getPlan({
+        reportId: null,
+        mode: 'full',
+        profile: { gender },
+      })
+      rawPlan.value = plan
+      planLoadedGender.value = gender
+      // Initialize raw answers for all questions
+      plan.questions.forEach((q) => {
+        if (!rawAnswers.value[q.id]) {
+          rawAnswers.value[q.id] = {
+            value: q.controlType === 'multi_choice' ? [] : '',
+          }
+        }
+      })
+      isPlanLoading.value = false
+      return true
+    } catch (err: any) {
+      isPlanLoading.value = false
+      planError.value = err?.message || '無法取得問卷題目，請確認網路連線或稍後再試。'
+      validationMessage.value = planError.value || ''
+      return false
+    }
+  }
+
   const openQuestionnaire = (source: 'analyzed' | 'direct', reset = false) => {
+
     clearTimers()
     currentMode.value = source === 'analyzed' ? 'supplement' : 'full'
     if (reset) {
       answers.value = {}
       currentQuestion.value = 0
+      liveStepIndex.value = 0
+      rawAnswers.value = {}
+      rawPlan.value = null
+      planLoadedGender.value = null
     } else {
       restoreState(currentMode.value)
     }
@@ -305,6 +486,65 @@ export function useQuestionnaire({
     panelAnimationKey.value++
     showScreen('question')
   }
+
+  // Live question handlers
+  const setLiveSingle = (questionId: number, key: string | number) => {
+    rawAnswers.value[questionId] = { value: key }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const setLiveNum = (questionId: number, val: string | number) => {
+    rawAnswers.value[questionId] = { value: val }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const toggleLiveNumUnknown = (questionId: number, unknownKey: string | number) => {
+    const cur = rawAnswers.value[questionId]?.value
+    const isUnknown = cur === unknownKey
+    rawAnswers.value[questionId] = { value: isUnknown ? '' : unknownKey }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const setLiveText = (questionId: number, text: string) => {
+    rawAnswers.value[questionId] = { value: text }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const toggleLiveMulti = (questionId: number, optKey: string | number, isExclusive?: boolean) => {
+    const cur = rawAnswers.value[questionId] || { value: [] }
+    let arr = Array.isArray(cur.value) ? [...(cur.value as (string | number)[])] : []
+    if (isExclusive) {
+      arr = arr.includes(optKey) ? [] : [optKey]
+    } else {
+      const q = livePlanViewModel.value.questions.find((i) => i.id === questionId)
+      const exKeys = q?.options.filter((o) => o.exclusive).map((o) => o.key) || []
+      arr = arr.filter((k) => !exKeys.includes(k))
+      arr = arr.includes(optKey) ? arr.filter((k) => k !== optKey) : [...arr, optKey]
+    }
+    rawAnswers.value[questionId] = { ...cur, value: arr as QuestionnaireAnswerValue }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const updateLiveDetail = (questionId: number, text: string) => {
+    rawAnswers.value[questionId] = {
+      ...(rawAnswers.value[questionId] || { value: [] }),
+      detailText: text,
+    }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const isLiveMultiSelected = (questionId: number, optKey: string | number): boolean => {
+    const cur = rawAnswers.value[questionId]?.value
+    return Array.isArray(cur) && (cur as (string | number)[]).includes(optKey)
+  }
+
+
 
 
 
@@ -440,6 +680,15 @@ export function useQuestionnaire({
 
   // Navigation handlers
   const handlePrevious = () => {
+    if (isLiveFullMode.value) {
+      if (liveStepIndex.value > 0) {
+        liveStepIndex.value--
+        panelAnimationKey.value++
+        validationMessage.value = ''
+        persistState()
+      }
+      return
+    }
     if (currentQuestion.value > 0) {
       currentQuestion.value--
       panelAnimationKey.value++
@@ -447,7 +696,66 @@ export function useQuestionnaire({
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (isLiveFullMode.value) {
+      if (!isCurrentLiveGroupValid.value) {
+        validationMessage.value = '請完成這個步驟的必填項目後再繼續。'
+        focusFirstInput()
+        return
+      }
+      validationMessage.value = ''
+
+      // If completing basic step, fetch canonical live plan
+      if (liveStepIndex.value === 0) {
+        const gender: 'MALE' | 'FEMALE' = answers.value.basic?.sex === 'female' ? 'FEMALE' : 'MALE'
+        if (!rawPlan.value || planLoadedGender.value !== gender) {
+          const ok = await fetchLivePlan(gender)
+          if (!ok) return
+        }
+        liveStepIndex.value++
+        panelAnimationKey.value++
+        persistState()
+        return
+      }
+
+      // If moving through question groups
+      if (liveStepIndex.value < totalLiveGroups.value) {
+        liveStepIndex.value++
+        panelAnimationKey.value++
+        persistState()
+        return
+      }
+
+      // If reaching complete step
+      if (liveStepIndex.value === totalLiveGroups.value) {
+        liveStepIndex.value++
+        panelAnimationKey.value++
+        persistState()
+        return
+      }
+
+      // If submitting from complete step
+      if (isLiveCompleteStep.value) {
+        const payload = adaptTargetAnswersToSubmission(null, 'full', rawAnswers.value)
+        isSubmitting.value = true
+        validationMessage.value = ''
+        try {
+          const res = await liveQuestionnaireService.submitAnswers(payload)
+          if (res.submissionId) {
+            setSubmissionId(res.submissionId)
+          }
+          isSubmitting.value = false
+          persistState()
+          runAnalysis(false)
+        } catch (err: any) {
+          isSubmitting.value = false
+          validationMessage.value = err?.message || '問卷提交失敗，請檢查網路連線或稍後再試。'
+        }
+        return
+      }
+      return
+    }
+
     const step = currentStep.value
     if (!isStepValid(step)) {
       validationMessage.value = '請完成這個步驟，或選擇「目前不知道」。'
@@ -462,7 +770,7 @@ export function useQuestionnaire({
       return
     }
 
-    // Submit step
+    // Submit step for supplement / mock mode
     persistState()
     isSubmitting.value = true
     later(() => {
@@ -470,6 +778,17 @@ export function useQuestionnaire({
       runAnalysis(false)
     }, 450)
   }
+
+  const retryLoadPlan = async () => {
+    const gender: 'MALE' | 'FEMALE' = answers.value.basic?.sex === 'female' ? 'FEMALE' : 'MALE'
+    const ok = await fetchLivePlan(gender)
+    if (ok) {
+      liveStepIndex.value = 1
+      panelAnimationKey.value++
+      persistState()
+    }
+  }
+
 
 
 
@@ -597,10 +916,33 @@ export function useQuestionnaire({
     questionHeaderInfo,
     isCurrentStepValid,
 
+    // Live Integration State
+    isLiveFullMode,
+    isPlanLoading,
+    planError,
+    isLivePlanStep,
+    isLiveCompleteStep,
+    liveStepIndex,
+    currentLiveGroupIndex,
+    totalLiveGroups,
+    currentLiveGroupQuestions,
+    rawAnswers,
+
+    // Live Handlers
+    setLiveSingle,
+    setLiveNum,
+    toggleLiveNumUnknown,
+    setLiveText,
+    toggleLiveMulti,
+    updateLiveDetail,
+    isLiveMultiSelected,
+    retryLoadPlan,
+
     // Loading-2
     analysisStatusText,
     isAnalysisChanging,
     isAnalysisErrorVisible,
+
 
     // Demo 控制面板
     isDemoPanelOpen,

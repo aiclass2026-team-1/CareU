@@ -40,6 +40,25 @@ const {
   isAnalysisChanging,
   isAnalysisErrorVisible,
   isDemoPanelOpen,
+
+  // Live Integration State & Handlers
+  isLiveFullMode,
+  isPlanLoading,
+  planError,
+  isLivePlanStep,
+  isLiveCompleteStep,
+  liveStepIndex,
+  currentLiveGroupQuestions,
+  rawAnswers,
+  setLiveSingle,
+  setLiveNum,
+  toggleLiveNumUnknown,
+  setLiveText,
+  toggleLiveMulti,
+  updateLiveDetail,
+  isLiveMultiSelected,
+  retryLoadPlan,
+
   updateBasicField,
   setSingleChoice,
   updateWaist,
@@ -59,6 +78,7 @@ const {
   toggleDemoPanel,
   handleDemoAction,
 } = useQuestionnaire({
+
   networkBackRef,
   appRef,
   questionPanelRef,
@@ -113,8 +133,20 @@ const onPointerLeave = () => {
               aria-live="polite"
               :key="panelAnimationKey"
             >
+              <!-- Plan Loading State -->
+              <div v-if="isPlanLoading" class="plan-loading-state" style="text-align: center; padding: 40px 0;">
+                <p style="color: var(--muted); font-size: 1.1rem;">正在取得問卷題目，請稍候...</p>
+              </div>
+
+              <!-- Plan Error State -->
+              <div v-else-if="planError" class="plan-error-state" style="text-align: center; padding: 30px 0;">
+                <h2 style="color: #a6403a; margin-bottom: 12px;">載入問卷題目時發生問題</h2>
+                <p style="color: var(--muted); margin-bottom: 24px;">{{ planError }}</p>
+                <button class="button primary" type="button" @click="retryLoadPlan">重新載入問卷</button>
+              </div>
+
               <!-- Step 1: Basic (Full Mode only) -->
-              <div v-if="currentStep === 'basic'">
+              <div v-else-if="currentStep === 'basic'">
                 <h2 id="activeQuestion" tabindex="-1">先提供幾項基本資料</h2>
                 <div class="field-grid three basic-grid">
                   <label class="field">
@@ -181,8 +213,108 @@ const onPointerLeave = () => {
               </div>
 
 
+
+              <!-- Live Full Plan Dynamic Steps -->
+              <div v-else-if="isLiveFullMode && isLivePlanStep">
+                <div v-for="q in currentLiveGroupQuestions" :key="q.id" class="question-block" style="margin-bottom: 28px;">
+                  <h2 id="activeQuestion" tabindex="-1" style="margin-bottom: 12px;">
+                    {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
+                  </h2>
+                  <p v-if="q.scoringDesc" style="color: var(--muted); font-size: 0.9rem; margin-top: -6px; margin-bottom: 16px;">
+                    {{ q.scoringDesc }}
+                  </p>
+
+                  <!-- Single Choice -->
+                  <div v-if="q.controlType === 'single_choice'" class="option-grid" role="radiogroup">
+                    <button
+                      v-for="opt in q.options"
+                      :key="opt.key"
+                      type="button"
+                      role="radio"
+                      :aria-checked="rawAnswers[q.id]?.value === opt.key"
+                      class="option"
+                      :class="{ 'is-checked': rawAnswers[q.id]?.value === opt.key }"
+                      @click="setLiveSingle(q.id, opt.key)"
+                    >
+                      <span class="option-mark" aria-hidden="true"></span>
+                      <span>{{ opt.label }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Number Control -->
+                  <div v-if="q.controlType === 'number'" class="field-grid measurement-fields single">
+                    <div class="field-block">
+                      <span class="field-label" v-if="q.numericConfig?.unit">{{ q.numericConfig.unit }}</span>
+                      <input
+                        class="text-input"
+                        inputmode="decimal"
+                        type="number"
+                        :min="q.numericConfig?.min"
+                        :max="q.numericConfig?.max"
+                        :step="q.numericConfig?.step || 0.1"
+                        :disabled="rawAnswers[q.id]?.value === q.numericConfig?.unknownOption?.key"
+                        :value="rawAnswers[q.id]?.value === q.numericConfig?.unknownOption?.key ? '' : (rawAnswers[q.id]?.value ?? '')"
+                        @input="e => setLiveNum(q.id, (e.target as HTMLInputElement).value)"
+                        placeholder="請輸入數值"
+                      />
+                      <button
+                        v-if="q.numericConfig?.unknownOption"
+                        type="button"
+                        role="checkbox"
+                        :aria-checked="rawAnswers[q.id]?.value === q.numericConfig.unknownOption.key"
+                        class="choice-chip unknown-row"
+                        :class="{ 'is-checked': rawAnswers[q.id]?.value === q.numericConfig.unknownOption.key }"
+                        @click="toggleLiveNumUnknown(q.id, q.numericConfig.unknownOption.key)"
+                      >
+                        <span>{{ q.numericConfig.unknownOption.label }}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Text Control -->
+                  <div v-if="q.controlType === 'text'" class="field-grid measurement-fields single">
+                    <div class="field-block">
+                      <input
+                        class="text-input"
+                        type="text"
+                        :value="rawAnswers[q.id]?.value ?? ''"
+                        @input="e => setLiveText(q.id, (e.target as HTMLInputElement).value)"
+                        placeholder="請輸入內容 (如：120/80)"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Multi Choice Control -->
+                  <div v-if="q.controlType === 'multi_choice'" class="option-grid" role="group">
+                    <template v-for="opt in q.options" :key="opt.key">
+                      <button
+                        type="button"
+                        role="checkbox"
+                        :aria-checked="isLiveMultiSelected(q.id, opt.key)"
+                        class="option check-option"
+                        :class="{ 'is-checked': isLiveMultiSelected(q.id, opt.key) }"
+                        @click="toggleLiveMulti(q.id, opt.key, opt.exclusive)"
+                      >
+                        <span class="option-mark" aria-hidden="true"></span>
+                        <span>{{ opt.label }}</span>
+                      </button>
+                      <label v-if="opt.detailInput && isLiveMultiSelected(q.id, opt.key)" class="field other-field conditional-field">
+                        <input
+                          class="text-input"
+                          type="text"
+                          :placeholder="opt.detailInput.placeholder || '請輸入說明'"
+                          :value="rawAnswers[q.id]?.detailText || ''"
+                          @input="e => updateLiveDetail(q.id, (e.target as HTMLInputElement).value)"
+                        />
+                      </label>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
               <!-- Step: Diet -->
               <div v-else-if="currentStep === 'diet'">
+
                 <h2 id="activeQuestion" tabindex="-1">每日蔬果攝取是否充足？</h2>
                 <div class="option-grid" role="radiogroup" aria-labelledby="activeQuestion">
                   <button
@@ -434,7 +566,7 @@ const onPointerLeave = () => {
                 class="button secondary"
                 id="previousQuestion"
                 type="button"
-                :disabled="currentQuestion === 0"
+                :disabled="isLiveFullMode ? liveStepIndex === 0 : currentQuestion === 0"
                 @click="handlePrevious"
               >
                 上一題
@@ -444,12 +576,13 @@ const onPointerLeave = () => {
                 id="nextQuestion"
                 type="button"
                 :class="{ 'is-busy': isSubmitting }"
-                :disabled="!isCurrentStepValid || isSubmitting"
+                :disabled="!isCurrentStepValid || isSubmitting || isPlanLoading"
                 @click="handleNext"
               >
-                {{ currentStep === 'complete' ? '送出問卷' : '下一步' }}
+                {{ (isLiveFullMode ? isLiveCompleteStep : currentStep === 'complete') ? '送出問卷' : '下一步' }}
               </button>
             </div>
+
 
           </div>
         </div>
