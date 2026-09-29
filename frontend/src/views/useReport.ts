@@ -1,5 +1,8 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+
+import { useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { getLiveReportData } from '@/utils/flowContext'
 import {
   type Category,
   type Product,
@@ -10,6 +13,11 @@ import {
 } from './reportData'
 
 export function useReport() {
+  const route = useRoute()
+  const isPreview = computed(() => {
+    return route?.path ? route.path.startsWith('/preview/') : false
+  })
+
   const catalog = createCatalog()
   const profiles = createProfiles(catalog)
 
@@ -42,9 +50,93 @@ export function useReport() {
   // Member logout confirmation modal state
   const isMemberModalOpen = ref<boolean>(false)
 
+  const liveReport = computed(() => {
+    if (isPreview.value) return null
+    return getLiveReportData()
+  })
+
+  const liveProfile = computed<Profile | null>(() => {
+    if (!liveReport.value || !Array.isArray(liveReport.value.priorities) || liveReport.value.priorities.length === 0) {
+      return null
+    }
+
+    const priorities = liveReport.value.priorities
+    const results: ResultItem[] = []
+    const productDirections: string[] = []
+
+    priorities.forEach((p: any, idx: number) => {
+      const catId = String(p.efficacyId || idx + 1)
+      const rawScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : null
+      results.push({
+        categoryId: catId,
+        score: rawScore !== null ? rawScore : 0,
+        summary: p.description || `${p.efficacyName} 是維持良好健康狀態的重要方向。`,
+        evidence: [
+          { label: '評估指標', value: p.efficacyName },
+          { label: '評估得分', value: rawScore !== null ? `${rawScore}分` : '資料評估中' },
+        ],
+        reason: p.exclusionNote || p.description || '依據問卷數據綜合評估。',
+      })
+
+
+      // Inject category if not present
+      if (!catalog.categories.find(c => c.id === catId)) {
+        catalog.categories.push({ id: catId, name: p.efficacyName })
+      }
+
+      // Inject product recommendations
+      if (Array.isArray(p.recommendations) && p.recommendations.length > 0) {
+        productDirections.push(catId)
+        catalog.candidates[catId] = []
+        p.recommendations.forEach((rec: any) => {
+          const pid = String(rec.productId)
+          catalog.candidates[catId].push(pid)
+          if (!catalog.products[pid]) {
+            catalog.products[pid] = {
+              id: pid,
+              name: rec.productName,
+              ingredients: rec.efficacyClaim || '專利有效成分',
+              license: '',
+              approvalDate: '',
+              applicant: '',
+              status: '',
+              category: p.efficacyName,
+              warnings: rec.warnings || null,
+              precautions: rec.precautions || '',
+              mechanismTag: rec.mechanismTag || null,
+              evidenceScore: rec.evidenceScore || 3,
+              sourceFlags: { pregnant: false, breastfeeding: false, allergy: false },
+              claims: {},
+              price: 980,
+              unitPrice: 980,
+              purchaseQuantity: 1,
+              isDemoPrice: false,
+            }
+          }
+        })
+      }
+    })
+
+    return {
+      id: 'live',
+      name: '個人化健康分析',
+      source: '正式健康問卷與整合評估',
+      summaryPublic: `已為您完成健康問卷評估。依據您填寫的生活與身體資料，發現 ${results.length} 項需要優先關注的保健方向。`,
+      summaryMember: '已解鎖完整個人化報告與保健品建議方案。',
+      results,
+      missing: [],
+      productDirections,
+      withheld: {},
+    }
+  })
+
   const currentProfile = computed<Profile>(() => {
+    if (liveProfile.value) {
+      return liveProfile.value
+    }
     return profiles[activeProfileKey.value] || profiles.a
   })
+
 
   const currentSummary = computed<string>(() => {
     return isMember.value
@@ -85,7 +177,15 @@ export function useReport() {
       }
     })
   }
-  resetSelection()
+
+  watch(
+    () => currentProfile.value,
+    () => {
+      resetSelection()
+    },
+    { immediate: true }
+  )
+
 
   function uniqueSelected(): Product[] {
     const ids = Array.from(

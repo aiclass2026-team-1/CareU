@@ -74,3 +74,70 @@ export function clearSubmissionId() {
   } catch (_) {}
   delete memoryStore[SUBMISSION_ID_KEY]
 }
+
+const ASSESSMENT_ID_KEY = 'careu-assessment-id'
+const LIVE_REPORT_KEY = 'careu-live-report'
+
+export function setAssessmentId(assessmentId: string) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(ASSESSMENT_ID_KEY, assessmentId)
+      return
+    }
+  } catch (_) {}
+  memoryStore[ASSESSMENT_ID_KEY] = assessmentId
+}
+
+export function getAssessmentId(): string | null {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem(ASSESSMENT_ID_KEY)
+    }
+  } catch (_) {}
+  return memoryStore[ASSESSMENT_ID_KEY] ?? null
+}
+
+export function clearAssessmentId() {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(ASSESSMENT_ID_KEY)
+    }
+  } catch (_) {}
+  delete memoryStore[ASSESSMENT_ID_KEY]
+}
+
+export function setLiveReportData(report: any) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(LIVE_REPORT_KEY, JSON.stringify(report))
+      return
+    }
+  } catch (_) {}
+  memoryStore[LIVE_REPORT_KEY] = JSON.stringify(report)
+}
+
+export function getLiveReportData(): any | null {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const raw = sessionStorage.getItem(LIVE_REPORT_KEY)
+      if (!raw) return null
+      return JSON.parse(raw)
+    }
+  } catch (_) {}
+  const raw = memoryStore[LIVE_REPORT_KEY]
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch (_) {
+    return null
+  }
+}
+
+export function clearLiveReportData() {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(LIVE_REPORT_KEY)
+    }
+  } catch (_) {}
+  delete memoryStore[LIVE_REPORT_KEY]
+}

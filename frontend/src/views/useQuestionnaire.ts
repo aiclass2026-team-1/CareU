@@ -1,10 +1,18 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import type { Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { clearUploadFlow, setSubmissionId } from '@/utils/flowContext'
+import {
+  clearUploadFlow,
+  setSubmissionId,
+  getSubmissionId,
+  setAssessmentId,
+  setLiveReportData,
+} from '@/utils/flowContext'
 import { adaptTargetQuestionnairePlan, adaptTargetAnswersToSubmission } from '@/adapters/questionnaireAdapter'
 import { liveQuestionnaireService } from '@/services/liveQuestionnaireService'
+import { liveReportService } from '@/services/liveReportService'
 import type { TargetQuestionnairePlan, QuestionnaireAnswerValue } from '@/types'
+
 
 
 
@@ -812,6 +820,14 @@ export function useQuestionnaire({
     isAnalysisErrorVisible.value = false
     analysisStatusText.value = analysisStages[0].text
     showScreen('analysis')
+
+    // If live full mode with real submissionId, trigger finalize-health-report in parallel
+    const subId = getSubmissionId()
+    let finalizePromise: Promise<any> | null = null
+    if (isLiveFullMode.value && subId && !shouldFail) {
+      finalizePromise = liveReportService.finalizeHealthReport(subId)
+    }
+
     let elapsed = 0
     const count = shouldFail ? 2 : analysisStages.length
     for (let i = 1; i < count; i++) {
@@ -820,19 +836,37 @@ export function useQuestionnaire({
       later(() => changeAnalysisStatus(targetText), elapsed)
     }
     elapsed += analysisStages[count - 1].duration
-    later(() => {
+    later(async () => {
       if (shouldFail) {
         showAnalysisError()
-      } else {
-        changeAnalysisStatus('報告準備完成')
-        later(() => {
-          clearUploadFlow()
-          clearSessionState()
-          router.replace('/report')
-        }, 650)
+        return
       }
+
+      if (finalizePromise) {
+        try {
+          const reportResult = await finalizePromise
+          if (reportResult?.assessmentId) {
+            setAssessmentId(reportResult.assessmentId)
+          }
+          if (reportResult) {
+            setLiveReportData(reportResult)
+          }
+        } catch (err: any) {
+          console.error('Finalize health report error:', err)
+          showAnalysisError()
+          return
+        }
+      }
+
+      changeAnalysisStatus('報告準備完成')
+      later(() => {
+        clearUploadFlow()
+        clearSessionState()
+        router.replace('/report')
+      }, 650)
     }, elapsed)
   }
+
 
   const handleRetryAnalysis = () => {
     runAnalysis(false)
