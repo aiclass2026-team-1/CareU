@@ -335,16 +335,23 @@
 ## 7. Phase 7｜後端整合合約與架構基準（Data Model & Backend Integration Contract Baseline）
 
 - **完成日期**：2026-09-29
-- **Git Checkpoint**：待本批 Commit (`feat: prepare questionnaire contract adapter`)
-- **證據來源**：`docs/specs/backend-integration-contracts.md`、`frontend/src/types/index.ts`、`frontend/src/adapters/questionnaireAdapter.ts`
+- **Git Checkpoint**：`4ba0ce8`（含 `642d0233` 與 `4ba0ce8` 兩個 Checkpoint）
+- **證據來源**：`docs/specs/backend-integration-contracts.md`、`frontend/src/types/index.ts`、`frontend/src/adapters/questionnaireAdapter.ts`、`frontend/src/services/questionnaireService.ts`、`frontend/src/services/mockQuestionnaireService.ts`
 - **狀態標籤**：`CONFIRMED` (Type-check PASS, Build PASS, Contract Review PASS)
 
-### 7.1 階段目標與成果 (Batch 1, Batch 2, Batch 3 & Batch 4)
+### 7.1 階段目標與成果 (Batch 1 ~ Batch 6 Preflight)
 1. **Backend Integration Contract Document**：建立 `docs/specs/backend-integration-contracts.md`，明確規範 CURRENT vs TARGET 邊界、後端擁有的 Assessment Orchestration 與 Dynamic Questionnaire Selection、Formula 2 雙軌加權法規則（60% Lab + 40% Survey）、Parse Core 11 與 Efficacy Metric Set 之區別、Auth 邊界、`health_food_products` 現況及 Questionnaire Runtime Compatibility Spike 發現。
 2. **TypeScript Contract Baseline & Questionnaire Adapter**：建立 `frontend/src/types/index.ts` 與 `frontend/src/adapters/questionnaireAdapter.ts`。擴充 `TargetQuestionnairePlan`、`TargetQuestionnaireItemRuntime` 與 `TargetQuestionnaireSubmissionPayload`，完整支援 `controlType`、`numericConfig`、`required`、`groupKey`、多選與互斥選項中繼資料。
 3. **Fixture-backed Questionnaire Runtime Integration (Batch 4)**：建立 `frontend/src/views/ContractQuestionnairePreview.vue` 與 `frontend/src/views/useContractQuestionnairePreview.ts`，並於 `QuestionnaireView.vue` 加入 `?source=contract-fixture` 預覽路由判斷，實作經由轉型與 ViewModel 驅動介面互動、分組導航、必填校驗、多選/互斥/數值/不確定輸入，最終產出合規之 `TargetQuestionnaireSubmissionPayload`（Human Acceptance PASS；正式問卷運行期與正式路由保持 100% 不變）。
-4. **Product Schema Verification**：完成生產 `public.health_food_products` 之 18 欄位與 PK (`id`) 驗證，並記錄 RLS 目前處於 disabled 狀態。
-5. **推薦引擎狀態標記**：記錄商品推薦後端功能目前為 `IN_PROGRESS / NOT_YET_VERIFIED`。
+4. **Questionnaire Service Layer Preparation & Mock Provider Preflight (Batch 6 Preflight)**：建立 `frontend/src/services/questionnaireService.ts` 與 `frontend/src/services/mockQuestionnaireService.ts`。定義抽象 `QuestionnaireService` 介面 (`getPlan`, `submitAnswers: Promise<void>`) 與 `MockQuestionnaireService`（利用 fixture 提供無網路模擬）。`submitAnswers` 定義為 `Promise<void>` 避免推測性 persistence/ID 欄位。預覽 Composable `useContractQuestionnairePreview.ts` 接入 `mockQuestionnaireService`。
+5. **Phase 7 Status Breakdown**：
+   - Phase 7 Batch 4 (Contract Fixture Runtime) = `COMPLETE`
+   - Phase 7 Batch 5 (Questionnaire Backend Plan Builder / API) = `IN_PROGRESS / WAITING ON 組員 A`
+   - Phase 7 Batch 6 Preflight (Questionnaire Service Layer Preparation) = `COMPLETE`
+   - Phase 7 Batch 6 (Live Questionnaire Integration) = `NOT STARTED / WAITING_FOR_BATCH_5`
+   - Phase 7 Batch 7 (Assessment Orchestrator) = `NOT STARTED`
+   - Phase 7 Batch 8 (Report / Recommendation Live Integration) = `NOT STARTED`
+   - Phase 7 overall = `IN_PROGRESS`
 
 | 階段 / 批次 | 核心產出 / 範圍 | 最新 Git Checkpoint | 狀態與驗收等級 |
 | :--- | :--- | :---: | :--- |
