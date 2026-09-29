@@ -40,11 +40,11 @@ Implementation 完成
 | 項目 | 當前狀態事實 | 依據來源 |
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
-| **當前階段 (Current Phase)** | **Phase 7｜Data Model & Backend Integration（進行中 IN PROGRESS，Batch 6 Preflight 已完成，等待 Batch 5 後端完成）** | `docs/specs/backend-integration-contracts.md`, Git status |
-| **最近完成之功能批次** | **Phase 7 Batch 6 Preflight：Questionnaire Service Layer Preparation & Mock Provider Seam（建立 `questionnaireService.ts` 與 `mockQuestionnaireService.ts` 介面與 Mock 實作，`submitAnswers` 定義為 `Promise<void>`）** | 人工驗收 PASS, Type-check / Build PASS |
-| **最近已提交功能 Checkpoint** | `4ba0ce8`（含 `642d023` 與 `4ba0ce8` 兩個 Checkpoint） | Git HEAD / 當前批次基準 |
-| **執行中功能工作** | **Phase 7 契約與架構對齊（Batch 5 Backend 進行中，等待組員 A 完成）** | 專案進度規範 |
-| **下一批遷移 Scope** | **Phase 7 Batch 6 Live Questionnaire Integration（待 Batch 5 完成後授權）** | Repo 權威文件盤點結果 |
+| **當前階段 (Current Phase)** | **Phase 7｜Data Model & Backend Integration（Questionnaire Formalization 人工驗收 HUMAN PASS）** | `docs/specs/backend-integration-contracts.md`, Git status |
+| **最近完成之功能批次** | **Phase 7 Questionnaire Formalization & Live Integration：Dual Path Live E2E（Path A Full 與 Path B Upload/Supplement 完整走完至 Live Report），動態混合分頁、Q27 複合式血壓與未知選項互斥、UI 狀態優化（PREPARING 藍色動態指示、腰圍/血壓輸入焦點與 cm/mmHg 單位處理）全面通過驗收。** | 人工驗收 PASS, 49/49 測試 PASS, Type-check / Build PASS |
+| **最近已提交功能 Checkpoint** | `5f93fca`（本批待提交 Checkpoint：`feat: finalize live questionnaire integration`） | Git HEAD / 當前批次基準 |
+| **執行中功能工作** | **Phase 7 結算與後續架構收尾預備（準備進入 Supplement 測試矩陣、Function 整合與 Vercel E2E）** | 專案進度規範 |
+| **下一批遷移 Scope** | **Supplement 測試矩陣與 Function Consolidation / Security Preflight** | Repo 權威文件盤點結果 |
 
 ---
 

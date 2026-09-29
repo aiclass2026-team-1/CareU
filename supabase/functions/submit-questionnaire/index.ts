@@ -138,11 +138,11 @@ if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
     try {
       return await handleSubmitQuestionnaire(req)
     } catch (err: any) {
+      console.error('Unhandled submit-questionnaire exception:', err)
       return new Response(
         JSON.stringify({
           error: 'UNHANDLED_EXCEPTION',
-          message: err?.message || String(err),
-          stack: err?.stack,
+          message: '系統發生未預期的錯誤，請稍後再試。',
         }),
         {
           status: 500,

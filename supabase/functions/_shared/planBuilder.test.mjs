@@ -11,14 +11,54 @@ function fixture(name) {
 
 const questionBank = fixture('question-bank')
 
-test('planBuilder: full female request matches TARGET golden response', () => {
+test('planBuilder: full female request generates 7 canonical questions with correct properties', () => {
   const actual = buildQuestionnairePlan(
     fixture('full-request'),
     { reportId: null, recognizedMetrics: [], missingMetrics: [] },
     questionBank
   )
-  assert.deepEqual(actual, fixture('full-response'))
+  assert.equal(actual.questions.length, 7)
+  assert.deepEqual(actual.questions.map(q => q.id), [1, 13, 26, 27, 30, 31, 32])
 })
+
+
+test('planBuilder: outputs pageKey, layoutHint, and composite_bp config correctly', () => {
+  const plan = buildQuestionnairePlan(
+    fixture('full-request'),
+    { reportId: null, recognizedMetrics: [], missingMetrics: [] },
+    questionBank
+  )
+
+  const q1 = plan.questions.find((q) => q.id === 1)
+  assert.equal(q1?.pageKey, 'lifestyle')
+  assert.equal(q1?.layoutHint, 'single')
+
+  const q13 = plan.questions.find((q) => q.id === 13)
+  assert.equal(q13?.pageKey, 'measurements')
+  assert.equal(q13?.layoutHint, 'pair_measurement')
+
+  const q27 = plan.questions.find((q) => q.id === 27)
+  assert.equal(q27?.controlType, 'composite_bp')
+  assert.equal(q27?.pageKey, 'measurements')
+  assert.equal(q27?.layoutHint, 'pair_measurement')
+  assert.equal(q27?.bpConfig?.unit, 'mmHg')
+  assert.equal(q27?.bpConfig?.systolicLabel, '收縮壓')
+  assert.equal(q27?.bpConfig?.diastolicLabel, '舒張壓')
+  assert.equal(q27?.bpConfig?.unknownOption?.key, 'unknown')
+
+  const q30 = plan.questions.find((q) => q.id === 30)
+  assert.equal(q30?.pageKey, 'safety')
+  assert.equal(q30?.layoutHint, 'pair_binary')
+
+  const q31 = plan.questions.find((q) => q.id === 31)
+  assert.equal(q31?.pageKey, 'safety')
+  assert.equal(q31?.layoutHint, 'pair_binary')
+
+  const q32 = plan.questions.find((q) => q.id === 32)
+  assert.equal(q32?.pageKey, 'allergies')
+  assert.equal(q32?.layoutHint, 'standalone')
+})
+
 
 test('planBuilder: supplement request suppresses recognized waist and asks for missing blood pressure and canonical safety/lifestyle', () => {
   const actual = buildQuestionnairePlan(

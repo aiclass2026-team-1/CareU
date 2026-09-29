@@ -55,7 +55,11 @@ function buildOptions(
   question: QuestionBankRow,
   presentation: PresentationConfig['items'][string]
 ): TargetQuestionnairePlanOption[] {
-  if (presentation.controlType === 'number' || presentation.controlType === 'text') {
+  if (
+    presentation.controlType === 'number' ||
+    presentation.controlType === 'text' ||
+    presentation.controlType === 'composite_bp'
+  ) {
     return []
   }
 
@@ -121,7 +125,6 @@ export function buildQuestionnairePlan(
       }
     }
 
-
     const item: TargetQuestionnaireItemRuntime = {
       id: question.id,
       efficacyId: question.efficacy_id,
@@ -132,10 +135,13 @@ export function buildQuestionnairePlan(
       controlType: presentation.controlType,
       options: buildOptions(question, presentation),
       ...(presentation.numericConfig ? { numericConfig: presentation.numericConfig } : {}),
+      ...(presentation.bpConfig ? { bpConfig: presentation.bpConfig } : {}),
       required: presentation.required,
       groupKey: presentation.groupKey,
+      pageKey: presentation.pageKey || presentation.groupKey,
+      layoutHint: presentation.layoutHint || 'single',
       applicableGender: question.applicable_gender,
-      ...(question.auto_map_field ? { autoMapField: question.auto_map_field } : {}),
+      ...(question.autoMapField ? { autoMapField: question.autoMapField } : question.auto_map_field ? { autoMapField: question.auto_map_field } : {}),
       isActive: question.is_active,
     }
 

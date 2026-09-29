@@ -184,54 +184,106 @@ export function useQuestionnaire({
     return adaptTargetQuestionnairePlan(rawPlan.value)
   })
 
-  const liveGroupKeys = computed(() => {
-    const keys: string[] = []
-    livePlanViewModel.value.questions.forEach((q) => {
-      const gk = q.groupKey || 'default'
-      if (!keys.includes(gk)) keys.push(gk)
+  // Dynamic Pagination (Hybrid Architecture: Backend pageKey/layoutHint -> Frontend filtered page grouping)
+  const livePages = computed<Array<{
+    key: string
+    layoutHint: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
+    questions: typeof livePlanViewModel.value.questions
+  }>>(() => {
+    const questions = livePlanViewModel.value.questions
+    if (!questions || questions.length === 0) return []
+
+    const pageMap = new Map<string, typeof questions>()
+    questions.forEach((q) => {
+      const pk = q.pageKey || q.groupKey || 'default'
+      const existing = pageMap.get(pk) || []
+      existing.push(q)
+      pageMap.set(pk, existing)
     })
-    return keys
+
+    const list: Array<{
+      key: string
+      layoutHint: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
+      questions: typeof questions
+    }> = []
+
+    pageMap.forEach((qList, pk) => {
+      if (qList.length === 0) return
+      let layoutHint: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone' = 'single'
+      if (qList.some((q) => q.layoutHint === 'pair_measurement')) {
+        layoutHint = 'pair_measurement'
+      } else if (qList.some((q) => q.layoutHint === 'pair_binary')) {
+        layoutHint = 'pair_binary'
+      } else if (qList.some((q) => q.layoutHint === 'standalone')) {
+        layoutHint = 'standalone'
+      } else if (qList[0]?.layoutHint) {
+        layoutHint = qList[0].layoutHint
+      }
+
+      list.push({
+        key: pk,
+        layoutHint,
+        questions: qList,
+      })
+    })
+
+    return list
   })
 
-  const totalLiveGroups = computed(() => liveGroupKeys.value.length)
-  const currentLiveGroupIndex = computed(() => {
+  const totalLivePages = computed(() => livePages.value.length)
+  const currentLivePageIndex = computed(() => {
     if (isLiveFullMode.value) {
       return Math.max(0, liveStepIndex.value - 1)
     }
     return liveStepIndex.value
   })
-  const currentLiveGroupKey = computed(() => liveGroupKeys.value[currentLiveGroupIndex.value] || 'default')
-  const currentLiveGroupQuestions = computed(() => {
-    return livePlanViewModel.value.questions.filter(
-      (q) => (q.groupKey || 'default') === currentLiveGroupKey.value
+  const currentLivePage = computed(() => {
+    return livePages.value[currentLivePageIndex.value] || null
+  })
+  const currentLivePageQuestions = computed(() => {
+    return currentLivePage.value?.questions || []
+  })
+
+  // Retain compatibility alias for template/tests
+  const totalLiveGroups = computed(() => totalLivePages.value)
+  const currentLiveGroupIndex = computed(() => currentLivePageIndex.value)
+  const currentLiveGroupQuestions = computed(() => currentLivePageQuestions.value)
+
+  // Progress State Machine: PREPARING -> QUESTIONNAIRE -> COMPLETE -> ANALYSIS
+  const isPreparing = computed(() => {
+    return isLiveMode.value && isPlanLoading.value && (!rawPlan.value || totalLivePages.value === 0)
+  })
+
+  const isBasicStep = computed(() => {
+    return (
+      isLiveFullMode.value &&
+      currentStep.value === 'basic' &&
+      !isPlanLoading.value
     )
   })
 
   const isLivePlanStep = computed(() => {
-    if (!rawPlan.value || isPlanLoading.value || totalLiveGroups.value === 0) {
-      return false
-    }
+    if (isPreparing.value) return false
     if (isLiveFullMode.value) {
-      return liveStepIndex.value > 0 && liveStepIndex.value <= totalLiveGroups.value
+      return liveStepIndex.value > 0 && liveStepIndex.value <= totalLivePages.value
     }
     if (isLiveSupplementMode.value) {
-      return liveStepIndex.value < totalLiveGroups.value
+      return liveStepIndex.value < totalLivePages.value
     }
     return false
   })
 
   const isLiveCompleteStep = computed(() => {
-    if (!rawPlan.value || isPlanLoading.value || totalLiveGroups.value === 0) {
-      return false
-    }
+    if (isPreparing.value) return false
     if (isLiveFullMode.value) {
-      return liveStepIndex.value > totalLiveGroups.value
+      return liveStepIndex.value > totalLivePages.value
     }
     if (isLiveSupplementMode.value) {
-      return liveStepIndex.value >= totalLiveGroups.value
+      return liveStepIndex.value >= totalLivePages.value
     }
     return false
   })
+
 
 
 
@@ -333,15 +385,20 @@ export function useQuestionnaire({
   })
 
   const progressPercent = computed<number>(() => {
-    if (isLiveFullMode.value) {
-      const totalSteps = 1 + totalLiveGroups.value + 1 // basic + groups + complete
-      const current = liveStepIndex.value + 1
-      return Math.min(100, Math.round((current / totalSteps) * 100))
-    }
-    if (isLiveSupplementMode.value) {
-      const totalSteps = Math.max(1, totalLiveGroups.value + 1) // groups + complete
-      const current = liveStepIndex.value + 1
-      return Math.min(100, Math.round((current / totalSteps) * 100))
+    if (isLiveMode.value) {
+      if (isPreparing.value) {
+        return 0
+      }
+      if (isLiveFullMode.value) {
+        const totalSteps = 1 + totalLivePages.value + 1 // basic + pages + complete
+        const current = liveStepIndex.value + 1
+        return Math.min(100, Math.round((current / totalSteps) * 100))
+      }
+      if (isLiveSupplementMode.value) {
+        const totalSteps = totalLivePages.value + 1 // pages + complete
+        const current = liveStepIndex.value + 1
+        return Math.min(100, Math.round((current / totalSteps) * 100))
+      }
     }
     const progressOrder = currentMode.value === 'supplement' ? supplementProgressOrder : fullProgressOrder
     const step = currentStep.value
@@ -350,6 +407,13 @@ export function useQuestionnaire({
   })
 
   const questionHeaderInfo = computed(() => {
+    if (isPreparing.value) {
+      return {
+        eyebrow: isLiveSupplementMode.value ? '資料補充' : '健康問卷',
+        title: isLiveSupplementMode.value ? '我們已讀取你提供的體檢資料' : '先從幾個日常問題開始',
+        intro: isLiveSupplementMode.value ? '正在取得需補充的問卷題目，請稍候...' : '正在取得問卷題目，請稍候...',
+      }
+    }
     if (isLiveSupplementMode.value) {
       if (isLiveCompleteStep.value) {
         return {
@@ -359,7 +423,7 @@ export function useQuestionnaire({
         }
       }
       return {
-        eyebrow: `資料補充 — 階段 ${currentLiveGroupIndex.value + 1}/${totalLiveGroups.value}`,
+        eyebrow: `資料補充 — 階段 ${currentLivePageIndex.value + 1}/${totalLivePages.value}`,
         title: '我們已讀取你提供的體檢資料',
         intro: '接下來只需要補充幾項資訊，幫助我們更完整地了解你的日常狀況。',
       }
@@ -380,7 +444,7 @@ export function useQuestionnaire({
         }
       }
       return {
-        eyebrow: `健康問卷 — 階段 ${currentLiveGroupIndex.value + 1}/${totalLiveGroups.value}`,
+        eyebrow: `健康問卷 — 階段 ${currentLivePageIndex.value + 1}/${totalLivePages.value}`,
         title: '健康與生活型態對應問卷',
         intro: '請根據您近期的真實日常狀態與身體數值作答。',
       }
@@ -399,16 +463,14 @@ export function useQuestionnaire({
     }
   })
 
-
-
   const isCurrentLiveGroupValid = computed(() => {
-    if (liveStepIndex.value === 0) {
+    if (isLiveFullMode.value && liveStepIndex.value === 0) {
       return Boolean(answers.value.basic?.age && answers.value.basic?.sex && answers.value.basic?.weight)
     }
     if (isLiveCompleteStep.value) {
       return true
     }
-    for (const q of currentLiveGroupQuestions.value) {
+    for (const q of currentLivePageQuestions.value) {
       if (!q.required) continue
       const ans = rawAnswers.value[q.id]
       if (!ans) return false
@@ -428,6 +490,13 @@ export function useQuestionnaire({
         if (isNaN(numVal)) return false
         if (q.numericConfig?.min !== undefined && numVal < q.numericConfig.min) return false
         if (q.numericConfig?.max !== undefined && numVal > q.numericConfig.max) return false
+      } else if (q.controlType === 'composite_bp') {
+        if (ans.value === q.bpConfig?.unknownOption?.key || ans.value === 'unknown') {
+          continue
+        }
+        if (typeof ans.value !== 'string' || !ans.value.trim()) return false
+        const bpMatch = /^\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*$/.test(ans.value.trim())
+        if (!bpMatch) return false
       } else if (q.controlType === 'text') {
         if (typeof ans.value !== 'string' || !ans.value.trim()) return false
       } else {
@@ -436,6 +505,7 @@ export function useQuestionnaire({
     }
     return true
   })
+
 
   const isStepValid = (step: QuestionnaireStep): boolean => {
     if (isLiveMode.value) {
@@ -583,11 +653,109 @@ export function useQuestionnaire({
     validationMessage.value = ''
   }
 
+  // Composite BP helpers
+  const rawBpState = ref<Record<number, { sbp: string; dbp: string; isUnknown: boolean }>>({})
+
+  const updateBpSbp = (questionId: number, val: string) => {
+    const cur = rawBpState.value[questionId] || { sbp: '', dbp: '', isUnknown: false }
+    cur.sbp = val
+    cur.isUnknown = false
+    rawBpState.value[questionId] = { ...cur }
+
+    if (cur.sbp.trim() && cur.dbp.trim()) {
+      rawAnswers.value[questionId] = { value: `${cur.sbp.trim()}/${cur.dbp.trim()}` }
+    } else {
+      rawAnswers.value[questionId] = { value: '' }
+    }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const updateBpDbp = (questionId: number, val: string) => {
+    const cur = rawBpState.value[questionId] || { sbp: '', dbp: '', isUnknown: false }
+    cur.dbp = val
+    cur.isUnknown = false
+    rawBpState.value[questionId] = { ...cur }
+
+    if (cur.sbp.trim() && cur.dbp.trim()) {
+      rawAnswers.value[questionId] = { value: `${cur.sbp.trim()}/${cur.dbp.trim()}` }
+    } else {
+      rawAnswers.value[questionId] = { value: '' }
+    }
+    persistState()
+    validationMessage.value = ''
+  }
+
+  const toggleBpUnknownState = (questionId: number, unknownKey: string | number) => {
+    const cur = rawBpState.value[questionId] || { sbp: '', dbp: '', isUnknown: false }
+    const nextUnknown = !cur.isUnknown
+    rawBpState.value[questionId] = {
+      sbp: nextUnknown ? '' : cur.sbp,
+      dbp: nextUnknown ? '' : cur.dbp,
+      isUnknown: nextUnknown,
+    }
+    rawAnswers.value[questionId] = { value: nextUnknown ? String(unknownKey) : '' }
+    persistState()
+    validationMessage.value = ''
+  }
+
   const setLiveText = (questionId: number, text: string) => {
     rawAnswers.value[questionId] = { value: text }
     persistState()
     validationMessage.value = ''
   }
+
+  const handleNumericKeydown = (e: KeyboardEvent, allowDecimal = false) => {
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault()
+    }
+    if (!allowDecimal && e.key === '.') {
+      e.preventDefault()
+    }
+  }
+
+  const handleNumericPaste = (e: ClipboardEvent, allowDecimal = false) => {
+    e.preventDefault()
+    const text = e.clipboardData?.getData('text') || ''
+    let cleaned = ''
+    let hasDecimal = false
+    for (const char of text) {
+      if (char >= '0' && char <= '9') {
+        cleaned += char
+      } else if (allowDecimal && char === '.' && !hasDecimal) {
+        cleaned += char
+        hasDecimal = true
+      }
+    }
+    const target = e.target as HTMLInputElement
+    if (target) {
+      const start = target.selectionStart || 0
+      const end = target.selectionEnd || 0
+      const currentVal = target.value
+      target.value = currentVal.substring(0, start) + cleaned + currentVal.substring(end)
+      target.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+  }
+
+  const clearLiveNumUnknownIfChecked = (questionId: number, unknownKey?: string | number) => {
+    const cur = rawAnswers.value[questionId]?.value
+    if (unknownKey !== undefined && cur === unknownKey) {
+      rawAnswers.value[questionId] = { value: '' }
+      persistState()
+      validationMessage.value = ''
+    }
+  }
+
+  const clearBpUnknownIfChecked = (questionId: number) => {
+    const cur = rawBpState.value[questionId]
+    if (cur?.isUnknown) {
+      rawBpState.value[questionId] = { ...cur, isUnknown: false }
+      rawAnswers.value[questionId] = { value: '' }
+      persistState()
+      validationMessage.value = ''
+    }
+  }
+
 
   const toggleLiveMulti = (questionId: number, optKey: string | number, isExclusive?: boolean) => {
     const cur = rawAnswers.value[questionId] || { value: [] }
@@ -1037,26 +1205,40 @@ export function useQuestionnaire({
     isLiveMode,
     isLiveFullMode,
     isLiveSupplementMode,
+    isPreparing,
+    isBasicStep,
     isPlanLoading,
     planError,
     isLivePlanStep,
     isLiveCompleteStep,
     liveStepIndex,
+    currentLivePageIndex,
+    totalLivePages,
+    currentLivePage,
+    currentLivePageQuestions,
     currentLiveGroupIndex,
     totalLiveGroups,
     currentLiveGroupQuestions,
     rawAnswers,
-
+    rawBpState,
 
     // Live Handlers
     setLiveSingle,
     setLiveNum,
     toggleLiveNumUnknown,
+    updateBpSbp,
+    updateBpDbp,
+    toggleBpUnknownState,
     setLiveText,
     toggleLiveMulti,
     updateLiveDetail,
     isLiveMultiSelected,
     retryLoadPlan,
+    handleNumericKeydown,
+    handleNumericPaste,
+    clearLiveNumUnknownIfChecked,
+    clearBpUnknownIfChecked,
+
 
     // Loading-2
     analysisStatusText,

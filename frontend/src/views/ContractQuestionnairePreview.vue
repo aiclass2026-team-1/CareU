@@ -45,6 +45,29 @@ const {
                   </label>
                 </div>
 
+                <!-- Composite BP -->
+                <div v-if="q.controlType === 'composite_bp'" class="number-control-group">
+                  <div class="number-input-row">
+                    <input
+                      type="text"
+                      :disabled="rawAnswers[q.id]?.value === q.bpConfig?.unknownOption?.key || rawAnswers[q.id]?.value === 'unknown'"
+                      :value="rawAnswers[q.id]?.value === 'unknown' ? '' : (rawAnswers[q.id]?.value as any)"
+                      @input="e => setSingle(q.id, (e.target as HTMLInputElement).value)"
+                      placeholder="請輸入血壓 (例如 120/80)"
+                    />
+                    <span v-if="q.bpConfig?.unit" class="unit-label">{{ q.bpConfig.unit }}</span>
+                  </div>
+                  <label v-if="q.bpConfig?.unknownOption" class="unknown-label">
+                    <input
+                      type="checkbox"
+                      :checked="rawAnswers[q.id]?.value === q.bpConfig.unknownOption.key || rawAnswers[q.id]?.value === 'unknown'"
+                      @change="e => setSingle(q.id, (e.target as HTMLInputElement).checked ? (q.bpConfig!.unknownOption!.key || 'unknown') : '')"
+                    />
+                    <span>{{ q.bpConfig.unknownOption.label }}</span>
+                  </label>
+                </div>
+
+
                 <!-- Multi Choice -->
                 <div v-if="q.controlType === 'multi_choice'" class="options-list">
                   <div v-for="opt in q.options" :key="opt.key" class="multi-option-row">

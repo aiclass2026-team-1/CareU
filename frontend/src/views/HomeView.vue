@@ -158,8 +158,8 @@ const onHeroPointerLeave = () => {
               >
                 <span class="primary-cta__label">從體檢資料開始瞭解</span>
               </button>
-              <p class="file-hint">支援 PDF、JPG、PNG，可選擇多個檔案</p>
               <p class="privacy-note">
+
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4h-2V7h2z"

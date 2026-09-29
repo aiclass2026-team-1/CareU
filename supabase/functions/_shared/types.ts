@@ -20,7 +20,17 @@ export interface TargetNumericConfig {
   }
 }
 
-export type QuestionnaireControlType = 'single_choice' | 'multi_choice' | 'number' | 'text'
+export interface TargetBpConfig {
+  unit?: string
+  systolicLabel?: string
+  diastolicLabel?: string
+  unknownOption?: {
+    key: string | number
+    label: string
+  }
+}
+
+export type QuestionnaireControlType = 'single_choice' | 'multi_choice' | 'number' | 'text' | 'composite_bp'
 
 export interface TargetQuestionnaireItemRuntime {
   id: number
@@ -32,12 +42,16 @@ export interface TargetQuestionnaireItemRuntime {
   controlType: QuestionnaireControlType
   options: TargetQuestionnairePlanOption[]
   numericConfig?: TargetNumericConfig
+  bpConfig?: TargetBpConfig
   required: boolean
   groupKey: string
+  pageKey?: string
+  layoutHint?: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
   applicableGender: 'ALL' | 'MALE' | 'FEMALE'
   autoMapField?: string
   isActive: boolean
 }
+
 
 export interface TargetQuestionnairePlan {
   reportId: string | null
@@ -93,13 +107,17 @@ export interface PresentationItemConfig {
   controlType: QuestionnaireControlType
   required: boolean
   groupKey: string
+  pageKey?: string
+  layoutHint?: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
   optionKeys?: (string | number)[]
   supplementMetrics?: string[]
   alwaysIncludeInSupplement?: boolean
   numericConfig?: TargetNumericConfig
+  bpConfig?: TargetBpConfig
   exclusiveKeys?: (string | number)[]
   detailInputs?: Record<string, { required?: boolean; placeholder?: string }>
 }
+
 
 
 export interface PresentationConfig {

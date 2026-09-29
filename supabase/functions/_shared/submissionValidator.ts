@@ -242,7 +242,52 @@ export function validateAndDeriveSubmission(
 
         derivedScore = null
       }
+    } else if (presentation.controlType === 'composite_bp') {
+      const isUnknown =
+        presentation.bpConfig?.unknownOption?.key === ans.value || ans.value === 'unknown'
+
+      if (isUnknown) {
+        derivedScore = null
+      } else {
+        if (typeof ans.value !== 'string') {
+          return {
+            valid: false,
+            error: {
+              code: 'INVALID_VALUE',
+              message: `composite_bp question ${ans.questionId} requires a string formatted value or unknown`,
+              questionId: ans.questionId,
+            },
+          }
+        }
+
+        const trimmed = ans.value.trim()
+        if (presentation.required && !trimmed) {
+          return {
+            valid: false,
+            error: {
+              code: 'REQUIRED_FIELD_MISSING',
+              message: `required composite_bp question ${ans.questionId} cannot be empty`,
+              questionId: ans.questionId,
+            },
+          }
+        }
+
+        const bpPattern = /^\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*$/
+        if (!bpPattern.test(trimmed)) {
+          return {
+            valid: false,
+            error: {
+              code: 'INVALID_VALUE',
+              message: `composite_bp question ${ans.questionId} must contain a valid numeric SBP/DBP pair (e.g. 120/80) or unknown`,
+              questionId: ans.questionId,
+            },
+          }
+        }
+
+        derivedScore = null
+      }
     } else if (presentation.controlType === 'text') {
+
       if (typeof ans.value !== 'string') {
         return {
           valid: false,

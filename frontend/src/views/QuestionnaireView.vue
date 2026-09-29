@@ -43,21 +43,34 @@ const {
 
   // Live Integration State & Handlers
   isLiveMode,
+  isPreparing,
+  isBasicStep,
   isPlanLoading,
   planError,
   isLivePlanStep,
   isLiveCompleteStep,
   liveStepIndex,
-  currentLiveGroupQuestions,
+  currentLivePage,
+  currentLivePageQuestions,
   rawAnswers,
+  rawBpState,
   setLiveSingle,
   setLiveNum,
   toggleLiveNumUnknown,
+  updateBpSbp,
+  updateBpDbp,
+  toggleBpUnknownState,
   setLiveText,
   toggleLiveMulti,
   updateLiveDetail,
   isLiveMultiSelected,
   retryLoadPlan,
+  handleNumericKeydown,
+  handleNumericPaste,
+  clearLiveNumUnknownIfChecked,
+  clearBpUnknownIfChecked,
+
+
 
 
 
@@ -122,10 +135,22 @@ const onPointerLeave = () => {
           </header>
           <div id="questionContent">
             <div class="progress-row" aria-label="問卷進度">
-              <div class="progress-track">
-                <div class="progress-fill" id="progressFill" :style="{ width: progressPercent + '%' }"></div>
+              <div class="progress-track" :class="{ 'is-preparing': isPreparing && !isBasicStep }">
+                <span
+                  v-if="isPreparing && !isBasicStep"
+                  class="progress-indeterminate-bar"
+                  aria-hidden="true"
+                ></span>
+                <div
+                  v-else
+                  class="progress-fill"
+                  :class="{ 'is-static-blue': isBasicStep }"
+                  id="progressFill"
+                  :style="isBasicStep ? { width: '35%' } : { width: progressPercent + '%' }"
+                ></div>
               </div>
             </div>
+
 
             <div
               class="question-panel"
@@ -137,8 +162,9 @@ const onPointerLeave = () => {
             >
               <!-- Plan Loading State -->
               <div v-if="isPlanLoading" class="plan-loading-state" style="text-align: center; padding: 40px 0;">
-                <p style="color: var(--muted); font-size: 1.1rem;">正在取得問卷題目，請稍候...</p>
+                <p style="color: var(--muted); font-size: 1.1rem;">正在取得需補充的問卷題目，請稍候...</p>
               </div>
+
 
               <!-- Plan Error State -->
               <div v-else-if="planError" class="plan-error-state" style="text-align: center; padding: 30px 0;">
@@ -160,6 +186,8 @@ const onPointerLeave = () => {
                       min="1"
                       placeholder="歲"
                       :value="answers.basic?.age || ''"
+                      @keydown="e => handleNumericKeydown(e, false)"
+                      @paste="e => handleNumericPaste(e, false)"
                       @input="e => updateBasicField('age', (e.target as HTMLInputElement).value)"
                     />
                   </label>
@@ -208,6 +236,8 @@ const onPointerLeave = () => {
                       step="0.1"
                       placeholder="kg"
                       :value="answers.basic?.weight || ''"
+                      @keydown="e => handleNumericKeydown(e, true)"
+                      @paste="e => handleNumericPaste(e, true)"
                       @input="e => updateBasicField('weight', (e.target as HTMLInputElement).value)"
                     />
                   </label>
@@ -217,37 +247,20 @@ const onPointerLeave = () => {
 
 
               <!-- Live Dynamic Plan Steps (Full / Supplement) -->
-              <div v-else-if="isLiveMode && isLivePlanStep">
+              <div v-else-if="isLiveMode && isLivePlanStep && currentLivePage">
+                <!-- Case 1: pair_measurement layoutHint (e.g. Waist + Blood Pressure) -->
+                <div
+                  v-if="currentLivePage.layoutHint === 'pair_measurement'"
+                  class="field-grid measurement-fields"
+                  :class="{ single: currentLivePageQuestions.length === 1 }"
+                >
+                  <div v-for="q in currentLivePageQuestions" :key="q.id" class="field-block">
+                    <span class="field-label">
+                      {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
+                    </span>
 
-                <div v-for="q in currentLiveGroupQuestions" :key="q.id" class="question-block" style="margin-bottom: 28px;">
-                  <h2 id="activeQuestion" tabindex="-1" style="margin-bottom: 12px;">
-                    {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
-                  </h2>
-                  <p v-if="q.scoringDesc" style="color: var(--muted); font-size: 0.9rem; margin-top: -6px; margin-bottom: 16px;">
-                    {{ q.scoringDesc }}
-                  </p>
-
-                  <!-- Single Choice -->
-                  <div v-if="q.controlType === 'single_choice'" class="option-grid" role="radiogroup">
-                    <button
-                      v-for="opt in q.options"
-                      :key="opt.key"
-                      type="button"
-                      role="radio"
-                      :aria-checked="rawAnswers[q.id]?.value === opt.key"
-                      class="option"
-                      :class="{ 'is-checked': rawAnswers[q.id]?.value === opt.key }"
-                      @click="setLiveSingle(q.id, opt.key)"
-                    >
-                      <span class="option-mark" aria-hidden="true"></span>
-                      <span>{{ opt.label }}</span>
-                    </button>
-                  </div>
-
-                  <!-- Number Control -->
-                  <div v-if="q.controlType === 'number'" class="field-grid measurement-fields single">
-                    <div class="field-block">
-                      <span class="field-label" v-if="q.numericConfig?.unit">{{ q.numericConfig.unit }}</span>
+                    <!-- Number Control -->
+                    <div v-if="q.controlType === 'number'">
                       <input
                         class="text-input"
                         inputmode="decimal"
@@ -255,10 +268,12 @@ const onPointerLeave = () => {
                         :min="q.numericConfig?.min"
                         :max="q.numericConfig?.max"
                         :step="q.numericConfig?.step || 0.1"
-                        :disabled="rawAnswers[q.id]?.value === q.numericConfig?.unknownOption?.key"
                         :value="rawAnswers[q.id]?.value === q.numericConfig?.unknownOption?.key ? '' : (rawAnswers[q.id]?.value ?? '')"
+                        @focus="clearLiveNumUnknownIfChecked(q.id, q.numericConfig?.unknownOption?.key)"
                         @input="e => setLiveNum(q.id, (e.target as HTMLInputElement).value)"
-                        placeholder="請輸入數值"
+                        @keydown="e => handleNumericKeydown(e, true)"
+                        @paste="e => handleNumericPaste(e, true)"
+                        :placeholder="q.numericConfig?.unit || 'cm'"
                       />
                       <button
                         v-if="q.numericConfig?.unknownOption"
@@ -272,48 +287,163 @@ const onPointerLeave = () => {
                         <span>{{ q.numericConfig.unknownOption.label }}</span>
                       </button>
                     </div>
-                  </div>
 
-                  <!-- Text Control -->
-                  <div v-if="q.controlType === 'text'" class="field-grid measurement-fields single">
-                    <div class="field-block">
+                    <!-- Composite BP Control -->
+                    <div v-else-if="q.controlType === 'composite_bp'">
+                      <div class="bp-grid">
+                        <label>
+                          <small>{{ q.bpConfig?.systolicLabel || '收縮壓' }}</small>
+                          <input
+                            class="text-input"
+                            inputmode="numeric"
+                            type="number"
+                            min="1"
+                            :value="rawBpState[q.id]?.sbp || ''"
+                            @focus="clearBpUnknownIfChecked(q.id)"
+                            @input="e => updateBpSbp(q.id, (e.target as HTMLInputElement).value)"
+                            @keydown="e => handleNumericKeydown(e, false)"
+                            @paste="e => handleNumericPaste(e, false)"
+                            :placeholder="q.bpConfig?.unit || 'mmHg'"
+                          />
+                        </label>
+                        <label>
+                          <small>{{ q.bpConfig?.diastolicLabel || '舒張壓' }}</small>
+                          <input
+                            class="text-input"
+                            inputmode="numeric"
+                            type="number"
+                            min="1"
+                            :value="rawBpState[q.id]?.dbp || ''"
+                            @focus="clearBpUnknownIfChecked(q.id)"
+                            @input="e => updateBpDbp(q.id, (e.target as HTMLInputElement).value)"
+                            @keydown="e => handleNumericKeydown(e, false)"
+                            @paste="e => handleNumericPaste(e, false)"
+                            :placeholder="q.bpConfig?.unit || 'mmHg'"
+                          />
+                        </label>
+                      </div>
+                      <button
+                        v-if="q.bpConfig?.unknownOption"
+                        type="button"
+                        role="checkbox"
+                        :aria-checked="rawBpState[q.id]?.isUnknown"
+                        class="choice-chip unknown-row"
+                        :class="{ 'is-checked': rawBpState[q.id]?.isUnknown }"
+                        @click="toggleBpUnknownState(q.id, q.bpConfig.unknownOption.key)"
+                      >
+                        <span>{{ q.bpConfig.unknownOption.label }}</span>
+                      </button>
+                    </div>
+
+                    <!-- Text Control -->
+                    <div v-else-if="q.controlType === 'text'">
                       <input
                         class="text-input"
                         type="text"
                         :value="rawAnswers[q.id]?.value ?? ''"
                         @input="e => setLiveText(q.id, (e.target as HTMLInputElement).value)"
-                        placeholder="請輸入內容 (如：120/80)"
+                        placeholder="請輸入內容"
                       />
                     </div>
                   </div>
-
-                  <!-- Multi Choice Control -->
-                  <div v-if="q.controlType === 'multi_choice'" class="option-grid" role="group">
-                    <template v-for="opt in q.options" :key="opt.key">
+                </div>
+                <!-- Case 2: pair_binary layoutHint (e.g. Pregnancy + Breastfeeding) -->
+                <div v-else-if="currentLivePage.layoutHint === 'pair_binary'" class="field-grid safety-grid">
+                  <div v-for="q in currentLivePageQuestions" :key="q.id" class="field selection-field" role="group">
+                    <span class="field-label">
+                      {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
+                    </span>
+                    <div class="inline-options" role="radiogroup">
                       <button
+                        v-for="opt in q.options"
+                        :key="opt.key"
                         type="button"
-                        role="checkbox"
-                        :aria-checked="isLiveMultiSelected(q.id, opt.key)"
-                        class="option check-option"
-                        :class="{ 'is-checked': isLiveMultiSelected(q.id, opt.key) }"
-                        @click="toggleLiveMulti(q.id, opt.key, opt.exclusive)"
+                        role="radio"
+                        :aria-checked="rawAnswers[q.id]?.value === opt.key"
+                        class="choice-chip"
+                        :class="{ 'is-checked': rawAnswers[q.id]?.value === opt.key }"
+                        @click="setLiveSingle(q.id, opt.key)"
+                      >
+                        <span>{{ opt.label }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Case 3: single / standalone layoutHint (e.g. Lifestyle single_choice, Allergy multi_choice) -->
+                <div v-else>
+                  <div v-for="q in currentLivePageQuestions" :key="q.id" class="question-block" style="margin-bottom: 28px;">
+                    <h2 id="activeQuestion" tabindex="-1" style="margin-bottom: 12px;">
+                      {{ q.questionText }} <span v-if="q.required" style="color: var(--coral);">*</span>
+                    </h2>
+
+                    <!-- Single Choice -->
+                    <div v-if="q.controlType === 'single_choice'" class="option-grid" role="radiogroup">
+                      <button
+                        v-for="opt in q.options"
+                        :key="opt.key"
+                        type="button"
+                        role="radio"
+                        :aria-checked="rawAnswers[q.id]?.value === opt.key"
+                        class="option"
+                        :class="{ 'is-checked': rawAnswers[q.id]?.value === opt.key }"
+                        @click="setLiveSingle(q.id, opt.key)"
                       >
                         <span class="option-mark" aria-hidden="true"></span>
                         <span>{{ opt.label }}</span>
                       </button>
-                      <label v-if="opt.detailInput && isLiveMultiSelected(q.id, opt.key)" class="field other-field conditional-field">
+                    </div>
+
+                    <!-- Multi Choice Control -->
+                    <div v-else-if="q.controlType === 'multi_choice'">
+                      <div class="option-grid" role="group">
+                        <button
+                          v-for="opt in q.options"
+                          :key="opt.key"
+                          type="button"
+                          role="checkbox"
+                          :aria-checked="isLiveMultiSelected(q.id, opt.key)"
+                          class="option check-option"
+                          :class="{ 'is-checked': isLiveMultiSelected(q.id, opt.key) }"
+                          @click="toggleLiveMulti(q.id, opt.key, opt.exclusive)"
+                        >
+                          <span class="option-mark" aria-hidden="true"></span>
+                          <span>{{ opt.label }}</span>
+                        </button>
+                      </div>
+                      <div v-if="q.options.some(opt => opt.detailInput && isLiveMultiSelected(q.id, opt.key))" style="margin-top: 16px; width: 100%;">
+                        <template v-for="opt in q.options" :key="'detail-' + opt.key">
+                          <div v-if="opt.detailInput && isLiveMultiSelected(q.id, opt.key)" class="field other-field" style="max-width: none; margin-top: 0;">
+                            <span class="field-label" style="margin-bottom: 6px; display: block;">{{ opt.label }}說明</span>
+                            <input
+                              class="text-input"
+                              type="text"
+                              :placeholder="opt.detailInput.placeholder || '請輸入說明'"
+                              :value="rawAnswers[q.id]?.detailText || ''"
+                              @input="e => updateLiveDetail(q.id, (e.target as HTMLInputElement).value)"
+                            />
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+
+                    <!-- Text Control fallback -->
+                    <div v-else-if="q.controlType === 'text'" class="field-grid measurement-fields single">
+                      <div class="field-block">
                         <input
                           class="text-input"
                           type="text"
-                          :placeholder="opt.detailInput.placeholder || '請輸入說明'"
-                          :value="rawAnswers[q.id]?.detailText || ''"
-                          @input="e => updateLiveDetail(q.id, (e.target as HTMLInputElement).value)"
+                          :value="rawAnswers[q.id]?.value ?? ''"
+                          @input="e => setLiveText(q.id, (e.target as HTMLInputElement).value)"
+                          placeholder="請輸入內容"
                         />
-                      </label>
-                    </template>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
+
 
               <!-- Step: Diet -->
               <div v-else-if="currentStep === 'diet'">
@@ -393,6 +523,8 @@ const onPointerLeave = () => {
                       :value="answers.measurements?.waist || ''"
                       @focus="cancelWaistUnknown"
                       @input="e => updateWaist((e.target as HTMLInputElement).value)"
+                      @keydown="e => handleNumericKeydown(e, true)"
+                      @paste="e => handleNumericPaste(e, true)"
                     />
                     <button
                       type="button"
@@ -419,6 +551,8 @@ const onPointerLeave = () => {
                           :value="answers.measurements?.systolic || ''"
                           @focus="cancelBpUnknown"
                           @input="e => updateSystolic((e.target as HTMLInputElement).value)"
+                          @keydown="e => handleNumericKeydown(e, false)"
+                          @paste="e => handleNumericPaste(e, false)"
                         />
                       </label>
                       <label>
@@ -432,6 +566,8 @@ const onPointerLeave = () => {
                           :value="answers.measurements?.diastolic || ''"
                           @focus="cancelBpUnknown"
                           @input="e => updateDiastolic((e.target as HTMLInputElement).value)"
+                          @keydown="e => handleNumericKeydown(e, false)"
+                          @paste="e => handleNumericPaste(e, false)"
                         />
                       </label>
                     </div>

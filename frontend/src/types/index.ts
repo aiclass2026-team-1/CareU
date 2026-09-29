@@ -168,7 +168,7 @@ export interface QuestionnaireSubmissionPayload {
 // 4b. TARGET Questionnaire Runtime Contracts & Submission Input
 // ==========================================
 
-export type QuestionnaireControlType = 'single_choice' | 'multi_choice' | 'number' | 'text'
+export type QuestionnaireControlType = 'single_choice' | 'multi_choice' | 'number' | 'text' | 'composite_bp'
 
 export interface TargetQuestionnairePlanOption {
   key: string | number
@@ -192,6 +192,16 @@ export interface TargetNumericConfig {
   }
 }
 
+export interface TargetBpConfig {
+  unit?: string
+  systolicLabel?: string
+  diastolicLabel?: string
+  unknownOption?: {
+    key: string | number
+    label: string
+  }
+}
+
 export interface TargetQuestionnaireItemRuntime {
   id: number
   efficacyId: number
@@ -202,12 +212,16 @@ export interface TargetQuestionnaireItemRuntime {
   controlType: QuestionnaireControlType
   options: TargetQuestionnairePlanOption[]
   numericConfig?: TargetNumericConfig
+  bpConfig?: TargetBpConfig
   required: boolean
   groupKey: string
+  pageKey?: string
+  layoutHint?: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
   applicableGender: QuestionnaireGender
   autoMapField?: string
   isActive: boolean
 }
+
 
 export interface TargetQuestionnairePlan {
   reportId: string | null

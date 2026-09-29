@@ -65,9 +65,13 @@ export function useContractQuestionnairePreview() {
           const opt = q.options.find(o => o.key === optKey)
           if (opt?.detailInput?.required && !ans.detailText?.trim()) return false
         }
+      } else if (q.controlType === 'composite_bp') {
+        if (ans.value === 'unknown' || ans.value === q.bpConfig?.unknownOption?.key) continue
+        if (!ans.value || !/^\s*\d{1,3}\/\d{1,3}\s*$/.test(String(ans.value))) return false
       } else {
         if (ans.value === '' || ans.value === undefined || ans.value === null) return false
       }
+
     }
     return true
   })

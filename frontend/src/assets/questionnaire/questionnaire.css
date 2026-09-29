@@ -333,6 +333,7 @@
 }
 
 .questionnaire-container .progress-track {
+  position: relative;
   height: 7px;
   flex: 1;
   border-radius: 99px;
@@ -346,6 +347,42 @@
   border-radius: inherit;
   background: var(--orange);
   transition: width .35s var(--ease);
+}
+
+.questionnaire-container .progress-indeterminate-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  border-radius: inherit;
+  background: var(--blue);
+  animation: progress-indeterminate-move 1.6s ease-in-out infinite;
+  z-index: 2;
+}
+
+.questionnaire-container .progress-fill.is-static-blue {
+  background: var(--blue);
+  width: 35% !important;
+  animation: none !important;
+}
+
+@keyframes progress-indeterminate-move {
+  0% {
+    left: -30%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: -30%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .questionnaire-container .progress-indeterminate-bar {
+    animation: none !important;
+    left: 35% !important;
+  }
 }
 
 .questionnaire-container .question-panel {
@@ -634,7 +671,14 @@
 }
 
 .questionnaire-container .unknown-row {
+  display: flex;
+  width: 100%;
   margin-top: 10px;
+}
+
+.questionnaire-container .unknown-row span {
+  width: 100%;
+  text-align: center;
 }
 
 

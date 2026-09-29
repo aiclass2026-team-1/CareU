@@ -149,7 +149,7 @@ test('submissionValidator: rejects number question with out of range value', () 
   assert.equal(result.error?.code, 'VALUE_OUT_OF_RANGE')
 })
 
-test('submissionValidator: validates text question', () => {
+test('submissionValidator: validates composite_bp with valid numeric pair (e.g. 120/80)', () => {
   const payload = {
     reportId: null,
     mode: 'full',
@@ -161,9 +161,53 @@ test('submissionValidator: validates text question', () => {
   const result = validateAndDeriveSubmission(payload, questionBank)
   assert.equal(result.valid, true)
   assert.equal(result.validatedAnswers?.[0].value, '120/80')
+  assert.equal(result.validatedAnswers?.[0].score, null)
 })
 
-test('submissionValidator: rejects required text question when empty', () => {
+test('submissionValidator: validates composite_bp with unknown semantic key', () => {
+  const payload = {
+    reportId: null,
+    mode: 'full',
+    submittedAt: '2026-09-29T10:00:00.000Z',
+    answers: [
+      { questionId: 27, value: 'unknown' },
+    ],
+  }
+  const result = validateAndDeriveSubmission(payload, questionBank)
+  assert.equal(result.valid, true)
+  assert.equal(result.validatedAnswers?.[0].value, 'unknown')
+  assert.equal(result.validatedAnswers?.[0].score, null)
+})
+
+test('submissionValidator: rejects composite_bp with alphabetic / free text', () => {
+  const payload = {
+    reportId: null,
+    mode: 'full',
+    submittedAt: '2026-09-29T10:00:00.000Z',
+    answers: [
+      { questionId: 27, value: 'normal blood pressure' },
+    ],
+  }
+  const result = validateAndDeriveSubmission(payload, questionBank)
+  assert.equal(result.valid, false)
+  assert.equal(result.error?.code, 'INVALID_VALUE')
+})
+
+test('submissionValidator: rejects composite_bp with missing diastolic number', () => {
+  const payload = {
+    reportId: null,
+    mode: 'full',
+    submittedAt: '2026-09-29T10:00:00.000Z',
+    answers: [
+      { questionId: 27, value: '120' },
+    ],
+  }
+  const result = validateAndDeriveSubmission(payload, questionBank)
+  assert.equal(result.valid, false)
+  assert.equal(result.error?.code, 'INVALID_VALUE')
+})
+
+test('submissionValidator: rejects required composite_bp when empty', () => {
   const payload = {
     reportId: null,
     mode: 'full',
@@ -191,6 +235,7 @@ test('submissionValidator: rejects duplicate questionId in single submission', (
   assert.equal(result.valid, false)
   assert.equal(result.error?.code, 'DUPLICATE_ANSWER')
 })
+
 
 test('submissionValidator: rejects non-existent questionId', () => {
   const payload = {

@@ -40,7 +40,7 @@ export interface QuestionnaireViewItem {
   category: string
   questionText: string
   scoringDesc?: string
-  controlType?: 'single_choice' | 'multi_choice' | 'number' | 'text'
+  controlType?: 'single_choice' | 'multi_choice' | 'number' | 'text' | 'composite_bp'
   options: QuestionnaireViewOption[]
   numericConfig?: {
     unit?: string
@@ -52,12 +52,24 @@ export interface QuestionnaireViewItem {
       label: string
     }
   }
+  bpConfig?: {
+    unit?: string
+    systolicLabel?: string
+    diastolicLabel?: string
+    unknownOption?: {
+      key: string | number
+      label: string
+    }
+  }
   required?: boolean
   groupKey?: string
+  pageKey?: string
+  layoutHint?: 'single' | 'pair_measurement' | 'pair_binary' | 'standalone'
   applicableGender: 'ALL' | 'MALE' | 'FEMALE'
   autoMapField?: string
   isActive: boolean
 }
+
 
 export interface QuestionnairePlanViewModel {
   reportId: string | null
@@ -181,14 +193,18 @@ export function adaptTargetQuestionnairePlan(plan: TargetQuestionnairePlan): Que
         detailInput: opt.detailInput,
       })),
       numericConfig: item.numericConfig,
+      bpConfig: item.bpConfig,
       required: item.required,
       groupKey: item.groupKey,
+      pageKey: item.pageKey || item.groupKey,
+      layoutHint: item.layoutHint || 'single',
       applicableGender: item.applicableGender,
       autoMapField: item.autoMapField,
       isActive: item.isActive,
     })),
   }
 }
+
 
 /**
  * 將 UI 收集之作答記錄轉換為合規之 TargetQuestionnaireSubmissionPayload
