@@ -1,9 +1,9 @@
 # Care U｜工程狀態基準（Project Status Baseline）
 
-- **最後更新日期**：2026-09-29
-- **當前階段**：Phase 7｜Data Model & Backend Integration Batch 4（進行中 IN PROGRESS）
-- **最近已提交功能 Checkpoint**：`6239cf5`（完整 SHA：`6239cf5ab42f842cad2274c98f04735ee9ece004`，本批待提交 Checkpoint：`feat: integrate questionnaire contract fixture runtime`）
-- **功能基線說明**：Phase 7 Batch 4 已完成 Fixture-backed Questionnaire Runtime Integration。建立 `frontend/src/views/ContractQuestionnairePreview.vue` 與 `frontend/src/views/useContractQuestionnairePreview.ts`，並於 `QuestionnaireView.vue` 加入 `?source=contract-fixture` 預覽路由判斷，支援將 `TargetQuestionnairePlan` fixture 經轉型與 ViewModel 驅動介面互動、分組導航、必填校驗、多選/互斥/數值/不確定輸入，最終產出合規之 `TargetQuestionnaireSubmissionPayload`（不含任何權威分數或來源）。正式問卷運行期與正式路由保持 100% 不變。Human Acceptance PASS。
+- **最後更新日期**：2026-09-30
+- **當前階段**：Phase 7｜Questionnaire Live Integration Closeout（完成 COMPLETE）
+- **最近已提交 Checkpoint**：`334748d`（完整 SHA：`334748dc426b67babb9db36642dc53b59314fa79`，`fix: separate questionnaire auth and data contexts`）
+- **功能基線說明**：Questionnaire Live Integration Runtime QA 已全面完成（T01-T08 全數通過 PASS）。已修正 T01 缺失指標解析問題（根本原因：`build-questionnaire-plan` 混合 caller JWT auth context 與 database reads，現已拆分 `authClient` 與 `dbClient` Service Role 讀取）。生產環境部署 `build-questionnaire-plan` v8 (ACTIVE, verify_jwt: true)。Full Path A 煙測（No Upload → Full Questionnaire → submit-questionnaire 201 → finalize-health-report 200 → formal /report）全數通過。問卷功能正式完工，會員與認證保持暫緩，報告實作為下一階段核心開發重點。
 - **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
 - **文件性質**：Care U 專案工程當前狀態的單一快速入口（Single Source of Current State）
 
@@ -40,11 +40,11 @@ Implementation 完成
 | 項目 | 當前狀態事實 | 依據來源 |
 | :--- | :--- | :--- |
 | **專案名稱** | Care U 保健食品推薦系統 | 專案規格與 `frontend/package.json` |
-| **當前階段 (Current Phase)** | **Phase 7｜Data Model & Backend Integration（FLOW-01 / UI-01 Fixed & HUMAN/DB PASS）** | `docs/specs/backend-integration-contracts.md`, Git status |
-| **最近完成之功能批次** | **FLOW-01 & UI-01 Fixed HUMAN/DB PASS。Supplement 模式現已完整支援 `submit-questionnaire` -> `finalize-health-report` 流程，正式路由下不再靜態回退至 Mock 報告。UI-01 嚴格執行 strict Demo Mode 規則（`VITE_ENABLE_DEMO_MODE === 'true' && ?demo=1`）。T01 保持未解決，RPT-01 需待重測 finalized live payload。** | 人工與資料庫驗證 PASS, Type-check PASS, Build PASS |
-| **最近已提交功能 Checkpoint** | `fix: restore supplement live finalization` (本批 Checkpoint) | Git HEAD / 當前批次基準 |
-| **執行中功能工作** | **Phase 7 結算與後續架構收尾（準備進入 Supplement 測試矩陣與 T01 缺失指標持久化修正）** | 專案進度規範 |
-| **下一批遷移 Scope** | **T01 缺失指標持久化與 Supplement 測試矩陣驗證** | Repo 權威文件盤點結果 |
+| **當前階段 (Current Phase)** | **Phase 7｜Questionnaire Live Integration Closeout (COMPLETE)** | `docs/specs/backend-integration-contracts.md`, Git status |
+| **最近完成之功能批次** | **Questionnaire Live Integration Runtime QA & T01-T08 Regression PASS。生產環境部署 `build-questionnaire-plan` v8。T01 根本原因修復（分離 authClient 與 dbClient）。Full Path A 煙測全數通過。** | 人工與資料庫驗證 PASS, Type-check PASS, Build PASS |
+| **最近已提交 Checkpoint** | `fix: separate questionnaire auth and data contexts` (`334748d`) | Git HEAD / 當前批次基準 |
+| **執行中功能工作** | **Questionnaire Live Integration 圓滿結算，準備進入 Report 實作階段（RANK-01, RPT-01, RPT-02, RPT-04, UI-02）** | 專案進度規範 |
+| **下一階段 Scope** | **Report Implementation & Recommendation Scope（RANK-01, RPT-01, RPT-02, RPT-04, UI-02）** | Repo 權威文件盤點結果 |
 
 ---
 
@@ -58,8 +58,8 @@ Implementation 完成
 | **Phase 4 Batch 4** | **問卷頁與 Loading頁-2**<br>`src/views/QuestionnaireView.vue` | `#/preview/questionnaire` | `3d9c22a` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
 | **Phase 4 Batch 5** | **報告頁與會員登入視窗**<br>`src/views/ReportView.vue` | `#/preview/report` | `5dd2998` | `frontend/README.md` §7 | **CONFIRMED** (User Accepted) |
 | **Phase 5** | **共用元件與全站資產模組化** | 全站共用 | `ac99318` | `frontend/README.md` §4, §5 | **CONFIRMED** (User Accepted) |
-| **Phase 6** | **正式整站路由、導航守衛、Flow Context、問卷 Draft Lifecycle、CSS Leakage 修正與 Transition Polish** | 保留 `#/preview/*` | 待本批 Commit | `frontend/src/router/index.ts` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>User Acceptance PASS |
-| **Next MVP Scope** | **資料對齊與 Mock API (Phase 7)** | - | - | 尚未定案 | **`TBD / NOT YET AUTHORIZED`** |
+| **Phase 6** | **正式整站路由、導航守衛、Flow Context、問卷 Draft Lifecycle、CSS Leakage 修正與 Transition Polish** | 保留 `#/preview/*` | `6239cf5` | `frontend/src/router/index.ts` | **CONFIRMED**<br>Type-check PASS, Build PASS<br>User Acceptance PASS |
+| **Phase 7 Batch 1-8** | **Questionnaire Live Integration & T01-T08 Regression QA** | 支援正式流程 | `334748d` | Supabase Functions / Frontend / Test Suite | **CONFIRMED**<br>T01-T08 PASS, Path A PASS, v8 deployed |
 
 ---
 
@@ -85,22 +85,21 @@ Implementation 完成
 
 ## 6. 當前工程邊界與限制（Current Engineering Boundaries）
 
-1. **無正式後端與 OCR 整合**：Loading-1 健檢資料讀取僅為前端動畫與 Demo 轉場。
-2. **無正式推薦演算法與計分引擎**：問卷計分、12 項關注方向排序與推薦邏輯目前為前端 Mock/Demo 資料。
-3. **無正式會員認證與 API 契約**：會員登入僅為前端記憶體狀態與表單驗證展示。
-4. **正式整站路由與守衛已建立**：正式 URL（`/`, `/home`, `/loading-1`, `/questionnaire`, `/report`）及 Preview 路由（`#/preview/*`）並存共用。
-5. **暫時性 Flow Context**：透過 sessionStorage 記錄最小 navigation metadata，不建立完整 Pinia 業務 Store（留待 Phase 8）。
-6. **Frontend Demo / Mock / Placeholder 嚴禁描述為 Production 或 Backend-ready**。
+1. **會員認證系統暫緩**：Membership/Auth 保持暫緩，訪客體驗與 Rank #1/#2 鎖定機制完整保留。
+2. **問卷運行期功能完整**：Questionnaire Live Integration 已全面完成，支援完整版與補充版動態問卷、性別過濾、缺失指標解析與資料庫持久化。
+3. **報告實作範圍界定**：
+   - RPT-03「bundle 中無適用產品」不視為 Bug：維持有效健康方向可見、無合適核准商品時顯示說明訊息、不造假商品、不強塞進可購買 bundle。
+   - 剩餘報告實作範圍包含：`RANK-01`, `RPT-01`, `RPT-02`, `RPT-04`, `UI-02` 及 `RPT-03 regression protection only`。
+4. **正式整站路由與守衛已確立**：正式 URL（`/ stromal`, `/home`, `/loading-1`, `/questionnaire`, `/report`）運行正常。
 
 ---
 
 ## 7. 待決策與確認事項（Current TBD / Needs Confirmation）
 
-- **`TBD`**：Phase 7（資料對齊與 Mock API / Data & Mock API Alignment）之正式工程範圍與驗收標準（等待 Technical PM 定案與授權）。
 - **`[RUNTIME_UNVERIFIED]`**：真機 Canvas 渲染效能及跨裝置捲動還原。
 
 ---
 
 ## 8. 明確下一步行動（Exact Next Action）
 
-**由 Technical PM／使用者確認並授權 Phase 7（資料對齊與 Mock API / Data & Mock API Alignment）；在 Phase 7 scope 定案與授權以前不得提前開始功能開發。**
+**進入 Report 實作階段（RANK-01, RPT-01, RPT-02, RPT-04, UI-02, RPT-03 regression protection）；維持 Questionnaire 功能穩定。**

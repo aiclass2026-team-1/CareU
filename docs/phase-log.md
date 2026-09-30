@@ -1,5 +1,44 @@
 # Care U｜工程歷程日誌（Phase & Milestone Engineering Log）
 
+- **最後更新日期**：2026-09-30
+- **當前階段**：Phase 7｜Questionnaire Live Integration Closeout（完成 COMPLETE）
+- **最近已提交 Checkpoint**：`334748d`（完整 SHA：`334748dc426b67babb9db36642dc53b59314fa79`，`fix: separate questionnaire auth and data contexts`）
+- **功能基線說明**：`334748d` 為 Questionnaire Live Integration Runtime QA 全面完成並進行 Closeout 之 Checkpoint。
+- **Git 運行狀態驗證原則**：Repo HEAD、Working Tree 與 Remote 同步狀態應於執行當下透過 Git 指令即時驗證，本文件不作自我記錄之靜態宣稱。
+- **文件性質**：Care U 專案各階段（Phase）與批次（Batch）之長期里程碑與驗收紀錄
+
+---
+
+## Questionnaire Live Integration Closeout Checkpoint (2026-09-30)
+- **範圍**：Questionnaire Live Integration Runtime QA & Closeout。
+- **核心成果**：
+  1. **T01 根本原因修復與 Checkpoint (`334748d`)**：
+     - **根本原因**：`build-questionnaire-plan` 函式將 caller JWT auth context 直接套用於資料庫讀取，導致以 Service Role 查詢 question bank 與 missing metrics 時發生授權覆蓋錯誤。
+     - **修復方案**：分離 `authClient`（攜帶 caller JWT 用於身分解析）與 `dbClient`（使用 Service Role 且不帶 caller Authorization 覆蓋），並保留明確的 report ownership 檢查。
+  2. **生產環境部署**：`build-questionnaire-plan` v8 已正式部署（status: ACTIVE, verify_jwt: true）。
+  3. **T01-T08 完整迴歸測試**：
+     - T01 (Female missing WAIST + BP): PASS (Q1 Q13 Q27 Q30 Q31 Q32)
+     - T02 (Female missing BP): PASS (Q1 Q27 Q30 Q31 Q32)
+     - T03 (Female missing WAIST): PASS (Q1 Q13 Q30 Q31 Q32)
+     - T04 (Female missing HB): PASS (Q1 Q26 Q30 Q31 Q32)
+     - T05 (Female complete core): PASS (Q1 Q30 Q31 Q32)
+     - T06 (Male missing BP): PASS (Q1 Q27 Q32)
+     - T07 (Male missing WAIST + HB): PASS (Q1 Q13 Q32; Q26 correctly suppressed for Male)
+     - T08 (Male complete core): PASS (Q1 Q32)
+     - 涵蓋 parse-health-report 200、build-questionnaire-plan 200、missingMetrics 正確、題庫組合正確、性別過濾正確、無空白分頁、進度正確、submit-questionnaire 201、submissionId 產出。T01 同步驗證 finalize-health-report 200、assessmentId 產出、priorities 非空、formal Live Report 渲染。
+  4. **Full Path A 最終煙測 (Smoke Test)**：PASS（No Upload → Full Questionnaire → submit-questionnaire 201 → finalize-health-report 200 → formal /report）。確認無 Mock/Fallback、無阻擋性 Console 錯誤、訪客 Rank #1/#2 鎖定維持正常。
+  5. **功能狀態總結與後續規劃**：
+     - Questionnaire Live Integration 功能性圓滿完成。
+     - Membership/Auth 保持暫緩。
+     - Report 實作為下一階段主要開發重心。
+     - 關於 Report 規格重要附註：RPT-03「bundle 中無適用產品」不視為 Bug（維持有效健康方向可見、無合適核准商品時顯示說明訊息、不造假商品、不強塞進可購買 bundle）。剩餘 Report 實作範圍包含 `RANK-01`, `RPT-01`, `RPT-02`, `RPT-04`, `UI-02` 及 `RPT-03 regression protection only`。
+- **驗證狀態**：`node --test supabase/functions/_shared/planBuilder.test.mjs` PASS, `frontend type-check` PASS, `frontend build` PASS, `git diff --check` PASS。
+
+---
+
+
+# Care U｜工程歷程日誌（Phase & Milestone Engineering Log）
+
 - **最後更新日期**：2026-09-28
 - **當前階段**：Phase 4｜Prototype → Vue Page Migration
 - **最近已提交功能 Checkpoint**：`41fb549`（完整 SHA：`41fb5494fc717573967f22e82ac0d01f32131291`，`fix: finalize loading-one layout and exclusion modal`）
