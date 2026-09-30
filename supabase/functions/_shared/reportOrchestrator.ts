@@ -63,6 +63,21 @@ export const ALLERGY_LABEL_MAP: Record<string, string> = {
   other: '其他',
 }
 
+export const EFFICACY_NAME_TO_ID: Record<string, number> = {
+  '調節血脂': 1,
+  '胃腸功能改善': 2,
+  '護肝': 3,
+  '免疫調節': 4,
+  '骨質保健': 5,
+  '不易形成體脂肪': 6,
+  '抗疲勞': 7,
+  '輔助調整過敏體質': 8,
+  '調節血糖': 9,
+  '延緩衰老': 10,
+  '輔助調節血鐵': 11,
+  '輔助調節血壓': 12,
+}
+
 /**
  * Derives trusted survey scores and normalized safety conditions from validated questionnaire answers.
  *
@@ -115,6 +130,9 @@ export function deriveAssessmentInputs(
 
     // 2. Scored survey accumulation
     if (typeof ans.score === 'number' && !isNaN(ans.score)) {
+      if (question.efficacy_id <= 0 || question.category === 'CONTRAINDICATION') {
+        continue
+      }
       const effId = question.efficacy_id
       const effName = question.efficacy_name || `功效項目 ${effId}`
 
@@ -149,30 +167,49 @@ export function deriveAssessmentInputs(
 }
 
 /**
- * Merges trusted lab scores into assessment items by efficacy identity/name.
+ * Merges trusted lab scores into assessment items by efficacy identity/name derived from trusted questionBankRows.
  */
 export function mergeAssessmentItems(
   surveyItems: EfficacyScoreInputItem[],
-  labScores: Array<{ efficacy_name: string; lab_earned_score: number; lab_max_score: number }>
+  labScores: Array<{ efficacy_name: string; lab_earned_score: number; lab_max_score: number }>,
+  questionBankRows: QuestionBankRow[]
 ): EfficacyScoreInputItem[] {
+  const nameToIdMap = new Map<string, number>()
+  for (const q of questionBankRows) {
+    if (q.efficacy_name && q.efficacy_id > 0 && q.efficacy_id <= 12) {
+      nameToIdMap.set(q.efficacy_name.trim(), q.efficacy_id)
+    }
+  }
+
   const mergedMap = new Map<string, EfficacyScoreInputItem>()
 
   // 1. Add all survey items
   for (const item of surveyItems) {
-    mergedMap.set(item.efficacyName, { ...item })
+    if (item.efficacyId > 0 && item.efficacyId <= 12) {
+      mergedMap.set(item.efficacyName.trim(), { ...item })
+    }
   }
 
   // 2. Merge lab scores
-  let nextGeneratedId = 100
   for (const lab of labScores) {
-    const existing = mergedMap.get(lab.efficacy_name)
+    const effName = (lab.efficacy_name || '').trim()
+    const canonicalId = nameToIdMap.get(effName)
+    if (canonicalId === undefined || canonicalId <= 0 || canonicalId > 12) {
+      console.warn(`[ReportOrchestrator] Unknown or invalid lab efficacy name '${lab.efficacy_name}'. Failing closed / skipping lab-only item.`)
+      continue
+    }
+
+    const existing = mergedMap.get(effName)
     if (existing) {
       existing.labScore = lab.lab_earned_score
       existing.labMax = lab.lab_max_score
+      if (existing.efficacyId <= 0) {
+        existing.efficacyId = canonicalId
+      }
     } else {
-      mergedMap.set(lab.efficacy_name, {
-        efficacyId: nextGeneratedId++,
-        efficacyName: lab.efficacy_name,
+      mergedMap.set(effName, {
+        efficacyId: canonicalId,
+        efficacyName: effName,
         labScore: lab.lab_earned_score,
         labMax: lab.lab_max_score,
         surveyScore: 0,
@@ -181,26 +218,26 @@ export function mergeAssessmentItems(
     }
   }
 
-  return Array.from(mergedMap.values())
+  return Array.from(mergedMap.values()).filter(item => item.efficacyId > 0 && item.efficacyId <= 12)
 }
 
 /**
- * Resolves truthful priority score from authoritative top_efficacies_detail and scores_json.
+ * Resolves truthful priority score from authoritative top_efficacies_detail and scores_json using strict exact match.
  * Returns exact number (0 remains 0) or null if unavailable. Never returns fabricated 85.
  */
 export function resolveEfficacyScore(
   rankRow: { efficacy_name: string; efficacy_rank: number; efficacy_id?: number },
   topEfficaciesDetail: any[] | null | undefined,
-  scoresJson: any
+  scoresJson: any,
+  questionBankRows?: QuestionBankRow[]
 ): number | null {
-  // 1. Check top_efficacies_detail array
+  // 1. Check top_efficacies_detail array with strict exact match (rank AND name)
   if (Array.isArray(topEfficaciesDetail)) {
     const found = topEfficaciesDetail.find(
       (item) =>
         item &&
-        (item.rank === rankRow.efficacy_rank ||
-          item.name === rankRow.efficacy_name ||
-          (rankRow.efficacy_id !== undefined && item.id === rankRow.efficacy_id))
+        item.rank === rankRow.efficacy_rank &&
+        item.name === rankRow.efficacy_name
     )
     if (found && typeof found.score === 'number' && !isNaN(found.score)) {
       return Math.round(found.score)
@@ -209,8 +246,14 @@ export function resolveEfficacyScore(
 
   // 2. Check scores_json keyed by efficacyId or efficacyName
   if (scoresJson && typeof scoresJson === 'object') {
-    if (rankRow.efficacy_id !== undefined && rankRow.efficacy_id !== null) {
-      const byId = scoresJson[String(rankRow.efficacy_id)]
+    let canonicalId = rankRow.efficacy_id
+    if ((!canonicalId || canonicalId <= 0) && Array.isArray(questionBankRows)) {
+      const qMatch = questionBankRows.find(q => q.efficacy_name === rankRow.efficacy_name)
+      if (qMatch) canonicalId = qMatch.efficacy_id
+    }
+
+    if (canonicalId !== undefined && canonicalId !== null && canonicalId > 0) {
+      const byId = scoresJson[String(canonicalId)]
       if (typeof byId === 'number' && !isNaN(byId)) {
         return Math.round(byId)
       }

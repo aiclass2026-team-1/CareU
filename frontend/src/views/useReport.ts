@@ -69,8 +69,12 @@ export function useReport() {
     const results: ResultItem[] = []
     const productDirections: string[] = []
 
-    priorities.forEach((p: any, idx: number) => {
-      const catId = String(p.efficacyId || idx + 1)
+    priorities.forEach((p: any) => {
+      if (!p.efficacyId || typeof p.efficacyId !== 'number' || p.efficacyId <= 0 || p.efficacyId > 12) {
+        console.warn('Skipping priority item with missing or invalid efficacyId in formal live report:', p)
+        return
+      }
+      const catId = String(p.efficacyId)
       const rawScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : null
       results.push({
         categoryId: catId,

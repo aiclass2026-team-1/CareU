@@ -102,7 +102,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
     const answersList: ValidatedAnswerRecord[] = Array.isArray(submission.answers) ? submission.answers : []
     const derived = deriveAssessmentInputs(answersList, questionRows as QuestionBankRow[])
 
-    let calculationItems = derived.items
+    let calculationItems = derived.items.filter(item => item.efficacyId > 0 && item.efficacyId <= 12)
 
     // 5. If submission is linked to a lab report, load and verify trusted lab data
     if (submission.report_id) {
@@ -129,7 +129,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
         .eq('report_id', submission.report_id)
 
       if (Array.isArray(labScores) && labScores.length > 0) {
-        calculationItems = mergeAssessmentItems(derived.items, labScores)
+        calculationItems = mergeAssessmentItems(calculationItems, labScores, questionRows as QuestionBankRow[]).filter(item => item.efficacyId > 0 && item.efficacyId <= 12)
       }
     }
 
@@ -234,7 +234,22 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
   const scoresJson = assessmentData?.scores_json || {}
 
   // 9. Build normalized report response (exact authoritative scores, no 85 fallback)
-  const priorities = rankRows.map((row: any) => {
+  const priorities: any[] = []
+  for (const row of rankRows) {
+    const matchedDetail = topEfficaciesDetail.find(
+      (item: any) =>
+        item &&
+        item.rank === row.efficacy_rank &&
+        item.name === row.efficacy_name
+    )
+
+    if (!matchedDetail || typeof matchedDetail.id !== 'number' || matchedDetail.id <= 0 || matchedDetail.id > 12) {
+      console.warn(`[RPT-01 Fail-Closed] Efficacy ID exact matching failed for rank ${row.efficacy_rank} (${row.efficacy_name}). Excluding invalid priority from report payload.`)
+      continue
+    }
+
+    const efficacyId = matchedDetail.id
+
     const recs: any[] = []
     if (row.rec1_product_id && productsMap.has(Number(row.rec1_product_id))) {
       const p = productsMap.get(Number(row.rec1_product_id))
@@ -263,18 +278,21 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       })
     }
 
-    const resolvedScore = resolveEfficacyScore(row, topEfficaciesDetail, scoresJson)
+    const resolvedScore = typeof matchedDetail.score === 'number' && !isNaN(matchedDetail.score)
+      ? Math.round(matchedDetail.score)
+      : resolveEfficacyScore(row, topEfficaciesDetail, scoresJson)
 
-    return {
+    priorities.push({
       rank: row.efficacy_rank,
+      efficacyId,
       efficacyName: row.efficacy_name,
       score: resolvedScore,
       description: row.description || '',
       userCondition: row.user_condition || null,
       recommendations: recs,
       exclusionNote: row.exclusion_note || null,
-    }
-  })
+    })
+  }
 
   return jsonResponse(
     {
