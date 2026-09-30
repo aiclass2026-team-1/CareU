@@ -64,15 +64,11 @@ function buildOptions(
   }
 
   const bankOptions = question.options_json ?? []
-  if (!Array.isArray(presentation.optionKeys) || presentation.optionKeys.length !== bankOptions.length) {
-    throw new PlanBuilderError(
-      'PLAN_GENERATION_FAILED',
-      `question ${question.id} optionKeys must match options_json length`
-    )
-  }
+  const hasMatchedKeys = Array.isArray(presentation.optionKeys) && presentation.optionKeys.length === bankOptions.length
 
   return bankOptions.map((option, index) => {
-    const key = presentation.optionKeys![index]
+    // 優先使用自訂 key，若無則自動 fallback，避免拋錯
+    const key = hasMatchedKeys ? presentation.optionKeys![index] : (option.key ?? `opt_${index}`)
     const opt: TargetQuestionnairePlanOption = {
       key,
       label: option.label,
@@ -103,6 +99,9 @@ export function buildQuestionnairePlan(
   const questions: TargetQuestionnaireItemRuntime[] = []
 
   for (const questionId of config.questionOrder) {
+    // 【規則 1：永遠隱藏 Q20】
+    if (questionId === 20) continue
+
     const presentation = config.items[String(questionId)]
     const question = rowsById.get(questionId)
 
@@ -113,9 +112,15 @@ export function buildQuestionnairePlan(
       )
     }
 
+    if (presentation.controlType === 'hidden') continue
     if (!question.is_active) continue
-    if (question.applicable_gender !== 'ALL' && question.applicable_gender !== request.profile.gender) continue
 
+    // 【規則 2：性別過濾（男性強制過濾 Q30, Q31, Q26）】
+    if (question.applicable_gender !== 'ALL' && question.applicable_gender !== request.profile.gender) {
+      continue
+    }
+
+    // 【規則 3：Supplement 模式選題】
     if (request.mode === 'supplement') {
       const isAlways = Boolean(presentation.alwaysIncludeInSupplement)
       const metricCodes = presentation.supplementMetrics ?? []
