@@ -339,8 +339,7 @@ export function useReport() {
       const rec = (res as any).recommendations.find((r: any) => String(r.productId) === String(productId))
       if (rec && rec.reason) return rec.reason
     }
-    const p = product(String(productId))
-    return p?.ingredients || ''
+    return ''
   }
 
   function selectProduct(categoryId: string, productId: string) {

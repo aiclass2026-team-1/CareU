@@ -123,7 +123,12 @@ const emit = defineEmits<{
                   <!-- Product info -->
                   <div class="product-info">
                     <h4>{{ getActiveProductForDirection(r.categoryId)!.name }}</h4>
-                    <p class="recommend-reason-subtitle">{{ getProductReason(r.categoryId, getActiveProductForDirection(r.categoryId)!.id) }}</p>
+                    <p
+                      v-if="getProductReason(r.categoryId, getActiveProductForDirection(r.categoryId)!.id)"
+                      class="recommend-reason-subtitle"
+                    >
+                      {{ getProductReason(r.categoryId, getActiveProductForDirection(r.categoryId)!.id) }}
+                    </p>
                     <span class="product-price">
                       {{ formatMoney(getActiveProductForDirection(r.categoryId)!.price) }}
                       <small>／30 粒</small>

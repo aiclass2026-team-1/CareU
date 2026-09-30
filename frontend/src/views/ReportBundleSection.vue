@@ -63,9 +63,6 @@ const emit = defineEmits<{
 
                     <div class="product-info">
                       <h4>{{ product(selectedProducts[cid])!.name }}</h4>
-                      <p class="recommend-reason-subtitle">
-                        {{ getProductReason(cid, selectedProducts[cid]) }}
-                      </p>
                       <span class="product-price">
                         {{ formatMoney(product(selectedProducts[cid])!.price) }}
                         <small>／30 粒</small>
@@ -176,9 +173,6 @@ const emit = defineEmits<{
                       </div>
                       <div class="candidate-copy product-info">
                         <h4 class="candidate-name">{{ product(candId)?.name }}</h4>
-                        <p class="recommend-reason-subtitle">
-                          {{ getProductReason(cid, candId) }}
-                        </p>
                         <span class="product-price">
                           {{ formatMoney(product(candId)!.price) }}
                           <small>／30 粒</small>

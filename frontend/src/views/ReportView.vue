@@ -185,10 +185,6 @@ function handleDemoLink(name: string) {
               @select-product="selectProduct"
               @open-cart="openCart(true)"
             />
-
-            <p class="source-note">
-              商品資料取自提供的健康食品資料集；核准資訊為來源檔案記載，未在本原型中即時查核。劑型示意不代表實際商品外觀。
-            </p>
           </div>
         </section>
       </main>
@@ -196,7 +192,7 @@ function handleDemoLink(name: string) {
       <!-- FOOTER -->
       <footer class="footer">
         <div class="footer__inner">
-          <span>© Care U Prototype · Typeface: LINE Seed TW</span>
+          <span>© Care U Prototype</span>
           <nav class="footer__links" aria-label="頁尾連結">
             <a href="#privacy-demo" @click.prevent="handleDemoLink('隱私權政策')">隱私權政策</a>
             <a href="#source-demo" @click.prevent="handleDemoLink('資料來源')">資料來源</a>
