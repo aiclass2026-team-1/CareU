@@ -1072,10 +1072,10 @@ export function useQuestionnaire({
     analysisStatusText.value = analysisStages[0].text
     showScreen('analysis')
 
-    // If live full mode with real submissionId, trigger finalize-health-report in parallel
+    // If live mode (full or supplement) with real submissionId, trigger finalize-health-report in parallel
     const subId = getSubmissionId()
     let finalizePromise: Promise<any> | null = null
-    if (isLiveFullMode.value && subId && !shouldFail) {
+    if (isLiveMode.value && subId && !shouldFail) {
       finalizePromise = liveReportService.finalizeHealthReport(subId)
     }
 
@@ -1099,14 +1099,19 @@ export function useQuestionnaire({
           if (reportResult?.assessmentId) {
             setAssessmentId(reportResult.assessmentId)
           }
-          if (reportResult) {
+          if (reportResult && Array.isArray(reportResult.priorities)) {
             setLiveReportData(reportResult)
+          } else {
+            throw new Error('Invalid or missing report payload from finalization')
           }
         } catch (err: any) {
           console.error('Finalize health report error:', err)
           showAnalysisError()
           return
         }
+      } else if (isLiveMode.value && !shouldFail) {
+        showAnalysisError()
+        return
       }
 
       changeAnalysisStatus('報告準備完成')

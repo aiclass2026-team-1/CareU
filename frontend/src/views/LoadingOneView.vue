@@ -6,6 +6,9 @@ import LoadingStageVisual from '@/components/visual/LoadingStageVisual.vue'
 import DataCanvas from '@/components/visual/DataCanvas.vue'
 import networkBackImg from '@/assets/images/network-back.png'
 import '@/assets/loading-one/loading-one.css'
+import { checkDemoMode } from '@/utils/demoMode'
+
+const isDemo = checkDemoMode()
 
 /**
  * Care U｜Loading頁-1 與排除視窗 View
@@ -278,7 +281,7 @@ const onPointerLeave = () => {
     </section>
 
     <!-- 5. Demo 控制面板 -->
-    <aside class="demo-controller" aria-label="原型情境控制">
+    <aside v-if="isDemo" class="demo-controller" aria-label="原型情境控制">
       <div class="demo-panel" id="demoPanel" :hidden="!isDemoPanelOpen">
         <p>此面板只供原型展示，不屬於正式網站介面。</p>
         <div class="demo-buttons">

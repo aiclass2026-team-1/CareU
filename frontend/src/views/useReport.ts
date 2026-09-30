@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue'
 
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { getLiveReportData } from '@/utils/flowContext'
 import {
@@ -14,9 +14,14 @@ import {
 
 export function useReport() {
   const route = useRoute()
+  const router = useRouter()
   const isPreview = computed(() => {
     return route?.path ? route.path.startsWith('/preview/') : false
   })
+
+  if (typeof window !== 'undefined' && !isPreview.value && route.query.entry !== 'direct' && !getLiveReportData()) {
+    router.replace('/questionnaire')
+  }
 
   const catalog = createCatalog()
   const profiles = createProfiles(catalog)

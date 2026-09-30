@@ -12,6 +12,9 @@ import {
   optionSets,
   allergyOptions,
 } from './useQuestionnaire'
+import { checkDemoMode } from '@/utils/demoMode'
+
+const isDemo = checkDemoMode()
 
 const dataCanvasRef = ref<InstanceType<typeof DataCanvas> | null>(null)
 const networkBackRef = ref<HTMLElement | null>(null)
@@ -804,7 +807,7 @@ const onPointerLeave = () => {
     </main>
 
     <!-- Demo Controller -->
-    <aside class="demo-controller" aria-label="原型情境控制">
+    <aside v-if="isDemo" class="demo-controller" aria-label="原型情境控制">
       <div class="demo-panel" id="demoPanel" :hidden="!isDemoPanelOpen">
         <p>此面板只供原型展示，不屬於正式網站介面。</p>
         <div class="demo-buttons">

@@ -9,6 +9,18 @@
 
 ---
 
+## Supplement Live Finalization & Strict Demo Mode Checkpoint (2026-09-30)
+- **範圍**：FLOW-01 & UI-01 Fixed HUMAN/DB PASS。
+- **核心成果**：
+  1. **FLOW-01 修正**：將問卷分析完成階段 `runAnalysis()` 的 `finalize-health-report` 觸發條件從 `isLiveFullMode` 擴大至 `isLiveMode`（涵蓋 full 與 supplement 兩種正式 live 模式）。
+  2. **端到端流程確認**：Supplement 模式現已完整執行 `submit-questionnaire` -> `finalize-health-report` -> 導向並渲染 `/report`，且資料庫確實寫入 `questionnaire_submissions`、`assessment_results` 與 `assessment_efficacy_ranks`。
+  3. **防禦性錯誤處理**：正規 live 流程若缺少有效 live report payload 或 finalization 失敗，將呈現分析錯誤重試狀態，不再靜態回退至 Mock 報告。
+  4. **UI-01 嚴格 Demo 模式**：將 `LoadingOneView.vue` 與 `QuestionnaireView.vue` 之原型 Demo 控制面板改由 `checkDemoMode()` 嚴格控管（`VITE_ENABLE_DEMO_MODE === 'true' && ?demo=1`）。
+  5. **未結事項**：T01 保持未解決（缺漏 core metrics 持久化問題待後端修正），RPT-01 需待重測 finalized live payload。
+- **驗證狀態**：Type-check PASS, Build PASS, git diff --check PASS, HUMAN + DATABASE PASS。
+
+---
+
 ## Frontend Productionization & Demo Isolation Checkpoint (2026-09-30)
 - **範圍**：Frontend Productionization / Demo Isolation HUMAN PASS。
 - **核心成果**：
