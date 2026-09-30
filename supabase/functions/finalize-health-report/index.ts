@@ -220,7 +220,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
   if (productIds.size > 0) {
     const { data: products } = await supabaseClient
       .from('health_food_products')
-      .select('id, product_name, license_no, category, active_ingredients, efficacy, efficacy_claim, warnings, precautions, mechanism_tag, evidence_score')
+      .select('id, product_name, license_no, category, active_ingredients, efficacy, efficacy_claim, evidence_type, warnings, precautions, mechanism_tag, evidence_score, unit_price')
       .in('id', Array.from(productIds))
 
     if (products) {
@@ -256,12 +256,17 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       recs.push({
         productId: p.id,
         productName: p.product_name,
-        reason: row.rec1_reason || p.efficacy_claim || '',
+        unitPrice: p.unit_price,
+        efficacy: p.efficacy,
         efficacyClaim: p.efficacy_claim,
+        evidenceType: p.evidence_type,
+        activeIngredients: p.active_ingredients,
         warnings: p.warnings,
         precautions: p.precautions,
-        mechanismTag: p.mechanism_tag,
+        licenseNo: p.license_no,
         evidenceScore: p.evidence_score,
+        mechanismTag: p.mechanism_tag,
+        reason: row.rec1_reason || p.efficacy_claim || '',
       })
     }
     if (row.rec2_product_id && productsMap.has(Number(row.rec2_product_id))) {
@@ -269,12 +274,17 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       recs.push({
         productId: p.id,
         productName: p.product_name,
-        reason: row.rec2_reason || p.efficacy_claim || '',
+        unitPrice: p.unit_price,
+        efficacy: p.efficacy,
         efficacyClaim: p.efficacy_claim,
+        evidenceType: p.evidence_type,
+        activeIngredients: p.active_ingredients,
         warnings: p.warnings,
         precautions: p.precautions,
-        mechanismTag: p.mechanism_tag,
+        licenseNo: p.license_no,
         evidenceScore: p.evidence_score,
+        mechanismTag: p.mechanism_tag,
+        reason: row.rec2_reason || p.efficacy_claim || '',
       })
     }
 

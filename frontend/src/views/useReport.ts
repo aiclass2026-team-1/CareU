@@ -101,11 +101,12 @@ export function useReport() {
           const pid = String(rec.productId)
           catalog.candidates[catId].push(pid)
           if (!catalog.products[pid]) {
+            const hasValidPrice = typeof rec.unitPrice === 'number' && !isNaN(rec.unitPrice) && rec.unitPrice > 0
             catalog.products[pid] = {
               id: pid,
               name: rec.productName,
-              ingredients: rec.efficacyClaim || '專利有效成分',
-              license: '',
+              ingredients: rec.activeIngredients || null,
+              license: rec.licenseNo || '',
               approvalDate: '',
               applicant: '',
               status: '',
@@ -115,10 +116,15 @@ export function useReport() {
               mechanismTag: rec.mechanismTag || null,
               evidenceScore: rec.evidenceScore || 3,
               sourceFlags: { pregnant: false, breastfeeding: false, allergy: false },
-              claims: {},
-              price: 980,
-              unitPrice: 980,
-              purchaseQuantity: 1,
+              claims: {
+                [catId]: {
+                  text: rec.efficacyClaim || '',
+                  type: rec.evidenceType || '',
+                },
+              },
+              price: hasValidPrice ? Number((rec.unitPrice * 30).toFixed(4)) : 0,
+              unitPrice: hasValidPrice ? rec.unitPrice : 0,
+              purchaseQuantity: 30,
               isDemoPrice: false,
             }
           }
@@ -207,8 +213,12 @@ export function useReport() {
     return uniqueSelected().reduce((acc, p) => acc + p.price, 0)
   }
 
-  function formatMoney(v: number): string {
-    return 'NT$ ' + new Intl.NumberFormat('zh-TW').format(v)
+  function formatMoney(v: any): string {
+    if (v === null || v === undefined || typeof v !== 'number' || isNaN(v) || v <= 0) {
+      return '價格未標示'
+    }
+    const fixed = Number(v.toFixed(4))
+    return 'NT$ ' + new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 4 }).format(fixed)
   }
 
   function supplementationReason(cid: string, p: Product): string {
