@@ -1,4 +1,16 @@
-import type { PresentationConfig } from './types.ts'
+import type { PresentationConfig, QuestionBankRow } from './types.ts'
+
+export function deriveQuestionOptionKeys(
+  question: QuestionBankRow,
+  presentation: PresentationConfig['items'][string]
+): string[] {
+  const bankOptions = question.options_json ?? []
+  const hasMatchedKeys = Array.isArray(presentation.optionKeys) && presentation.optionKeys.length === bankOptions.length
+
+  return bankOptions.map((option, index) => {
+    return hasMatchedKeys ? presentation.optionKeys![index] : (option.key ?? `opt_${index}`)
+  })
+}
 
 // 【第一部分：原本 7 題的精細配置，100% 原汁原味完整保留】
 const canonicalItems: PresentationConfig['items'] = {

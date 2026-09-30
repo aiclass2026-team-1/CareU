@@ -5,7 +5,7 @@ import type {
   SubmissionValidationResult,
   ValidatedAnswerRecord,
 } from './types.ts'
-import { presentationConfigV1 } from './presentationConfig.ts'
+import { presentationConfigV1, deriveQuestionOptionKeys } from './presentationConfig.ts'
 
 export class SubmissionValidationError extends Error {
   code: string
@@ -109,6 +109,7 @@ export function validateAndDeriveSubmission(
 
     let derivedScore: number | null = null
     const bankOptions = question.options_json ?? []
+    const derivedKeys = deriveQuestionOptionKeys(question, presentation)
 
     if (presentation.controlType === 'single_choice') {
       if (typeof ans.value !== 'string' && typeof ans.value !== 'number') {
@@ -122,7 +123,7 @@ export function validateAndDeriveSubmission(
         }
       }
 
-      const optIdx = presentation.optionKeys?.findIndex((k) => k === ans.value) ?? -1
+      const optIdx = derivedKeys.findIndex((k) => k === ans.value)
       if (optIdx === -1) {
         return {
           valid: false,
@@ -173,7 +174,7 @@ export function validateAndDeriveSubmission(
       }
 
       for (const valKey of ans.value) {
-        const optIdx = presentation.optionKeys?.findIndex((k) => k === valKey) ?? -1
+        const optIdx = derivedKeys.findIndex((k) => k === valKey)
         if (optIdx === -1) {
           return {
             valid: false,

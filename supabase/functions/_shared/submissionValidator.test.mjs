@@ -251,3 +251,65 @@ test('submissionValidator: rejects non-existent questionId', () => {
   assert.equal(result.error?.code, 'INVALID_QUESTION')
 })
 
+test('submissionValidator: expanded single-choice question with fallback keys accepts opt_1 and derives correct score', () => {
+  const customQuestionBank = [
+    {
+      id: 2,
+      efficacy_id: 1,
+      efficacy_name: '調節血脂',
+      category: 'RISK_FACTOR',
+      question_text: '血脂補充題',
+      applicable_gender: 'ALL',
+      is_active: true,
+      options_json: [
+        { label: '選項0', score: 0 },
+        { label: '選項1', score: 2 },
+        { label: '選項2', score: 4 },
+      ],
+    }
+  ]
+  const payload = {
+    reportId: null,
+    mode: 'full',
+    submittedAt: '2026-09-29T10:00:00.000Z',
+    answers: [
+      { questionId: 2, value: 'opt_1' },
+    ],
+  }
+  const result = validateAndDeriveSubmission(payload, customQuestionBank)
+  assert.equal(result.valid, true)
+  assert.equal(result.validatedAnswers?.length, 1)
+  assert.equal(result.validatedAnswers?.[0].score, 2)
+  assert.equal(result.validatedAnswers?.[0].value, 'opt_1')
+})
+
+test('submissionValidator: rejects invalid fallback option key opt_99 on expanded question', () => {
+  const customQuestionBank = [
+    {
+      id: 2,
+      efficacy_id: 1,
+      efficacy_name: '調節血脂',
+      category: 'RISK_FACTOR',
+      question_text: '血脂補充題',
+      applicable_gender: 'ALL',
+      is_active: true,
+      options_json: [
+        { label: '選項0', score: 0 },
+        { label: '選項1', score: 2 },
+      ],
+    }
+  ]
+  const payload = {
+    reportId: null,
+    mode: 'full',
+    submittedAt: '2026-09-29T10:00:00.000Z',
+    answers: [
+      { questionId: 2, value: 'opt_99' },
+    ],
+  }
+  const result = validateAndDeriveSubmission(payload, customQuestionBank)
+  assert.equal(result.valid, false)
+  assert.equal(result.error?.code, 'INVALID_OPTION')
+  assert.equal(result.error?.questionId, 2)
+})
+

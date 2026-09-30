@@ -7,7 +7,7 @@ import type {
   TargetQuestionnaireItemRuntime,
   TargetQuestionnairePlanOption,
 } from './types.ts'
-import { presentationConfigV1 } from './presentationConfig.ts'
+import { presentationConfigV1, deriveQuestionOptionKeys } from './presentationConfig.ts'
 
 export class PlanBuilderError extends Error {
   code: string
@@ -64,11 +64,11 @@ function buildOptions(
   }
 
   const bankOptions = question.options_json ?? []
-  const hasMatchedKeys = Array.isArray(presentation.optionKeys) && presentation.optionKeys.length === bankOptions.length
+  const keys = deriveQuestionOptionKeys(question, presentation)
 
   return bankOptions.map((option, index) => {
     // 優先使用自訂 key，若無則自動 fallback，避免拋錯
-    const key = hasMatchedKeys ? presentation.optionKeys![index] : (option.key ?? `opt_${index}`)
+    const key = keys[index]
     const opt: TargetQuestionnairePlanOption = {
       key,
       label: option.label,
