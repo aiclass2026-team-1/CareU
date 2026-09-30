@@ -55,6 +55,7 @@ const {
   toggleChartCategory,
   setBrowsingProduct,
   getActiveProductForDirection,
+  getProductReason,
   selectProduct,
   removeProduct,
   toggleCandidates,
@@ -155,6 +156,7 @@ function handleDemoLink(name: string) {
               :product="product"
               :candidates-for="candidatesFor"
               :get-active-product-for-direction="getActiveProductForDirection"
+              :get-product-reason="getProductReason"
               :format-money="formatMoney"
               :dose-tone="doseTone"
               :is-tablet="isTablet"
@@ -173,6 +175,7 @@ function handleDemoLink(name: string) {
               :category="category"
               :product="product"
               :candidates-for="candidatesFor"
+              :get-product-reason="getProductReason"
               :supplementation-reason="supplementationReason"
               :format-money="formatMoney"
               :dose-tone="doseTone"

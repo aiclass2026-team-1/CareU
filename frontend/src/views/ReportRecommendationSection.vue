@@ -11,6 +11,7 @@ defineProps<{
   product: (id: string) => Product | undefined
   candidatesFor: (id: string) => string[]
   getActiveProductForDirection: (cid: string) => Product | undefined
+  getProductReason: (cid: string, pid: string | number) => string
   formatMoney: (v: number) => string
   doseTone: (id: string) => string
   isTablet: (id: string) => boolean
@@ -122,7 +123,7 @@ const emit = defineEmits<{
                   <!-- Product info -->
                   <div class="product-info">
                     <h4>{{ getActiveProductForDirection(r.categoryId)!.name }}</h4>
-                    <p class="ingredients-short">{{ getActiveProductForDirection(r.categoryId)!.ingredients }}</p>
+                    <p class="recommend-reason-subtitle">{{ getProductReason(r.categoryId, getActiveProductForDirection(r.categoryId)!.id) }}</p>
                     <span class="product-price">
                       {{ formatMoney(getActiveProductForDirection(r.categoryId)!.price) }}
                       <small>／30 粒</small>

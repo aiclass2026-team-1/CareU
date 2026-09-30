@@ -58,7 +58,7 @@ export interface MedicalAlert {
 }
 
 export interface EvidenceItem {
-  label: string
+  label?: string
   value: string
 }
 
@@ -203,8 +203,8 @@ export function createProfiles(catalog: CatalogData): Record<string, Profile> {
         score,
         summary: bp[0],
         evidence: [
-          { label: '提供的資料（示範）', value: bp[1] },
-          { label: '生活紀錄／待確認資訊（示範）', value: bp[2] },
+          { value: bp[1] },
+          { value: bp[2] },
         ],
         reason: bp[3],
       }

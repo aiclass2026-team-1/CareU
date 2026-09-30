@@ -11,6 +11,7 @@ defineProps<{
   category: (id: string) => Category
   product: (id: string) => Product | undefined
   candidatesFor: (id: string) => string[]
+  getProductReason: (cid: string, pid: string | number) => string
   supplementationReason: (cid: string, p: Product) => string
   formatMoney: (v: number) => string
   doseTone: (id: string) => string
@@ -62,9 +63,8 @@ const emit = defineEmits<{
 
                     <div class="product-info">
                       <h4>{{ product(selectedProducts[cid])!.name }}</h4>
-                      <p class="bundle-reason">
-                        <span>推薦理由</span>
-                        {{ supplementationReason(cid, product(selectedProducts[cid])!) }}
+                      <p class="recommend-reason-subtitle">
+                        {{ getProductReason(cid, selectedProducts[cid]) }}
                       </p>
                       <span class="product-price">
                         {{ formatMoney(product(selectedProducts[cid])!.price) }}
@@ -176,9 +176,8 @@ const emit = defineEmits<{
                       </div>
                       <div class="candidate-copy product-info">
                         <h4 class="candidate-name">{{ product(candId)?.name }}</h4>
-                        <p class="bundle-reason">
-                          <span>推薦理由</span>
-                          {{ supplementationReason(cid, product(candId)!) }}
+                        <p class="recommend-reason-subtitle">
+                          {{ getProductReason(cid, candId) }}
                         </p>
                         <span class="product-price">
                           {{ formatMoney(product(candId)!.price) }}
@@ -274,9 +273,6 @@ const emit = defineEmits<{
               將組合加入購物車
               <svg class="icon"><use href="#i-arrow" /></svg>
             </button>
-            <p class="summary-note">
-              確認清單後可體驗模擬購買，不會扣款。<br />每項 30 粒為訂購數量示範，不代表每日用量或實際可服用一個月；本組合尚未確認適合一同服用。
-            </p>
           </aside>
         </div>
       </section>

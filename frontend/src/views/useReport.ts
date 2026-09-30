@@ -10,6 +10,7 @@ import {
   type ResultItem,
   createCatalog,
   createProfiles,
+  blueprint,
 } from './reportData'
 
 export function useReport() {
@@ -76,16 +77,20 @@ export function useReport() {
       }
       const catId = String(p.efficacyId)
       const rawScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : null
+      const evItems = Array.isArray(p.evidenceItems) ? p.evidenceItems : []
       results.push({
         categoryId: catId,
         score: rawScore !== null ? rawScore : 0,
-        summary: p.description || `${p.efficacyName} 是維持良好健康狀態的重要方向。`,
-        evidence: [
-          { label: '評估指標', value: p.efficacyName },
-          { label: '評估得分', value: rawScore !== null ? `${rawScore}分` : '資料評估中' },
-        ],
+        summary: blueprint[catId]?.[0] || p.description || `${p.efficacyName} 是維持良好健康狀態的重要方向。`,
+        evidenceItems: evItems,
+        evidence: evItems.length > 0
+          ? evItems.map((item: string) => ({ value: item }))
+          : [],
         reason: p.exclusionNote || p.description || '依據問卷數據綜合評估。',
-      })
+        rec1Reason: p.rec1Reason || null,
+        rec2Reason: p.rec2Reason || null,
+        recommendations: p.recommendations || [],
+      } as any)
 
 
       // Inject category if not present
@@ -326,6 +331,16 @@ export function useReport() {
       selectedProducts.value[categoryId] ||
       candidatesFor(categoryId)[0]
     return catalog.products[pid]
+  }
+
+  function getProductReason(categoryId: string, productId: string | number): string {
+    const res = currentProfile.value?.results?.find((x: any) => String(x.categoryId) === String(categoryId))
+    if (res && Array.isArray((res as any).recommendations)) {
+      const rec = (res as any).recommendations.find((r: any) => String(r.productId) === String(productId))
+      if (rec && rec.reason) return rec.reason
+    }
+    const p = product(String(productId))
+    return p?.ingredients || ''
   }
 
   function selectProduct(categoryId: string, productId: string) {
@@ -573,6 +588,7 @@ export function useReport() {
     toggleChartCategory,
     setBrowsingProduct,
     getActiveProductForDirection,
+    getProductReason,
     selectProduct,
     removeProduct,
     toggleCandidates,

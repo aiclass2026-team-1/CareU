@@ -112,15 +112,18 @@ const emit = defineEmits<{
               </div>
 
               <p class="insight-summary">{{ row.summary }}</p>
-              <div class="evidence-grid">
+              <div class="evidence-grid" v-if="row.evidence && row.evidence.length > 0">
                 <div
                   v-for="(ev, evIdx) in row.evidence"
                   :key="evIdx"
                   class="evidence-tile"
                 >
-                  <small>{{ ev.label }}</small>
+                  <small v-if="ev.label">{{ ev.label }}</small>
                   <strong>{{ ev.value }}</strong>
                 </div>
+              </div>
+              <div v-else class="evidence-empty">
+                <p class="neutral-missing" style="font-size: 13px; color: var(--muted); padding: 4px 0;">目前尚無具體評估證據項目。</p>
               </div>
               <p>{{ row.reason }}</p>
               <p class="analysis-caution">
