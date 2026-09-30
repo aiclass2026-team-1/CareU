@@ -28,23 +28,31 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || serviceRoleKey
 
-  if (!supabaseUrl || !supabaseKey) {
-    // If running in an environment without Supabase credentials, fail closed
-    return errorResponse('SERVER_CONFIG_ERROR', 'Supabase environment variables not configured', 500)
+  if (!supabaseUrl || !serviceRoleKey) {
+    // Fail closed if required Service Role configuration is unavailable
+    return errorResponse('SERVER_CONFIG_ERROR', 'Supabase service role configuration required', 500)
   }
 
   const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? ''
-  const supabaseClient = createClientOverride
-    ? createClientOverride(supabaseUrl, supabaseKey)
-    : createClient(supabaseUrl, supabaseKey, {
+  
+  // 1. Caller-authentication context client (passes user JWT for auth/identity verification)
+  const authClient = createClientOverride
+    ? createClientOverride(supabaseUrl, serviceRoleKey)
+    : createClient(supabaseUrl, anonKey || serviceRoleKey, {
         global: {
           headers: authHeader ? { Authorization: authHeader } : {},
         },
       })
 
-  const authIdentity = await resolveAuthIdentity(req, supabaseClient)
+  const authIdentity = await resolveAuthIdentity(req, authClient)
+
+  // 2. Trusted backend database-read context client (Service Role, no caller Authorization override)
+  const dbClient = createClientOverride
+    ? createClientOverride(supabaseUrl, serviceRoleKey)
+    : createClient(supabaseUrl, serviceRoleKey)
 
   let trustedContext: TrustedReportContext = {
     reportId: null,
@@ -57,8 +65,8 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
       return errorResponse('REPORT_REQUIRED', 'supplement mode requires a valid reportId', 400)
     }
 
-    // Verify report existence, status and ownership in lab_reports
-    const { data: report, error: reportErr } = await supabaseClient
+    // Verify report existence, status and ownership in lab_reports using trusted dbClient
+    const { data: report, error: reportErr } = await dbClient
       .from('lab_reports')
       .select('id, user_id, status, subject_gender, has_red_flags')
       .eq('id', body.reportId)
@@ -96,8 +104,8 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
     }
     body.profile = { gender: trustedGender }
 
-    // Query lab_report_metrics for recognized metrics
-    const { data: metrics, error: metricsErr } = await supabaseClient
+    // Query lab_report_metrics for recognized metrics using trusted dbClient
+    const { data: metrics, error: metricsErr } = await dbClient
       .from('lab_report_metrics')
       .select('metric_code')
       .eq('report_id', body.reportId)
@@ -108,8 +116,8 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
 
     const recognizedCodes = (metrics || []).map((m: { metric_code: string }) => m.metric_code)
 
-    // Query missing metrics from report_missing_core_metrics (Fail closed on error)
-    const { data: missingRows, error: missingErr } = await supabaseClient
+    // Query missing metrics from report_missing_core_metrics using trusted dbClient (bypassing caller-JWT RLS on core_metric_candidates)
+    const { data: missingRows, error: missingErr } = await dbClient
       .from('report_missing_core_metrics')
       .select('missing_metric_code')
       .eq('report_id', body.reportId)
@@ -131,8 +139,8 @@ export async function handleBuildPlan(req: Request, createClientOverride?: any):
 
   }
 
-  // Load active question_bank rows
-  const { data: questionRows, error: qErr } = await supabaseClient
+  // Load active question_bank rows using trusted dbClient
+  const { data: questionRows, error: qErr } = await dbClient
     .from('question_bank')
     .select('id, efficacy_id, efficacy_name, category, question_text, scoring_desc, applicable_gender, is_active, options_json, auto_map_field')
     .eq('is_active', true)
