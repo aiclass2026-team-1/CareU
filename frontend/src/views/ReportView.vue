@@ -6,6 +6,7 @@ import ReportInsightSection from './ReportInsightSection.vue'
 import ReportRecommendationSection from './ReportRecommendationSection.vue'
 import ReportBundleSection from './ReportBundleSection.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
+import ReportSafetyNoticeModal from './ReportSafetyNoticeModal.vue'
 import CartModal from './CartModal.vue'
 import AppToast from '@/components/common/AppToast.vue'
 import AppModal from '@/components/common/AppModal.vue'
@@ -33,6 +34,8 @@ const {
   isCartModalOpen,
   cartConfirmMode,
   isMemberModalOpen,
+  isSafetyNoticeOpen,
+  acknowledgeSafetyNotice,
   openMemberModal,
   closeMemberModal,
   confirmLogout,
@@ -102,7 +105,7 @@ function handleDemoLink(name: string) {
 
     <a class="skip" href="#chartSection" @click.prevent="scrollToSection('chartTitle')">跳至分析內容</a>
 
-    <div id="reportApp" class="report-enter">
+    <div id="reportApp" class="report-enter" :inert="isSafetyNoticeOpen">
       <!-- HERO -->
       <ReportHero
         :is-member="isMember"
@@ -313,6 +316,12 @@ function handleDemoLink(name: string) {
       :total="bundleTotal()"
       @close="closeCart"
       @confirm="confirmPurchase"
+    />
+
+    <!-- SAFETY NOTICE MODAL -->
+    <ReportSafetyNoticeModal
+      :is-open="isSafetyNoticeOpen"
+      @acknowledge="acknowledgeSafetyNotice"
     />
 
     <!-- TOAST NOTIFICATION -->

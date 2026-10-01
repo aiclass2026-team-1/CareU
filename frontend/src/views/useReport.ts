@@ -2,7 +2,7 @@ import { ref, computed, watch } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
-import { getLiveReportData } from '@/utils/flowContext'
+import { getLiveReportData, getAssessmentId, getReportId } from '@/utils/flowContext'
 import {
   type Category,
   type Product,
@@ -55,6 +55,29 @@ export function useReport() {
 
   // Member logout confirmation modal state
   const isMemberModalOpen = ref<boolean>(false)
+
+  // Safety Notice Modal state & session persistence
+  function getSafetyAckKey(): string {
+    const assessmentId = getAssessmentId()
+    const reportId = getReportId()
+    if (assessmentId) return `careu-safety-ack-assessment-${assessmentId}`
+    if (reportId) return `careu-safety-ack-report-${reportId}`
+    if (isPreview.value) return 'careu-safety-ack-preview'
+    return 'careu-safety-ack-formal-general'
+  }
+
+  const safetyAckKey = getSafetyAckKey()
+  const isAcknowledged = typeof window !== 'undefined' ? sessionStorage.getItem(safetyAckKey) === 'true' : false
+  const isSafetyNoticeOpen = ref<boolean>(!isAcknowledged)
+
+  function acknowledgeSafetyNotice() {
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(safetyAckKey, 'true')
+      }
+    } catch (_) {}
+    isSafetyNoticeOpen.value = false
+  }
 
   const liveReport = computed(() => {
     if (isPreview.value) return null
@@ -564,6 +587,8 @@ export function useReport() {
     cartConfirmMode,
     cartProductIds,
     isMemberModalOpen,
+    isSafetyNoticeOpen,
+    acknowledgeSafetyNotice,
     openMemberModal,
     closeMemberModal,
     confirmLogout,
