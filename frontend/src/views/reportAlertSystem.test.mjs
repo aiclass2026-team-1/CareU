@@ -199,3 +199,134 @@ test('15. removed candidate-safety sentence remains absent', () => {
   assert.ok(useReportCode.includes(`p.exclusionNote !== '${forbidden}'`))
 })
 
+test('Regression A: SHOW_WARNING-only matched report keeps has_red_flags=false, does not block recommend, resolves near alert', () => {
+  const matchedRules = [
+    {
+      rule_key: 'GLU_AC_NEAR_THRESHOLD',
+      metric_code: 'GLU_AC',
+      action_type: 'SHOW_WARNING',
+      warning_message: '空腹血糖接近提醒門檻，建議注意日常糖分攝取。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+  ]
+
+  const hasBlockingMatch = matchedRules.some((m) => m.action_type === 'BLOCK_RECOMMENDATION')
+  const hasRedFlags = hasBlockingMatch
+  assert.equal(hasRedFlags, false, 'SHOW_WARNING-only must NOT set hasRedFlags=true')
+
+  const alert = resolveEfficacyAlert('調節血糖', matchedRules, mockMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'near')
+  assert.equal(alert.label, '接近提醒門檻')
+})
+
+test('Regression B: BLOCK_RECOMMENDATION matched report sets has_red_flags=true and maintains recommendation blocking', () => {
+  const matchedRules = [
+    {
+      rule_key: 'TG_HIGH_CRITICAL',
+      metric_code: 'TG',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '三酸甘油脂指數異常偏高，請儘速就醫。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+  ]
+
+  const hasBlockingMatch = matchedRules.some((m) => m.action_type === 'BLOCK_RECOMMENDATION')
+  const hasRedFlags = hasBlockingMatch
+  assert.equal(hasRedFlags, true, 'BLOCK_RECOMMENDATION must set hasRedFlags=true')
+
+  const alert = resolveEfficacyAlert('調節血脂', matchedRules, mockMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'urgent')
+  assert.equal(alert.label, '就醫警告')
+})
+
+test('Regression C: Mixed SHOW_WARNING + BLOCK_RECOMMENDATION sets has_red_flags=true and preserves mapped warning alert', () => {
+  const matchedRules = [
+    {
+      rule_key: 'TG_CRITICAL',
+      metric_code: 'TG',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '血脂過高。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+    {
+      rule_key: 'GLU_AC_NEAR',
+      metric_code: 'GLU_AC',
+      action_type: 'SHOW_WARNING',
+      warning_message: '血糖接近提醒門檻。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+  ]
+
+  const hasBlockingMatch = matchedRules.some((m) => m.action_type === 'BLOCK_RECOMMENDATION')
+  const hasRedFlags = hasBlockingMatch
+  assert.equal(hasRedFlags, true)
+
+  const alertWarning = resolveEfficacyAlert('調節血糖', matchedRules, mockMappings)
+  assert.ok(alertWarning)
+  assert.equal(alertWarning.level, 'near')
+  assert.equal(alertWarning.label, '接近提醒門檻')
+
+  const alertUrgent = resolveEfficacyAlert('調節血脂', matchedRules, mockMappings)
+  assert.ok(alertUrgent)
+  assert.equal(alertUrgent.level, 'urgent')
+  assert.equal(alertUrgent.label, '就醫警告')
+})
+
+test('Regression D: Unmapped BLOCK_RECOMMENDATION sets global has_red_flags=true with no fabricated efficacy alert', () => {
+  const matchedRules = [
+    {
+      rule_key: 'URINE_PROTEIN_POSITIVE',
+      metric_code: 'URINE_PROTEIN',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '尿蛋白陽性。',
+      rule_status: 'PROTOTYPE_ACTIVE',
+      source_verified: false,
+    },
+    {
+      rule_key: 'URINE_OCCULT_BLOOD_POSITIVE',
+      metric_code: 'URINE_OCCULT_BLOOD',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '尿潛血陽性。',
+      rule_status: 'PROTOTYPE_ACTIVE',
+      source_verified: false,
+    },
+  ]
+
+  const hasBlockingMatch = matchedRules.some((m) => m.action_type === 'BLOCK_RECOMMENDATION')
+  const hasRedFlags = hasBlockingMatch
+  assert.equal(hasRedFlags, true, 'Unmapped urine rules must still trigger global blocking')
+
+  // Verify none of the 12 mapped efficacies get a fabricated alert
+  const testEfficacies = ['調節血脂', '護肝', '調節血糖', '抗疲勞', '輔助調節血鐵', '胃腸功能改善']
+  for (const eff of testEfficacies) {
+    const alert = resolveEfficacyAlert(eff, matchedRules, mockMappings)
+    assert.equal(alert, null, `Efficacy ${eff} must not receive a fabricated alert for unmapped urine metrics`)
+  }
+})
+
+test('Regression E: No matched rules results in has_red_flags=false and no alert', () => {
+  const matchedRules = []
+  const hasBlockingMatch = matchedRules.some((m) => m.action_type === 'BLOCK_RECOMMENDATION')
+  const hasRedFlags = hasBlockingMatch
+  assert.equal(hasRedFlags, false)
+
+  const alert = resolveEfficacyAlert('調節血脂', matchedRules, mockMappings)
+  assert.equal(alert, null)
+})
+
+test('Regression F: Migration SQL defines report_red_flag_summary with backward-compatible columns and action_type=BLOCK_RECOMMENDATION filter', () => {
+  const migrationPath = path.join(__dirname, '../../../supabase/migrations/20261002_fix_red_flag_summary_action_type_semantics.sql')
+  const sql = fs.readFileSync(migrationPath, 'utf-8')
+  assert.ok(sql.includes("m.action_type = 'BLOCK_RECOMMENDATION'"), 'Migration must filter action_type on BLOCK_RECOMMENDATION')
+  assert.ok(sql.includes("AS has_red_flags"), 'Migration must project has_red_flags')
+  assert.ok(sql.includes("AS triggered_rule_count"), 'Migration must preserve triggered_rule_count for parse-health-report compatibility')
+  assert.ok(sql.includes("AS warning_messages"), 'Migration must preserve warning_messages')
+  assert.ok(sql.includes("string_agg("), 'Migration must use string_agg text semantics for warning_messages')
+})
+
