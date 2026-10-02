@@ -18,7 +18,6 @@ const isDemo = checkDemoMode()
 const {
   activeProfileKey,
   isMember,
-  selectedCategoryForChart,
   selectedProducts,
   expandedCandidateDirections,
   isAuthModalOpen,
@@ -42,7 +41,6 @@ const {
   currentProfile,
   currentSummary,
   chartRows,
-  selectedChartItem,
   insightRows,
   recommendationDirections,
   deferredDirections,
@@ -55,7 +53,6 @@ const {
   supplementationReason,
   doseTone,
   isTablet,
-  toggleChartCategory,
   setBrowsingProduct,
   getActiveProductForDirection,
   getProductReason,
@@ -131,11 +128,8 @@ function handleDemoLink(name: string) {
         <!-- SECTION 1: CHART -->
         <ReportChartSection
           :chart-rows="chartRows"
-          :selected-category-for-chart="selectedCategoryForChart"
-          :selected-chart-item="selectedChartItem"
           :category="category"
           @open-auth="openAuth('login')"
-          @toggle-category="toggleChartCategory"
         />
 
         <!-- SECTION 2: INSIGHTS -->

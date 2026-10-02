@@ -53,8 +53,9 @@ export interface MedicalAlert {
   level: 'urgent' | 'near'
   label: string
   message: string
-  source: string
-  demo: boolean
+  source?: string
+  sourceVerified?: boolean
+  demo?: boolean
 }
 
 export interface EvidenceItem {

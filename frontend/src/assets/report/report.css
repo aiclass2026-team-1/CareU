@@ -29,7 +29,7 @@
 .report-container .footer{display:block;padding:34px 24px max(32px,env(safe-area-inset-bottom));color:rgba(255,255,255,.66);background:var(--navy);font-size:.74rem}.report-container .footer__inner{width:min(1080px,100%);margin:auto;display:flex;justify-content:space-between;align-items:center;gap:24px}.report-container .footer__links{display:flex;flex-wrap:wrap;gap:17px}.report-container .footer a:hover{color:white}
 
 /* Reading width and quieter product-led composition */
-.report-container .wrap{width:min(920px,calc(100% - 112px));margin-inline:auto}
+.report-container .wrap{width:min(1012px,calc(100% - 112px));margin-inline:auto}
 .report-container .page-nav{position:fixed;left:20px;top:35%;z-index:12;display:flex;flex-direction:column;gap:24px;border:0;padding:0 0 0 23px;font-size:12px;overflow:visible;background:transparent;--rail:5px}
 .report-container .page-nav:before{content:"";position:absolute;left:var(--rail);top:23px;bottom:23px;width:1px;background:#BCD1EB;transform:translateX(-50%)}
 .report-container .page-nav a{position:relative;min-height:46px;display:flex;align-items:center;color:#58708C;text-decoration:none}
@@ -41,7 +41,7 @@
 .recommend-list{gap:26px}.recommend-card{padding:26px;border-color:#DFEAF4}.recommend-card:nth-child(3n+2){border-top:4px solid #A3D3F7}.recommend-card:nth-child(3n+1){border-top:4px solid #EB938E}.recommend-card:nth-child(3n){border-top:4px solid #F5BD9D}.recommend-header{margin-bottom:12px}.recommend-intro{font-size:14px;line-height:1.85}.reason-disclosure{margin-top:10px;font-size:12px}.reason-disclosure summary{color:#47709F;cursor:pointer;min-height:40px;display:flex;align-items:center;gap:8px}.reason-disclosure .reason{padding:14px 18px;background:#F7F8FA;border-radius:12px}.reason-disclosure p{margin-top:10px}.direction-only{padding:20px 26px;background:#FAFBFD}.direction-only .recommend-header .label{display:none}.direction-only .recommend-header h3{font-size:19px}.no-recommend{padding:12px 14px!important;margin-top:10px;background:#F0F4F8!important;font-size:12px}.no-recommend p{font-size:12px}
 .recommend-browse{gap:10px;margin:20px 0 12px}.browse-product{display:flex;flex-direction:column;gap:5px;background:#F7F8FA;position:relative;line-height:1.6}.browse-product[aria-pressed="true"]{background:#EFF7FF;box-shadow:inset 0 0 0 1px #A3D3F7}.choice-status{display:flex;align-items:center;gap:4px;min-height:22px;font-size:10px;color:#6C7D91}.choice-status:has(.icon){color:#2764A3;font-weight:700}.choice-status .icon{width:14px;height:14px}.browse-product small{font-size:10px;color:#47709F}.product-focus{padding:20px;background:#F8FBFD;border:1px solid #DCEAF3;border-radius:20px}.featured-product{border:0;padding:0;grid-template-columns:130px 1fr;gap:24px}.featured-product .product-art{aspect-ratio:1/1.1;background:radial-gradient(ellipse at 50% 40%,#fff,#DDEEF8)}.recommend-actions{padding:0;margin-top:8px}.selected-caption{font-size:12px;color:#47709F}.product-details{margin-top:16px;border-top:1px solid #DCE6ED}.product-details summary{font-size:12px;line-height:1.7;min-height:44px}.details-product-name{padding:12px 0;font-weight:700;font-size:13px;color:var(--navy)}.source-grid{font-size:12px}.product-focus .source-grid{background:white;border-radius:12px;padding:16px}.source-meta{font-size:10px!important}
 .bundle-layout{grid-template-columns:minmax(0,1fr) 270px;gap:22px;align-items:start}.bundle-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.bundle-list[data-count="1"]{grid-template-columns:minmax(0,380px);justify-content:center}.bundle-card{padding:16px;background:white;border:1px solid #DCE8F3;border-radius:20px;overflow:hidden}.bundle-card:nth-child(even){background:#FFFBF8}.bundle-card .direction{padding-right:25px;min-height:34px;margin-bottom:10px;font-size:11px}.bundle-product{display:block}.bundle-product>.product-art{width:100%;height:180px;aspect-ratio:auto;border:0;background:radial-gradient(ellipse at 40% 30%,white,#DDEDF7);border-radius:14px;margin-bottom:14px}.bundle-product .bottle{width:64px;height:105px}.bundle-card:nth-child(even) .product-art{background:radial-gradient(ellipse at 40% 30%,white,#F8E2D6)}.bundle-product h4{font-size:14px;margin:0;min-height:44px}.bundle-product .product-price{font-size:17px;margin:8px 0}.bundle-actions{margin-top:4px}.bundle-actions .text-button{min-height:40px}.bundle-card>.product-details{border-top:1px solid #DCE6ED;background:#F7FAFC;padding:8px 10px;border-radius:12px;margin-top:10px}.bundle-card .source-grid{grid-template-columns:1fr!important}.bundle-card .source-meta{grid-template-columns:1fr}.candidate-wrap{border:1px solid #DCE7EF;background:#fff;border-radius:14px;padding:10px;margin:12px 0}.candidate-wrap .candidate{border:0;grid-template-columns:36px 1fr;position:relative;gap:8px;padding:0}.candidate .selected-check{grid-column:2;font-size:10px;text-align:left}.candidate-wrap .product-details{border-top:1px solid #E1E9F1;margin-bottom:0;padding-top:4px}.candidate-wrap .product-details summary{font-size:11px}.candidates>p{font-size:11px}.summary-card{padding:22px;background:#EFF6FC;border-color:#D7E6F3}.summary-item{font-size:12px}.summary-total strong{font-size:23px}.summary-card .button{font-size:13px}.summary-note{line-height:1.8}.commerce{background:linear-gradient(180deg,#EEF6FD,#FAFBFC 55%,#FFF8F4)}
-@media(max-width:1250px){.report-container .page-nav a{font-size:0;width:22px}.report-container .page-nav .icon{display:none}.report-container .page-nav a:hover:after,.report-container .page-nav a:focus-visible:after{content:attr(aria-label);position:absolute;left:18px;white-space:nowrap;padding:6px 10px;background:#fff;border:1px solid #DCE7EF;border-radius:8px;font-size:12px}.report-container .page-nav{left:14px}.report-container .wrap{width:min(920px,calc(100% - 100px));margin-inline:auto}}
+@media(max-width:1250px){.report-container .page-nav a{font-size:0;width:22px}.report-container .page-nav .icon{display:none}.report-container .page-nav a:hover:after,.report-container .page-nav a:focus-visible:after{content:attr(aria-label);position:absolute;left:18px;white-space:nowrap;padding:6px 10px;background:#fff;border:1px solid #DCE7EF;border-radius:8px;font-size:12px}.report-container .page-nav{left:14px}.report-container .wrap{width:min(1012px,calc(100% - 100px));margin-inline:auto}}
 @media(max-width:850px){.bundle-layout{grid-template-columns:1fr}.summary-card{position:static}.bundle-list{grid-template-columns:repeat(2,minmax(0,1fr))}.report-container .hero-body{grid-template-columns:1fr 160px}.report-container .hero-logo{width:85px}.report-container .hero-visual{height:200px}}
 @media(max-width:600px){.report-container .wrap{width:calc(100% - 60px);margin-inline:auto}.report-container .page-nav{left:5px;padding-left:10px;gap:22px}.report-container .hero-body{grid-template-columns:1fr}.report-container .hero h1{font-size:30px}.report-section{padding-top:38px}.recommend-card,.direction-only{padding:18px}.recommend-header h3{font-size:19px}.recommend-header{gap:8px}.recommend-header .pill{font-size:9px}.featured-product{grid-template-columns:90px 1fr;gap:14px}.product-focus{padding:14px}.product-info h4{font-size:14px}.recommend-browse{gap:7px}.browse-product{min-width:95px;padding:8px;font-size:11px}.bundle-list{grid-template-columns:1fr}.bundle-list[data-count="1"]{grid-template-columns:1fr}.bundle-product>.product-art{height:200px}.bundle-product .bottle{width:76px;height:120px}.bundle-product h4{min-height:0}.insight-card summary{padding:17px;gap:9px}.insight-card h3{font-size:16px}.insight-body{padding:0 17px 17px}.insight-card summary .priority{width:148px}.medical-alert strong{font-size:11px}.chart-layout{padding:18px 12px}.chart-note{padding:16px}.section-head h2{font-size:25px}}
 
@@ -118,3 +118,69 @@
 
 /* Restore option typography from before the item-name enlargement. */
 .recommend-browse .choice-name{font-size:12px;line-height:1.7}.recommend-browse .choice-status{font-size:10px;line-height:1.6}.recommend-browse .browse-product{align-items:center;gap:8px}
+
+/* Central Report Content Explicit Typography Scale (~10% Visual Scale) */
+.report-container .hero h1{font-size:clamp(33px,3.7vw,50.6px)}
+.report-container .hero-copy>p{font-size:16.5px}
+.report-container .hero-tag{font-size:14.5px}
+.report-container .hero-meta{font-size:13px}
+.report-container h2,.section-head h2{font-size:clamp(26.4px,3.3vw,35.2px)}
+.report-container h3{font-size:21px}
+.section-index{font-size:13px}
+.section-head p{font-size:15.5px}
+.chart-caption{font-size:13px}
+.chart-row{font-size:15.5px}
+.chart-row .rank{font-size:13px}
+.chart-axis{font-size:12px}
+.chart-foot{font-size:13px}
+.chart-note h3{font-size:17.5px}
+.chart-note p{font-size:13px}
+.insight-card .number{font-size:19px}
+.insight-card h3{font-size:21px}
+.insight-card p{font-size:15.5px}
+.priority,.insight-card summary .priority{font-size:13px}
+.priority b{font-size:25.5px}
+.evidence-tile small{font-size:13px}
+.evidence-tile strong{font-size:15.5px}
+.medical-alert,.medical-alert strong{font-size:13px}
+.medical-alert p{font-size:14.5px}
+.medical-alert small{font-size:12px}
+.recommend-header h3{font-size:24px}
+.recommend-intro{font-size:15.5px}
+.reason p,.reason ul{font-size:15.5px}
+.reason .reason-label{font-size:13px}
+.reason-disclosure{font-size:13px}
+.reason-disclosure summary{font-size:13px}
+.direction-only .recommend-header h3{font-size:21px}
+.no-recommend,.no-recommend p{font-size:13px}
+.recommend-browse .choice-status{font-size:10px}
+.recommend-browse .choice-name{font-size:15.5px;font-weight:600;line-height:1.5}
+.featured-product .product-info h4{font-size:20px}
+.featured-product .product-price{font-size:16.5px}
+.featured-product .selected-caption{font-size:13px}
+.bundle-product .product-info h4{font-size:17.5px}
+.bundle-product .bundle-reason{font-size:11px!important}
+.bundle-product .product-price{font-size:15.5px}
+.bundle-product .unit-price,.unit-price{font-size:12px!important}
+.bundle-ingredients{font-size:13px!important}
+.supply-info{font-size:11px!important}
+.bundle-actions [data-action="toggle-candidates"]{font-size:12px}
+.candidate-wrap .candidate-copy .candidate-name{font-size:17.5px}
+.candidate-wrap .candidate-ingredients{font-size:11px!important}
+.candidate-wrap .product-info .product-price{font-size:15.5px}
+.candidate-price{font-size:12px!important}
+.candidate-price strong{font-size:15.5px}
+.candidate-add .button{font-size:13px}
+.product-details summary{font-size:13px}
+.candidate-wrap .product-details summary{font-size:11px}
+.details-product-name{font-size:14.5px}
+.source-grid,.source-grid h4{font-size:13px}
+.source-meta,.source-meta span{font-size:12px}
+.summary-card h3{font-size:21px}
+.summary-card p,#selectionCount{font-size:12px}
+.summary-item p{font-size:14.5px}
+.summary-item>span{font-size:13px}
+.summary-item small{font-size:11px}
+.summary-total strong{font-size:25.5px}
+.summary-total span{font-size:13px}
+.summary-card .button{font-size:14.5px}

@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { resolveAuthIdentity } from '../_shared/auth.ts'
-import { deriveAssessmentInputs, mergeAssessmentItems, resolveEfficacyScore } from '../_shared/reportOrchestrator.ts'
+import { deriveAssessmentInputs, mergeAssessmentItems, resolveEfficacyScore, resolveEfficacyAlert } from '../_shared/reportOrchestrator.ts'
 import type { QuestionBankRow, ValidatedAnswerRecord } from '../_shared/types.ts'
 
 declare const Deno: {
@@ -74,6 +74,29 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
 
   let assessmentId: string | null = null
   let hasRedFlags = false
+  let matchedRows: any[] = []
+  let mappingRows: any[] = []
+
+  // Load red flag matches and metric mappings if submission is linked to a lab report
+  if (submission.report_id) {
+    const { data: matchedData } = await supabaseClient
+      .from('report_red_flag_matches')
+      .select('report_id, rule_key, metric_code, detected_value, action_type, warning_message, rule_status, source_verified')
+      .eq('report_id', submission.report_id)
+
+    if (Array.isArray(matchedData)) {
+      matchedRows = matchedData
+    }
+
+    const { data: mapData } = await supabaseClient
+      .from('metric_efficacy_mapping')
+      .select('metric_code, efficacy_name, is_active')
+      .eq('is_active', true)
+
+    if (Array.isArray(mapData)) {
+      mappingRows = mapData
+    }
+  }
 
   // 2. Check for existing completed assessment owned by the caller (idempotency / duplicate protection)
   const { data: existingAssessment } = await supabaseClient
@@ -120,7 +143,12 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
         return errorResponse('REPORT_ACCESS_DENIED', 'Access denied to this report', 403)
       }
 
-      hasRedFlags = Boolean(report.has_red_flags)
+      const hasBlockingMatch = matchedRows.some((m: any) => m.action_type === 'BLOCK_RECOMMENDATION')
+      if (matchedRows.length > 0) {
+        hasRedFlags = hasBlockingMatch
+      } else {
+        hasRedFlags = Boolean(report.has_red_flags)
+      }
 
       // Load trusted efficacy lab scores
       const { data: labScores } = await supabaseClient
@@ -220,7 +248,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
   if (productIds.size > 0) {
     const { data: products } = await supabaseClient
       .from('health_food_products')
-      .select('id, product_name, license_no, category, active_ingredients, efficacy, efficacy_claim, evidence_type, warnings, precautions, mechanism_tag, evidence_score, unit_price')
+      .select('id, product_name, license_no, category, active_ingredients, efficacy, efficacy_claim, evidence_type, warnings, precautions, mechanism_tag, evidence_score, unit_price, approval_date, applicant')
       .in('id', Array.from(productIds))
 
     if (products) {
@@ -264,6 +292,8 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
         warnings: p.warnings,
         precautions: p.precautions,
         licenseNo: p.license_no,
+        approvalDate: p.approval_date,
+        applicant: p.applicant,
         evidenceScore: p.evidence_score,
         mechanismTag: p.mechanism_tag,
         reason: row.rec1_reason || p.efficacy_claim || '',
@@ -282,6 +312,8 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
         warnings: p.warnings,
         precautions: p.precautions,
         licenseNo: p.license_no,
+        approvalDate: p.approval_date,
+        applicant: p.applicant,
         evidenceScore: p.evidence_score,
         mechanismTag: p.mechanism_tag,
         reason: row.rec2_reason || p.efficacy_claim || '',
@@ -291,6 +323,8 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
     const resolvedScore = typeof matchedDetail.score === 'number' && !isNaN(matchedDetail.score)
       ? Math.round(matchedDetail.score)
       : resolveEfficacyScore(row, topEfficaciesDetail, scoresJson)
+
+    const alert = resolveEfficacyAlert(row.efficacy_name, matchedRows, mappingRows)
 
     priorities.push({
       rank: row.efficacy_rank,
@@ -304,6 +338,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       rec2Reason: row.rec2_reason || null,
       recommendations: recs,
       exclusionNote: row.exclusion_note || null,
+      alert,
     })
   }
 

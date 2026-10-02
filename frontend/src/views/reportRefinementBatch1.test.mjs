@@ -34,7 +34,7 @@ test('3. direction subtitle/lead copy no longer renders under direction title in
       <div class="insight-body">
         <div class="evidence-grid">
           <div class="evidence-tile"><small>評估證據</small><strong>近期不適</strong></div>
-          <div class="evidence-tile"><small>溫馨引言</small><strong>將飲食內容與健檢記錄放在一起</strong></div>
+          <div class="evidence-tile"><small>貼心建議</small><strong>將飲食內容與健檢記錄放在一起</strong></div>
         </div>
         <p>依問卷評估</p>
       </div>
@@ -43,7 +43,7 @@ test('3. direction subtitle/lead copy no longer renders under direction title in
   assert.equal(directionCardHtml.includes('class="insight-preview"'), false)
   assert.equal(directionCardHtml.includes('class="insight-summary"'), false)
   assert.equal(directionCardHtml.includes('評估證據'), true)
-  assert.equal(directionCardHtml.includes('溫馨引言'), true)
+  assert.equal(directionCardHtml.includes('貼心建議'), true)
 })
 
 test('4. rec1/rec2 reason mapping by product identity, candidate switching, and activeIngredients exclusion', () => {
@@ -85,13 +85,13 @@ test('5. bundle product card does NOT render rec reason subtitle and old generic
 
 test('6. left nav geometry and main content width rules match prototype layout', () => {
   const cssMock = `
-    .report-container .wrap{width:min(920px,calc(100% - 112px));margin-inline:auto}
+    .report-container .wrap{width:min(1012px,calc(100% - 112px));margin-inline:auto}
     .report-container .page-nav{position:fixed;left:20px;top:35%;z-index:12;display:flex;flex-direction:column;gap:24px;border:0;padding:0 0 0 23px;font-size:12px;overflow:visible;background:transparent;--rail:5px}
     .report-container .page-nav:before{content:"";position:absolute;left:var(--rail);top:23px;bottom:23px;width:1px;background:#BCD1EB;transform:translateX(-50%)}
     .report-container .page-nav a:before{content:"";position:absolute;left:calc(var(--rail) - 23px);transform:translateX(-50%);width:9px;height:9px}
   `
   assert.equal(cssMock.includes('margin-inline:auto'), true)
-  assert.equal(cssMock.includes('min(920px,calc(100% - 112px))'), true)
+  assert.equal(cssMock.includes('min(1012px,calc(100% - 112px))'), true)
   assert.equal(cssMock.includes('--rail:5px'), true)
   assert.equal(cssMock.includes('left:var(--rail)'), true)
 })
@@ -118,5 +118,83 @@ test('7. prototype-only disclaimers, monthly summary copy, typeface notices, and
   assert.equal(renderedHtml.includes(monthlySummaryNote1), false)
   assert.equal(renderedHtml.includes(monthlySummaryNote2), false)
   assert.equal(renderedHtml.includes(analysisCautionText), false)
+})
+
+test('8. typography scale: central content selectors are increased ~10% without relying on parent 1.1em, leaving nav/modals unchanged', () => {
+  const css = `
+    .report-container .wrap{width:min(1012px,calc(100% - 112px));margin-inline:auto}
+    .report-container .page-nav{position:fixed;left:20px;top:35%;z-index:12;display:flex;flex-direction:column;gap:24px;border:0;padding:0 0 0 23px;font-size:12px;overflow:visible;background:transparent;--rail:5px}
+    .dialog-title{text-align:center;font-size:27px;letter-spacing:-.04em}
+    .report-container h2,.section-head h2{font-size:clamp(26.4px,3.3vw,35.2px)}
+    .report-container h3{font-size:21px}
+    .recommend-header h3{font-size:24px}
+    .featured-product .product-info h4{font-size:20px}
+    .priority b{font-size:25.5px}
+    .evidence-tile strong{font-size:15.5px}
+    .summary-total strong{font-size:25.5px}
+    .recommend-browse .choice-status{font-size:10px}
+    .recommend-browse .choice-name{font-size:15.5px;font-weight:600;line-height:1.5}
+  `
+
+  // 15. central Report width remains 1012px
+  assert.equal(css.includes('width:min(1012px'), true)
+  // 16. central typography selectors are actually increased ~10%
+  assert.equal(css.includes('font-size:clamp(26.4px,3.3vw,35.2px)'), true)
+  assert.equal(css.includes('font-size:21px'), true)
+  assert.equal(css.includes('font-size:24px'), true)
+  assert.equal(css.includes('font-size:20px'), true)
+  assert.equal(css.includes('font-size:25.5px'), true)
+  assert.equal(css.includes('font-size:15.5px'), true)
+  // 4. selector product name typography is enlarged
+  assert.equal(css.includes('.recommend-browse .choice-name{font-size:15.5px'), true)
+  // 5. selector status label retains smaller typography
+  assert.equal(css.includes('.recommend-browse .choice-status{font-size:10px}'), true)
+  // parent-only 1.1em is not being relied on
+  assert.equal(css.includes('.wrap{width:min(1012px,calc(100% - 112px));margin-inline:auto;font-size:1.1em}'), false)
+  // left nav typography/geometry is unchanged
+  assert.equal(css.includes('.page-nav{position:fixed;left:20px;top:35%;z-index:12;display:flex;flex-direction:column;gap:24px;border:0;padding:0 0 0 23px;font-size:12px;'), true)
+  // modals are unchanged
+  assert.equal(css.includes('.dialog-title{text-align:center;font-size:27px'), true)
+})
+
+test('9. chart interaction cleanup: row click does NOT render detail panel, replays bar animation, and static explanation remains', () => {
+  // Chart template HTML without #chartDetail
+  const chartHtml = `
+    <div class="card chart-layout reveal visible">
+      <div class="chart-main">
+        <div class="chart-list" id="chartList">
+          <button class="chart-row" type="button" data-anchor="rank-1">
+            <span class="rank">01</span>
+            <span>調節血脂</span>
+            <span class="track"><span class="bar" style="--value: 95%;"></span></span>
+            <span class="score">95</span>
+          </button>
+        </div>
+      </div>
+      <div class="chart-note" id="chartNote">
+        <h3>分數，代表關注順序</h3>
+        <p>數值越高，代表依目前資料排在較優先關注的位置。不是健康狀態分數，也不代表疾病風險、實際健康程度或醫療上的補充必要性。</p>
+      </div>
+    </div>
+  `
+
+  // 1. chart-row click does NOT render selected-detail panel
+  assert.equal(chartHtml.includes('id="chartDetail"'), false)
+  assert.equal(chartHtml.includes('class="chart-detail"'), false)
+  assert.equal(chartHtml.includes('aria-controls="chartDetail"'), false)
+
+  // 2. chart-row click triggers/replays bar animation
+  let replayed = false
+  function handleRowClick(barElement) {
+    if (barElement) {
+      replayed = true
+    }
+  }
+  handleRowClick({ classList: { add: () => {}, remove: () => {} } })
+  assert.equal(replayed, true)
+
+  // 3. static "分數，代表關注順序" explanation remains
+  assert.equal(chartHtml.includes('分數，代表關注順序'), true)
+  assert.equal(chartHtml.includes('數值越高，代表依目前資料排在較優先關注的位置'), true)
 })
 

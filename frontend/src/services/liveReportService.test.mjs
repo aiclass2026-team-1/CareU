@@ -40,7 +40,13 @@ test('FlowContext: handles assessmentId and liveReportData correctly', () => {
         efficacyName: '調節血脂',
         score: 95,
         recommendations: [
-          { productId: 6, productName: '測試魚油膠囊', reason: '人體食用研究' },
+          {
+            productId: 6,
+            productName: '測試魚油膠囊',
+            reason: '人體食用研究',
+            approvalDate: '2019-08-05',
+            applicant: '合一生技股份有限公司',
+          },
         ],
       },
     ],

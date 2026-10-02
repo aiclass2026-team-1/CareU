@@ -101,6 +101,9 @@ export function useReport() {
       const catId = String(p.efficacyId)
       const rawScore = typeof p.score === 'number' && !isNaN(p.score) ? p.score : null
       const evItems = Array.isArray(p.evidenceItems) ? p.evidenceItems : []
+      const hasRealExclusion = p.exclusionNote && p.exclusionNote !== '候選品經安全審查皆符合條件，無觸發特殊排除規則。'
+      const reason = hasRealExclusion ? p.exclusionNote : (p.description || '依據問卷數據綜合評估。')
+
       results.push({
         categoryId: catId,
         score: rawScore !== null ? rawScore : 0,
@@ -109,10 +112,18 @@ export function useReport() {
         evidence: evItems.length > 0
           ? evItems.map((item: string) => ({ value: item }))
           : [],
-        reason: p.exclusionNote || p.description || '依據問卷數據綜合評估。',
+        reason,
         rec1Reason: p.rec1Reason || null,
         rec2Reason: p.rec2Reason || null,
         recommendations: p.recommendations || [],
+        alert: p.alert ? {
+          level: p.alert.level,
+          label: p.alert.label,
+          message: p.alert.message,
+          source: (p.alert as any).source || '依檢驗資料與審核規則提供提醒',
+          sourceVerified: p.alert.sourceVerified,
+          demo: (p.alert as any).demo,
+        } : undefined,
       } as any)
 
 
@@ -135,8 +146,8 @@ export function useReport() {
               name: rec.productName,
               ingredients: rec.activeIngredients || null,
               license: rec.licenseNo || '',
-              approvalDate: '',
-              applicant: '',
+              approvalDate: rec.approvalDate || '',
+              applicant: rec.applicant || '',
               status: '',
               category: p.efficacyName,
               warnings: rec.warnings || null,
@@ -238,15 +249,15 @@ export function useReport() {
   }
 
   function bundleTotal(): number {
-    return uniqueSelected().reduce((acc, p) => acc + p.price, 0)
+    return uniqueSelected().reduce((acc, p) => acc + Math.round(p.price), 0)
   }
 
   function formatMoney(v: any): string {
     if (v === null || v === undefined || typeof v !== 'number' || isNaN(v) || v <= 0) {
       return '價格未標示'
     }
-    const fixed = Number(v.toFixed(4))
-    return 'NT$ ' + new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 4 }).format(fixed)
+    const rounded = Math.round(v)
+    return 'NT$ ' + new Intl.NumberFormat('zh-TW').format(rounded)
   }
 
   function supplementationReason(cid: string, p: Product): string {

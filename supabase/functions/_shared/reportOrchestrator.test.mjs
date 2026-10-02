@@ -4,6 +4,7 @@ import {
   deriveAssessmentInputs,
   mergeAssessmentItems,
   resolveEfficacyScore,
+  resolveEfficacyAlert,
 } from './reportOrchestrator.ts'
 
 const mockQuestionBank = [
@@ -228,5 +229,107 @@ test('K: resolveEfficacyScore requires strict rank + name exact match', () => {
 
   const topDetailMatched = [{ rank: 1, id: 1, name: '調節血脂', score: 92 }]
   assert.equal(resolveEfficacyScore(rankRow, topDetailMatched, {}), 92)
+})
+
+
+const mockMetricEfficacyMappings = [
+  { metric_code: 'CHOL_TOTAL', efficacy_name: '調節血脂', is_active: true },
+  { metric_code: 'TG', efficacy_name: '調節血脂', is_active: true },
+  { metric_code: 'GPT_ALT', efficacy_name: '護肝', is_active: true },
+  { metric_code: 'GLU_AC', efficacy_name: '調節血糖', is_active: true },
+  { metric_code: 'HB', efficacy_name: '抗疲勞', is_active: true },
+  { metric_code: 'HB', efficacy_name: '輔助調節血鐵', is_active: true },
+]
+
+test('Alert 1: BLOCK_RECOMMENDATION -> urgent alert with 就醫警告 label and unmodified message', () => {
+  const matchedRules = [
+    {
+      rule_key: 'GPT_ALT_CRITICAL_HIGH',
+      metric_code: 'GPT_ALT',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '肝指數 ALT 超過標準甚多，請儘速就醫檢查。',
+      rule_status: 'PROTOTYPE_ACTIVE',
+      source_verified: false,
+    },
+  ]
+
+  const alert = resolveEfficacyAlert('護肝', matchedRules, mockMetricEfficacyMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'urgent')
+  assert.equal(alert.label, '就醫警告')
+  assert.equal(alert.message, '肝指數 ALT 超過標準甚多，請儘速就醫檢查。')
+  assert.deepEqual(alert.sourceMetricCodes, ['GPT_ALT'])
+  assert.deepEqual(alert.sourceRuleKeys, ['GPT_ALT_CRITICAL_HIGH'])
+  assert.equal(alert.sourceVerified, false)
+})
+
+test('Alert 2: SHOW_WARNING -> near alert with 接近提醒門檻 label and unmodified message', () => {
+  const matchedRules = [
+    {
+      rule_key: 'GLU_AC_NEAR_THRESHOLD',
+      metric_code: 'GLU_AC',
+      action_type: 'SHOW_WARNING',
+      warning_message: '空腹血糖接近提醒門檻，建議注意日常糖分攝取。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+  ]
+
+  const alert = resolveEfficacyAlert('調節血糖', matchedRules, mockMetricEfficacyMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'near')
+  assert.equal(alert.label, '接近提醒門檻')
+  assert.equal(alert.message, '空腹血糖接近提醒門檻，建議注意日常糖分攝取。')
+  assert.deepEqual(alert.sourceMetricCodes, ['GLU_AC'])
+  assert.deepEqual(alert.sourceRuleKeys, ['GLU_AC_NEAR_THRESHOLD'])
+  assert.equal(alert.sourceVerified, true)
+})
+
+test('Alert 3: Multi-efficacy deterministic mapping (e.g. HB maps to both 抗疲勞 and 輔助調節血鐵)', () => {
+  const matchedRules = [
+    {
+      rule_key: 'HB_LOW_WARNING',
+      metric_code: 'HB',
+      action_type: 'SHOW_WARNING',
+      warning_message: '血紅素偏低，請注意鐵質補充與作息。',
+      rule_status: 'ACTIVE',
+      source_verified: true,
+    },
+  ]
+
+  const alertFatigue = resolveEfficacyAlert('抗疲勞', matchedRules, mockMetricEfficacyMappings)
+  assert.ok(alertFatigue)
+  assert.equal(alertFatigue.level, 'near')
+  assert.equal(alertFatigue.label, '接近提醒門檻')
+
+  const alertIron = resolveEfficacyAlert('輔助調節血鐵', matchedRules, mockMetricEfficacyMappings)
+  assert.ok(alertIron)
+  assert.equal(alertIron.level, 'near')
+  assert.equal(alertIron.label, '接近提醒門檻')
+
+  const alertLipid = resolveEfficacyAlert('調節血脂', matchedRules, mockMetricEfficacyMappings)
+  assert.equal(alertLipid, null)
+})
+
+test('Alert 4: No heuristic inference - unmapped metrics return null regardless of name similarity', () => {
+  const matchedRules = [
+    {
+      rule_key: 'URINE_PROTEIN_POSITIVE',
+      metric_code: 'URINE_PROTEIN',
+      action_type: 'BLOCK_RECOMMENDATION',
+      warning_message: '尿蛋白陽性。',
+      rule_status: 'PROTOTYPE_ACTIVE',
+      source_verified: false,
+    },
+  ]
+
+  // URINE_PROTEIN is not in mockMetricEfficacyMappings -> returns null for any efficacy
+  const alert = resolveEfficacyAlert('護肝', matchedRules, mockMetricEfficacyMappings)
+  assert.equal(alert, null)
+})
+
+test('Alert 5: Null alert when no matched rules for efficacy', () => {
+  const alert = resolveEfficacyAlert('調節血脂', [], mockMetricEfficacyMappings)
+  assert.equal(alert, null)
 })
 

@@ -25,6 +25,31 @@ export interface NormalizedRecommendationItem {
   evidenceScore?: number
 }
 
+export interface PriorityAlert {
+  level: 'near' | 'urgent'
+  label: string
+  message: string
+  sourceMetricCodes?: string[]
+  sourceRuleKeys?: string[]
+  sourceVerified?: boolean
+}
+
+export interface MatchedRuleRecord {
+  rule_key: string
+  metric_code: string
+  action_type: 'BLOCK_RECOMMENDATION' | 'SHOW_WARNING' | string
+  warning_message: string
+  rule_status?: string
+  source_verified?: boolean
+  detected_value?: string | number | null
+}
+
+export interface MetricEfficacyMappingRecord {
+  metric_code: string
+  efficacy_name: string
+  is_active?: boolean
+}
+
 export interface NormalizedPriorityItem {
   rank: number
   efficacyId?: number
@@ -39,6 +64,7 @@ export interface NormalizedPriorityItem {
   userCondition?: string | null
   recommendations: NormalizedRecommendationItem[]
   exclusionNote?: string | null
+  alert?: PriorityAlert | null
 }
 
 export interface NormalizedReportPayload {
@@ -273,5 +299,69 @@ export function resolveEfficacyScore(
 
   return null
 }
+/**
+ * Resolves priority alert from authoritative matched rules and metric_efficacy_mapping.
+ *
+ * Rules:
+ * 1. Resolves associated efficacy identity ONLY via approved metric_efficacy_mapping (no guessing or string heuristics).
+ * 2. BLOCK_RECOMMENDATION maps to level 'urgent' / label '就醫警告'.
+ * 3. SHOW_WARNING maps to level 'near' / label '接近提醒門檻'.
+ * 4. Warning message is passed unmodified from backend rule.
+ * 5. Returns null if no matched rule maps to this efficacy.
+ * 6. Preserves provenance (source_verified, metricCodes, ruleKeys).
+ */
+export function resolveEfficacyAlert(
+  efficacyName: string,
+  matchedRules: MatchedRuleRecord[],
+  mappings: MetricEfficacyMappingRecord[]
+): PriorityAlert | null {
+  if (!efficacyName || !Array.isArray(matchedRules) || matchedRules.length === 0 || !Array.isArray(mappings)) {
+    return null
+  }
 
+  const targetName = efficacyName.trim()
+  const activeMappings = mappings.filter(
+    (m) => m && m.is_active !== false && (m.efficacy_name || '').trim() === targetName
+  )
+
+  if (activeMappings.length === 0) {
+    return null
+  }
+
+  const mappedMetricCodes = new Set(activeMappings.map((m) => (m.metric_code || '').trim()).filter(Boolean))
+
+  const contributingRules = matchedRules.filter((rule) => {
+    if (!rule || !rule.metric_code) return false
+    return mappedMetricCodes.has(rule.metric_code.trim())
+  })
+
+  if (contributingRules.length === 0) {
+    return null
+  }
+
+  const hasUrgent = contributingRules.some((r) => r.action_type === 'BLOCK_RECOMMENDATION')
+  const level: 'urgent' | 'near' = hasUrgent ? 'urgent' : 'near'
+  const label = hasUrgent ? '就醫警告' : '接近提醒門檻'
+
+  const primaryRules = contributingRules.filter(
+    (r) => r.action_type === (hasUrgent ? 'BLOCK_RECOMMENDATION' : 'SHOW_WARNING')
+  )
+  const message = (primaryRules.length > 0 ? primaryRules : contributingRules)
+    .map((r) => r.warning_message)
+    .filter(Boolean)
+    .join(' ') || contributingRules[0].warning_message || ''
+
+  const sourceMetricCodes = Array.from(new Set(contributingRules.map((r) => r.metric_code.trim())))
+  const sourceRuleKeys = Array.from(new Set(contributingRules.map((r) => r.rule_key.trim())))
+  const sourceVerified = contributingRules.every((r) => r.source_verified === true)
+
+  return {
+    level,
+    label,
+    message,
+    sourceMetricCodes,
+    sourceRuleKeys,
+    sourceVerified,
+  }
+}
 

@@ -3,19 +3,14 @@ import type { Category, ResultItem } from './reportData'
 
 defineProps<{
   chartRows: (ResultItem & { rank: number; isLocked: boolean; isTopThree: boolean })[]
-  selectedCategoryForChart: string | null
-  selectedChartItem: ResultItem | null
   category: (id: string) => Category
 }>()
 
 const emit = defineEmits<{
   (e: 'openAuth'): void
-  (e: 'toggleCategory', id: string): void
 }>()
 
-function handleRowClick(event: MouseEvent, categoryId: string) {
-  emit('toggleCategory', categoryId)
-
+function handleRowClick(event: MouseEvent) {
   // Replay animation on the clicked row's bar, faithful to Prototype behavior
   const target = event.currentTarget as HTMLElement | null
   const bar = target?.querySelector('.bar') as HTMLElement | null
@@ -65,9 +60,7 @@ function handleRowClick(event: MouseEvent, categoryId: string) {
               type="button"
               :class="{ 'top-three': row.isTopThree }"
               :data-anchor="'rank-' + row.rank"
-              :aria-expanded="selectedCategoryForChart === row.categoryId ? 'true' : 'false'"
-              aria-controls="chartDetail"
-              @click="handleRowClick($event, row.categoryId)"
+              @click="handleRowClick($event)"
             >
               <span class="rank">{{ String(row.rank).padStart(2, '0') }}</span>
               <span>{{ category(row.categoryId).name }}</span>
@@ -80,13 +73,6 @@ function handleRowClick(event: MouseEvent, categoryId: string) {
               <span class="score">{{ row.score }}</span>
             </button>
           </template>
-        </div>
-
-        <!-- Chart detail card -->
-        <div v-if="selectedChartItem" id="chartDetail" class="chart-detail">
-          <strong>{{ category(selectedChartItem.categoryId).name }} · 優先度 {{ selectedChartItem.score }}</strong>
-          <p>{{ selectedChartItem.summary }}</p>
-          <p style="font-size: 12px">此數值為示範排序，不代表疾病風險或補充必要性。</p>
         </div>
       </div>
 

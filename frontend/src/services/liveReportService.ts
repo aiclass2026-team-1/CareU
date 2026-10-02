@@ -4,11 +4,27 @@ export interface NormalizedRecommendationItem {
   productId: number | string
   productName: string
   reason: string
+  efficacy?: string
   efficacyClaim?: string
+  evidenceType?: string
+  activeIngredients?: string | null
   warnings?: string | null
   precautions?: string | null
+  licenseNo?: string | null
+  approvalDate?: string | null
+  applicant?: string | null
   mechanismTag?: string | null
   evidenceScore?: number
+  unitPrice?: number
+}
+
+export interface PriorityAlert {
+  level: 'near' | 'urgent'
+  label: string
+  message: string
+  sourceMetricCodes?: string[]
+  sourceRuleKeys?: string[]
+  sourceVerified?: boolean
 }
 
 export interface NormalizedPriorityItem {
@@ -28,6 +44,7 @@ export interface NormalizedPriorityItem {
   rec2Reason?: string | null
   recommendations: NormalizedRecommendationItem[]
   exclusionNote?: string | null
+  alert?: PriorityAlert | null
 }
 
 export interface NormalizedReportPayload {

@@ -121,10 +121,9 @@ const emit = defineEmits<{
                         </div>
                       </div>
                       <div class="source-meta">
-                        <span>核准字號：{{ product(selectedProducts[cid])!.license }}</span>
-                        <span>核准日期：{{ product(selectedProducts[cid])!.approvalDate }}</span>
-                        <span>申請商：{{ product(selectedProducts[cid])!.applicant }}</span>
-                        <span>來源記載狀態：{{ product(selectedProducts[cid])!.status }}（未即時查核）</span>
+                        <span>核准字號：{{ product(selectedProducts[cid])!.license || '未標示' }}</span>
+                        <span>核准日期：{{ product(selectedProducts[cid])!.approvalDate || '未標示' }}</span>
+                        <span>申請商：{{ product(selectedProducts[cid])!.applicant || '未標示' }}</span>
                       </div>
                     </div>
                   </details>
@@ -218,10 +217,9 @@ const emit = defineEmits<{
                           </div>
                         </div>
                         <div class="source-meta">
-                          <span>核准字號：{{ product(candId)!.license }}</span>
-                          <span>核准日期：{{ product(candId)!.approvalDate }}</span>
-                          <span>申請商：{{ product(candId)!.applicant }}</span>
-                          <span>來源記載狀態：{{ product(candId)!.status }}（未即時查核）</span>
+                          <span>核准字號：{{ product(candId)!.license || '未標示' }}</span>
+                          <span>核准日期：{{ product(candId)!.approvalDate || '未標示' }}</span>
+                          <span>申請商：{{ product(candId)!.applicant || '未標示' }}</span>
                         </div>
                       </div>
                     </details>

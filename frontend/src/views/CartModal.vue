@@ -18,8 +18,8 @@ function formatMoney(v: any): string {
   if (v === null || v === undefined || typeof v !== 'number' || isNaN(v) || v <= 0) {
     return '價格未標示'
   }
-  const fixed = Number(v.toFixed(4))
-  return 'NT$ ' + new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 4 }).format(fixed)
+  const rounded = Math.round(v)
+  return 'NT$ ' + new Intl.NumberFormat('zh-TW').format(rounded)
 }
 </script>
 

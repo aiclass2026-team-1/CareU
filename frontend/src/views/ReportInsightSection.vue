@@ -105,9 +105,9 @@ const emit = defineEmits<{
                   <path class="alert-mark" d="M12 8v6m0 3v.2" />
                 </svg>
                 <div>
-                  <strong>{{ row.alert.label }}（示範）</strong>
+                  <strong>{{ row.alert.label }}{{ (row.alert.sourceVerified === false || (row.alert as any).demo) ? '（示範）' : '' }}</strong>
                   <p>{{ row.alert.message }}</p>
-                  <small>{{ row.alert.source }}。此提醒獨立於保健關注排序，不代表需要購買保健食品。</small>
+                  <small>{{ row.alert.source || '依檢驗資料與審核規則提供提醒' }}。此提醒獨立於保健關注排序，不代表需要購買保健食品。</small>
                 </div>
               </div>
 
@@ -122,11 +122,11 @@ const emit = defineEmits<{
                 </div>
                 <!-- Right Info Box: 12-efficacy warm-intro dictionary -->
                 <div class="evidence-tile">
-                  <small>溫馨引言</small>
+                  <small>貼心建議</small>
                   <strong>{{ blueprint[row.categoryId]?.[0] || row.summary }}</strong>
                 </div>
               </div>
-              <p>{{ row.reason }}</p>
+              <p v-if="row.reason && row.reason !== '候選品經安全審查皆符合條件，無觸發特殊排除規則。'">{{ row.reason }}</p>
             </div>
           </details>
         </template>
