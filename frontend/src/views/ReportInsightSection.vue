@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Category, ResultItem } from './reportData'
+import { blueprint } from './reportData'
 
 defineProps<{
   isMember: boolean
@@ -81,7 +82,6 @@ const emit = defineEmits<{
                     </svg>
                   </span>
                 </h3>
-                <p class="insight-preview">{{ row.summary }}</p>
               </div>
               <span class="priority" :class="{ 'top-three': idx < 3 }">
                 <span class="priority-label">優先度</span>
@@ -111,21 +111,22 @@ const emit = defineEmits<{
                 </div>
               </div>
 
-              <p class="insight-summary">{{ row.summary }}</p>
               <div class="evidence-grid">
-                <div
-                  v-for="(ev, evIdx) in row.evidence"
-                  :key="evIdx"
-                  class="evidence-tile"
-                >
-                  <small>{{ ev.label }}</small>
-                  <strong>{{ ev.value }}</strong>
+                <!-- Left Info Box: evidence_items -->
+                <div class="evidence-tile">
+                  <small>評估證據</small>
+                  <strong v-if="(row as any).evidenceItems && (row as any).evidenceItems.length > 0">
+                    <div v-for="(ev, evI) in (row as any).evidenceItems" :key="evI" style="margin-bottom: 2px;">{{ ev }}</div>
+                  </strong>
+                  <strong v-else class="neutral-missing">目前尚無具體評估證據項目。</strong>
+                </div>
+                <!-- Right Info Box: 12-efficacy warm-intro dictionary -->
+                <div class="evidence-tile">
+                  <small>溫馨引言</small>
+                  <strong>{{ blueprint[row.categoryId]?.[0] || row.summary }}</strong>
                 </div>
               </div>
               <p>{{ row.reason }}</p>
-              <p class="analysis-caution">
-                分析依據與分數為示範資料；檢驗異常或問卷回答不能直接推論需要特定保健食品。
-              </p>
             </div>
           </details>
         </template>

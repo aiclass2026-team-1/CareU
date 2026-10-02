@@ -201,7 +201,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
 
   const { data: rankRows, error: rankErr } = await supabaseClient
     .from('assessment_efficacy_ranks')
-    .select('id, efficacy_name, efficacy_rank, description, user_condition, rec1_product_id, rec1_reason, rec2_product_id, rec2_reason, exclusion_note')
+    .select('id, efficacy_name, efficacy_rank, description, user_condition, rec1_product_id, rec1_reason, rec2_product_id, rec2_reason, exclusion_note, evidence_items')
     .eq('assessment_id', assessmentId)
     .order('efficacy_rank', { ascending: true })
 
@@ -299,6 +299,9 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       score: resolvedScore,
       description: row.description || '',
       userCondition: row.user_condition || null,
+      evidenceItems: row.evidence_items || [],
+      rec1Reason: row.rec1_reason || null,
+      rec2Reason: row.rec2_reason || null,
       recommendations: recs,
       exclusionNote: row.exclusion_note || null,
     })

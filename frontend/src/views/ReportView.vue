@@ -6,6 +6,7 @@ import ReportInsightSection from './ReportInsightSection.vue'
 import ReportRecommendationSection from './ReportRecommendationSection.vue'
 import ReportBundleSection from './ReportBundleSection.vue'
 import LoginModal from '@/components/auth/LoginModal.vue'
+import ReportSafetyNoticeModal from './ReportSafetyNoticeModal.vue'
 import CartModal from './CartModal.vue'
 import AppToast from '@/components/common/AppToast.vue'
 import AppModal from '@/components/common/AppModal.vue'
@@ -33,6 +34,8 @@ const {
   isCartModalOpen,
   cartConfirmMode,
   isMemberModalOpen,
+  isSafetyNoticeOpen,
+  acknowledgeSafetyNotice,
   openMemberModal,
   closeMemberModal,
   confirmLogout,
@@ -55,6 +58,7 @@ const {
   toggleChartCategory,
   setBrowsingProduct,
   getActiveProductForDirection,
+  getProductReason,
   selectProduct,
   removeProduct,
   toggleCandidates,
@@ -101,7 +105,7 @@ function handleDemoLink(name: string) {
 
     <a class="skip" href="#chartSection" @click.prevent="scrollToSection('chartTitle')">跳至分析內容</a>
 
-    <div id="reportApp" class="report-enter">
+    <div id="reportApp" class="report-enter" :inert="isSafetyNoticeOpen">
       <!-- HERO -->
       <ReportHero
         :is-member="isMember"
@@ -155,6 +159,7 @@ function handleDemoLink(name: string) {
               :product="product"
               :candidates-for="candidatesFor"
               :get-active-product-for-direction="getActiveProductForDirection"
+              :get-product-reason="getProductReason"
               :format-money="formatMoney"
               :dose-tone="doseTone"
               :is-tablet="isTablet"
@@ -173,6 +178,7 @@ function handleDemoLink(name: string) {
               :category="category"
               :product="product"
               :candidates-for="candidatesFor"
+              :get-product-reason="getProductReason"
               :supplementation-reason="supplementationReason"
               :format-money="formatMoney"
               :dose-tone="doseTone"
@@ -182,10 +188,6 @@ function handleDemoLink(name: string) {
               @select-product="selectProduct"
               @open-cart="openCart(true)"
             />
-
-            <p class="source-note">
-              商品資料取自提供的健康食品資料集；核准資訊為來源檔案記載，未在本原型中即時查核。劑型示意不代表實際商品外觀。
-            </p>
           </div>
         </section>
       </main>
@@ -193,7 +195,7 @@ function handleDemoLink(name: string) {
       <!-- FOOTER -->
       <footer class="footer">
         <div class="footer__inner">
-          <span>© Care U Prototype · Typeface: LINE Seed TW</span>
+          <span>© Care U Prototype</span>
           <nav class="footer__links" aria-label="頁尾連結">
             <a href="#privacy-demo" @click.prevent="handleDemoLink('隱私權政策')">隱私權政策</a>
             <a href="#source-demo" @click.prevent="handleDemoLink('資料來源')">資料來源</a>
@@ -314,6 +316,12 @@ function handleDemoLink(name: string) {
       :total="bundleTotal()"
       @close="closeCart"
       @confirm="confirmPurchase"
+    />
+
+    <!-- SAFETY NOTICE MODAL -->
+    <ReportSafetyNoticeModal
+      :is-open="isSafetyNoticeOpen"
+      @acknowledge="acknowledgeSafetyNotice"
     />
 
     <!-- TOAST NOTIFICATION -->

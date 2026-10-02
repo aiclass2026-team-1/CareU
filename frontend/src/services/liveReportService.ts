@@ -23,6 +23,9 @@ export interface NormalizedPriorityItem {
   surveyMax?: number
   description?: string
   userCondition?: string | null
+  evidenceItems?: string[]
+  rec1Reason?: string | null
+  rec2Reason?: string | null
   recommendations: NormalizedRecommendationItem[]
   exclusionNote?: string | null
 }
