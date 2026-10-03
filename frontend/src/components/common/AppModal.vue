@@ -12,6 +12,7 @@ import { useBodyScrollLock } from '@/composables/useBodyScrollLock'
  *    - 健檢排除視窗 (ExcludeModal) 必須傳入 false（落實 DEC-04，禁止 ESC 與遮罩關閉）。
  * 3. 整合 useBodyScrollLock 安全管理背景捲動鎖定。
  * 4. 不新增未經測試的通用 Focus Trap，保留各頁面已驗收之焦點控制。
+ * 5. 支援 Opt-in CSS Variables 佈局擴充 (customLayout)。
  */
 const props = withDefaults(
   defineProps<{
@@ -19,18 +20,21 @@ const props = withDefaults(
     dialogId?: string
     ariaLabelledby?: string
     ariaLabel?: string
+    ariaDescribedby?: string
     backdropClass?: string
     cardClass?: string
     closeOnEsc?: boolean
     closeOnOverlay?: boolean
     showCloseButton?: boolean
     closeButtonLabel?: string
+    customLayout?: boolean
   }>(),
   {
     closeOnEsc: true,
     closeOnOverlay: true,
     showCloseButton: false,
     closeButtonLabel: '關閉視窗',
+    customLayout: false,
   }
 )
 
@@ -84,16 +88,25 @@ onUnmounted(() => {
 <template>
   <div
     v-if="isOpen"
-    :class="['app-modal-backdrop', backdropClass]"
+    :class="[
+      'app-modal-backdrop',
+      { 'app-modal-backdrop--custom': customLayout },
+      backdropClass,
+    ]"
     @click="handleBackdropClick"
   >
     <section
       :id="dialogId"
-      :class="['app-modal-card', cardClass]"
+      :class="[
+        'app-modal-card',
+        { 'app-modal-card--custom': customLayout },
+        cardClass,
+      ]"
       role="dialog"
       aria-modal="true"
       :aria-labelledby="ariaLabelledby"
       :aria-label="ariaLabel"
+      :aria-describedby="ariaDescribedby"
       tabindex="-1"
     >
       <button
@@ -138,5 +151,26 @@ onUnmounted(() => {
   background: #ffffff;
   box-shadow: var(--cu-shadow-modal, 0 35px 90px rgba(7, 41, 92, 0.24));
   outline: none;
+}
+
+/* Opt-in 自訂佈局支援：只有 customLayout: true 時生效 */
+.app-modal-backdrop--custom {
+  align-items: var(--cu-modal-backdrop-align, center);
+  justify-content: var(--cu-modal-backdrop-justify, center);
+  padding: var(--cu-modal-backdrop-padding, 20px);
+  overflow: var(--cu-modal-backdrop-overflow, auto);
+}
+
+.app-modal-card--custom {
+  width: var(--cu-modal-width, auto);
+  max-width: var(--cu-modal-max-width, 100%);
+  min-width: var(--cu-modal-min-width, 0);
+  height: var(--cu-modal-height, auto);
+  max-height: var(--cu-modal-max-height, none);
+  padding: var(--cu-modal-padding, 0);
+  border-radius: var(--cu-modal-radius, var(--cu-radius-modal, 32px));
+  overflow: var(--cu-modal-overflow, visible);
+  overflow-y: var(--cu-modal-overflow-y, var(--cu-modal-overflow, visible));
+  scrollbar-gutter: var(--cu-modal-scrollbar-gutter, auto);
 }
 </style>

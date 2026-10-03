@@ -33,6 +33,7 @@ onMounted(() => {
 
 <template>
   <AppModal
+    class="safety-modal-shell"
     :is-open="isOpen"
     dialog-id="reportSafetyDialog"
     backdrop-class="dialog-backdrop safety-modal-backdrop"
@@ -42,6 +43,7 @@ onMounted(() => {
     :close-on-esc="false"
     :close-on-overlay="false"
     :show-close-button="false"
+    :custom-layout="true"
   >
     <div class="safety-modal-content" id="safetyDesc">
       <div class="safety-icon-wrap" aria-hidden="true">
@@ -80,20 +82,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
-:deep(.safety-modal-card),
-:deep(#reportSafetyDialog) {
-  width: 500px !important;
-  max-width: calc(100vw - 48px) !important;
-  min-width: 0 !important;
-  padding: 40px 48px 36px !important;
-  padding-inline: 48px !important;
-  border-radius: var(--cu-radius-modal, 32px) !important;
-  background: #ffffff !important;
-  color: var(--cu-color-navy, #07295c) !important;
-  text-align: left !important;
-  box-sizing: border-box !important;
-  scrollbar-gutter: auto !important;
-  overflow: visible !important;
+.safety-modal-shell {
+  --cu-modal-width: 500px;
+  --cu-modal-max-width: calc(100vw - 48px);
+  --cu-modal-min-width: 0;
+  --cu-modal-padding: 40px 48px 36px;
+  --cu-modal-radius: var(--cu-radius-modal, 32px);
+  --cu-modal-overflow: visible;
+  --cu-modal-scrollbar-gutter: auto;
+}
+
+.safety-modal-card {
+  color: var(--cu-color-navy, #07295c);
+  text-align: left;
 }
 
 .safety-modal-content {
@@ -195,19 +196,17 @@ onMounted(() => {
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 700;
-  border-radius: 9999px !important;
+  border-radius: var(--cu-radius-pill, 9999px);
   justify-content: center;
   box-sizing: border-box;
   margin: 0;
 }
 
 @media (max-width: 600px) {
-  :deep(.safety-modal-card),
-  :deep(#reportSafetyDialog) {
-    width: calc(100vw - 32px) !important;
-    max-width: 100% !important;
-    padding: 28px 20px 24px !important;
-    padding-inline: 20px !important;
+  .safety-modal-shell {
+    --cu-modal-width: calc(100vw - 32px);
+    --cu-modal-max-width: 100%;
+    --cu-modal-padding: 28px 20px 24px;
   }
 
   .safety-icon-wrap {

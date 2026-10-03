@@ -38,6 +38,7 @@ const emit = defineEmits<{
 
 <template>
   <AppModal
+    class="auth-modal-shell"
     :is-open="isOpen"
     dialog-id="authDialog"
     backdrop-class="dialog-backdrop auth-layer"
@@ -45,6 +46,7 @@ const emit = defineEmits<{
     aria-labelledby="authTitle"
     :close-on-esc="true"
     :close-on-overlay="true"
+    :custom-layout="true"
     @close="emit('close')"
   >
     <button
@@ -198,37 +200,28 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-/* Prototype 精修版 Auth Backdrop 結構 (外層捲動、隱藏捲軸) */
-:deep(.auth-layer) {
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: #07295c55;
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-  overflow: auto;
+/* Prototype 精修版 Auth Shell 結構 (外層捲動、隱藏捲軸) */
+.auth-modal-shell {
+  --cu-modal-width: min(440px, 100%);
+  --cu-modal-height: auto;
+  --cu-modal-max-height: none;
+  --cu-modal-min-height: 0;
+  --cu-modal-overflow: visible;
+  --cu-modal-scrollbar-gutter: auto;
+  --cu-modal-radius: 24px;
+  --cu-modal-padding: 24px 30px;
+  --cu-modal-backdrop-padding: 16px;
+  --cu-modal-backdrop-overflow: auto;
   scrollbar-width: none;
 }
 
-:deep(.auth-layer)::-webkit-scrollbar {
+.auth-modal-shell::-webkit-scrollbar {
   display: none;
 }
 
-/* Prototype 精修版 Auth Card (寬度 440px、內距 24px 30px、圓角 24px、卡片自身不雙重捲動) */
-:deep(.dialog-card) {
-  position: relative;
-  width: min(440px, 100%) !important;
-  height: auto;
-  max-height: none;
-  min-height: 0;
-  overflow: visible;
-  scrollbar-gutter: auto;
-  border-radius: 24px;
-  background: #ffffff;
-  padding: 24px 30px;
-  box-shadow: 0 25px 90px rgba(7, 41, 92, 0.2);
+/* Prototype 精修版 Auth Card 內層字體與文字選取設定 */
+.dialog-card {
   box-sizing: border-box;
-  outline: none;
   font-family: "CareU LINE Seed TW", "LINE Seed TW", "Microsoft JhengHei", sans-serif;
   line-height: 1.65;
   user-select: text;
@@ -427,7 +420,7 @@ const emit = defineEmits<{
 .auth-submit,
 #authSubmit {
   width: 100%;
-  border-radius: 9999px !important;
+  border-radius: var(--cu-radius-pill, 9999px);
   min-height: 42px;
   padding: 8px 14px;
   margin-top: 5px;
@@ -521,15 +514,13 @@ const emit = defineEmits<{
 
 /* 響應式規則：小螢幕 (<= 720px) */
 @media (max-width: 720px) {
-  :deep(.auth-layer) {
-    align-items: safe center;
-    padding: 12px;
-  }
-  :deep(.dialog-card) {
-    padding: 24px;
-    height: auto;
-    max-height: none;
-    min-height: 0;
+  .auth-modal-shell {
+    --cu-modal-backdrop-align: safe center;
+    --cu-modal-backdrop-padding: 12px;
+    --cu-modal-padding: 24px;
+    --cu-modal-height: auto;
+    --cu-modal-max-height: none;
+    --cu-modal-min-height: 0;
   }
   .dialog-close {
     top: 10px;
@@ -538,8 +529,8 @@ const emit = defineEmits<{
 
 /* 響應式規則：低高度螢幕 (<= 690px) */
 @media (max-height: 690px) {
-  :deep(.dialog-card) {
-    padding: 18px 24px;
+  .auth-modal-shell {
+    --cu-modal-padding: 18px 24px;
   }
   .auth-logo,
   .dialog-intro,
@@ -560,16 +551,14 @@ const emit = defineEmits<{
 
 /* 響應式規則：極窄螢幕 (<= 420px) */
 @media (max-width: 420px) {
-  :deep(.auth-layer) {
-    padding: 0;
-    align-items: stretch;
-  }
-  :deep(.dialog-card) {
-    width: 100% !important;
-    max-height: 100dvh;
-    height: 100dvh;
-    border-radius: 0;
-    padding: calc(28px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  .auth-modal-shell {
+    --cu-modal-backdrop-padding: 0;
+    --cu-modal-backdrop-align: stretch;
+    --cu-modal-width: 100%;
+    --cu-modal-max-height: 100dvh;
+    --cu-modal-height: 100dvh;
+    --cu-modal-radius: 0;
+    --cu-modal-padding: calc(28px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
   }
   .dialog-close {
     top: calc(12px + env(safe-area-inset-top, 0px));

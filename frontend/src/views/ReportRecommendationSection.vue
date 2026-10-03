@@ -185,9 +185,6 @@ const emit = defineEmits<{
                       <span>核准日期：{{ getActiveProductForDirection(r.categoryId)!.approvalDate || '未標示' }}</span>
                       <span>申請商：{{ getActiveProductForDirection(r.categoryId)!.applicant || '未標示' }}</span>
                     </div>
-                    <p style="font-size: 11px; margin-top: 13px">
-                      以上為資料集記載，研究條件不等同於你的個人情況。來源的 evidence_score 未用於本頁關注排序或個人化配對。
-                    </p>
                   </div>
                 </details>
               </div>
