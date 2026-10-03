@@ -235,101 +235,186 @@ test('K: resolveEfficacyScore requires strict rank + name exact match', () => {
 const mockMetricEfficacyMappings = [
   { metric_code: 'CHOL_TOTAL', efficacy_name: '調節血脂', is_active: true },
   { metric_code: 'TG', efficacy_name: '調節血脂', is_active: true },
+  { metric_code: 'LDL_C', efficacy_name: '調節血脂', is_active: true },
+  { metric_code: 'HDL_C', efficacy_name: '調節血脂', is_active: true },
   { metric_code: 'GPT_ALT', efficacy_name: '護肝', is_active: true },
   { metric_code: 'GLU_AC', efficacy_name: '調節血糖', is_active: true },
+  { metric_code: 'HBA1C', efficacy_name: '調節血糖', is_active: true },
   { metric_code: 'HB', efficacy_name: '抗疲勞', is_active: true },
   { metric_code: 'HB', efficacy_name: '輔助調節血鐵', is_active: true },
 ]
 
-test('Alert 1: BLOCK_RECOMMENDATION -> urgent alert with 就醫警告 label and unmodified message', () => {
-  const matchedRules = [
+test('Alert 1: is_abnormal=true + HIGH + valid mapping -> urgent alert with 偏高 wording', () => {
+  const labMetrics = [
     {
-      rule_key: 'GPT_ALT_CRITICAL_HIGH',
       metric_code: 'GPT_ALT',
-      action_type: 'BLOCK_RECOMMENDATION',
-      warning_message: '肝指數 ALT 超過標準甚多，請儘速就醫檢查。',
-      rule_status: 'PROTOTYPE_ACTIVE',
-      source_verified: false,
+      metric_name: 'GPT/ALT',
+      normalized_value: 72,
+      raw_value: '72',
+      source_flag: 'HIGH',
+      is_abnormal: true,
     },
   ]
 
-  const alert = resolveEfficacyAlert('護肝', matchedRules, mockMetricEfficacyMappings)
+  const alert = resolveEfficacyAlert('護肝', labMetrics, mockMetricEfficacyMappings)
   assert.ok(alert)
   assert.equal(alert.level, 'urgent')
-  assert.equal(alert.label, '就醫警告')
-  assert.equal(alert.message, '肝指數 ALT 超過標準甚多，請儘速就醫檢查。')
+  assert.equal(alert.label, '檢驗數值偏高')
+  assert.equal(alert.message, 'GPT/ALT（72）偏高。')
+  assert.equal(alert.source, '健檢報告檢驗數值')
   assert.deepEqual(alert.sourceMetricCodes, ['GPT_ALT'])
-  assert.deepEqual(alert.sourceRuleKeys, ['GPT_ALT_CRITICAL_HIGH'])
-  assert.equal(alert.sourceVerified, false)
-})
-
-test('Alert 2: SHOW_WARNING -> near alert with 接近提醒門檻 label and unmodified message', () => {
-  const matchedRules = [
-    {
-      rule_key: 'GLU_AC_NEAR_THRESHOLD',
-      metric_code: 'GLU_AC',
-      action_type: 'SHOW_WARNING',
-      warning_message: '空腹血糖接近提醒門檻，建議注意日常糖分攝取。',
-      rule_status: 'ACTIVE',
-      source_verified: true,
-    },
-  ]
-
-  const alert = resolveEfficacyAlert('調節血糖', matchedRules, mockMetricEfficacyMappings)
-  assert.ok(alert)
-  assert.equal(alert.level, 'near')
-  assert.equal(alert.label, '接近提醒門檻')
-  assert.equal(alert.message, '空腹血糖接近提醒門檻，建議注意日常糖分攝取。')
-  assert.deepEqual(alert.sourceMetricCodes, ['GLU_AC'])
-  assert.deepEqual(alert.sourceRuleKeys, ['GLU_AC_NEAR_THRESHOLD'])
   assert.equal(alert.sourceVerified, true)
 })
 
-test('Alert 3: Multi-efficacy deterministic mapping (e.g. HB maps to both 抗疲勞 and 輔助調節血鐵)', () => {
-  const matchedRules = [
+test('Alert 2: is_abnormal=true + LOW + valid mapping -> urgent alert with 偏低 wording, not 偏高', () => {
+  const labMetrics = [
     {
-      rule_key: 'HB_LOW_WARNING',
       metric_code: 'HB',
-      action_type: 'SHOW_WARNING',
-      warning_message: '血紅素偏低，請注意鐵質補充與作息。',
-      rule_status: 'ACTIVE',
-      source_verified: true,
+      metric_name: '血紅素',
+      normalized_value: 10.5,
+      raw_value: '10.5',
+      source_flag: 'LOW',
+      is_abnormal: true,
     },
   ]
 
-  const alertFatigue = resolveEfficacyAlert('抗疲勞', matchedRules, mockMetricEfficacyMappings)
+  const alert = resolveEfficacyAlert('抗疲勞', labMetrics, mockMetricEfficacyMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'urgent')
+  assert.equal(alert.label, '檢驗數值偏低')
+  assert.equal(alert.message, '血紅素（10.5）偏低。')
+  assert.ok(!alert.label.includes('偏高'))
+  assert.ok(!alert.message.includes('偏高'))
+})
+
+test('Alert 3: Multi-efficacy deterministic mapping from DB mapping (HB maps to both 抗疲勞 and 輔助調節血鐵)', () => {
+  const labMetrics = [
+    {
+      metric_code: 'HB',
+      metric_name: '血紅素',
+      normalized_value: 10.5,
+      raw_value: '10.5',
+      source_flag: 'LOW',
+      is_abnormal: true,
+    },
+  ]
+
+  const alertFatigue = resolveEfficacyAlert('抗疲勞', labMetrics, mockMetricEfficacyMappings)
   assert.ok(alertFatigue)
-  assert.equal(alertFatigue.level, 'near')
-  assert.equal(alertFatigue.label, '接近提醒門檻')
+  assert.equal(alertFatigue.level, 'urgent')
+  assert.equal(alertFatigue.label, '檢驗數值偏低')
 
-  const alertIron = resolveEfficacyAlert('輔助調節血鐵', matchedRules, mockMetricEfficacyMappings)
+  const alertIron = resolveEfficacyAlert('輔助調節血鐵', labMetrics, mockMetricEfficacyMappings)
   assert.ok(alertIron)
-  assert.equal(alertIron.level, 'near')
-  assert.equal(alertIron.label, '接近提醒門檻')
+  assert.equal(alertIron.level, 'urgent')
+  assert.equal(alertIron.label, '檢驗數值偏低')
 
-  const alertLipid = resolveEfficacyAlert('調節血脂', matchedRules, mockMetricEfficacyMappings)
+  const alertLipid = resolveEfficacyAlert('調節血脂', labMetrics, mockMetricEfficacyMappings)
   assert.equal(alertLipid, null)
 })
 
-test('Alert 4: No heuristic inference - unmapped metrics return null regardless of name similarity', () => {
-  const matchedRules = [
+test('Alert 4: is_abnormal=false produces NO alert', () => {
+  const labMetrics = [
     {
-      rule_key: 'URINE_PROTEIN_POSITIVE',
       metric_code: 'URINE_PROTEIN',
-      action_type: 'BLOCK_RECOMMENDATION',
-      warning_message: '尿蛋白陽性。',
-      rule_status: 'PROTOTYPE_ACTIVE',
-      source_verified: false,
+      metric_name: '尿蛋白',
+      normalized_value: null,
+      raw_value: 'NEGATIVE',
+      source_flag: 'NORMAL',
+      is_abnormal: false,
+    },
+    {
+      metric_code: 'CHOL_TOTAL',
+      metric_name: '總膽固醇',
+      normalized_value: 180,
+      raw_value: '180',
+      source_flag: 'NORMAL',
+      is_abnormal: false,
     },
   ]
 
-  // URINE_PROTEIN is not in mockMetricEfficacyMappings -> returns null for any efficacy
-  const alert = resolveEfficacyAlert('護肝', matchedRules, mockMetricEfficacyMappings)
-  assert.equal(alert, null)
+  assert.equal(resolveEfficacyAlert('調節血脂', labMetrics, mockMetricEfficacyMappings), null)
+  assert.equal(resolveEfficacyAlert('護肝', labMetrics, mockMetricEfficacyMappings), null)
 })
 
-test('Alert 5: Null alert when no matched rules for efficacy', () => {
-  const alert = resolveEfficacyAlert('調節血脂', [], mockMetricEfficacyMappings)
-  assert.equal(alert, null)
+test('Alert 5: Abnormal metric with NO efficacy mapping produces NO alert', () => {
+  const labMetrics = [
+    {
+      metric_code: 'URINE_PROTEIN',
+      metric_name: '尿蛋白',
+      normalized_value: null,
+      raw_value: 'POSITIVE',
+      source_flag: 'HIGH',
+      is_abnormal: true,
+    },
+  ]
+
+  // URINE_PROTEIN is not in mockMetricEfficacyMappings -> returns null for all efficacies
+  assert.equal(resolveEfficacyAlert('護肝', labMetrics, mockMetricEfficacyMappings), null)
+  assert.equal(resolveEfficacyAlert('調節血脂', labMetrics, mockMetricEfficacyMappings), null)
+  assert.equal(resolveEfficacyAlert('調節血糖', labMetrics, mockMetricEfficacyMappings), null)
+})
+
+test('Alert 6: Multiple abnormal metrics mapped to one efficacy summarize deterministically (sorted by metric_code)', () => {
+  const labMetricsUnsorted = [
+    {
+      metric_code: 'TG',
+      metric_name: '三酸甘油脂',
+      normalized_value: 230,
+      raw_value: '230',
+      source_flag: 'HIGH',
+      is_abnormal: true,
+    },
+    {
+      metric_code: 'CHOL_TOTAL',
+      metric_name: '總膽固醇',
+      normalized_value: 260,
+      raw_value: '260',
+      source_flag: 'HIGH',
+      is_abnormal: true,
+    },
+    {
+      metric_code: 'LDL_C',
+      metric_name: '低密度脂蛋白膽固醇',
+      normalized_value: 175,
+      raw_value: '175',
+      source_flag: 'HIGH',
+      is_abnormal: true,
+    },
+  ]
+
+  const alert = resolveEfficacyAlert('調節血脂', labMetricsUnsorted, mockMetricEfficacyMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'urgent')
+  assert.equal(alert.label, '檢驗數值偏高')
+  assert.equal(alert.message, '總膽固醇（260）偏高、低密度脂蛋白膽固醇（175）偏高、三酸甘油脂（230）偏高。')
+  assert.deepEqual(alert.sourceMetricCodes, ['CHOL_TOTAL', 'LDL_C', 'TG'])
+})
+
+test('Alert 7: Mixed HIGH and LOW abnormal metrics label as 檢驗數值異常', () => {
+  const labMetrics = [
+    {
+      metric_code: 'CHOL_TOTAL',
+      metric_name: '總膽固醇',
+      normalized_value: 260,
+      raw_value: '260',
+      source_flag: 'HIGH',
+      is_abnormal: true,
+    },
+    {
+      metric_code: 'HDL_C',
+      metric_name: '高密度脂蛋白膽固醇',
+      normalized_value: 35,
+      raw_value: '35',
+      source_flag: 'LOW',
+      is_abnormal: true,
+    },
+  ]
+
+  const alert = resolveEfficacyAlert('調節血脂', labMetrics, mockMetricEfficacyMappings)
+  assert.ok(alert)
+  assert.equal(alert.level, 'urgent')
+  assert.equal(alert.label, '檢驗數值異常')
+  assert.equal(alert.message, '總膽固醇（260）偏高、高密度脂蛋白膽固醇（35）偏低。')
 })
 

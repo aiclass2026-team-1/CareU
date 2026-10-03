@@ -59,7 +59,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
   // 1. Load submission and verify ownership (fail-closed)
   const { data: submission, error: subErr } = await supabaseClient
     .from('questionnaire_submissions')
-    .select('id, user_id, report_id, answers, is_completed, created_at')
+    .select('id, user_id, report_id, answers')
     .eq('id', body.submissionId)
     .single()
 
@@ -76,25 +76,41 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
   let hasRedFlags = false
   let matchedRows: any[] = []
   let mappingRows: any[] = []
+  let labMetricsRows: any[] = []
 
-  // Load red flag matches and metric mappings if submission is linked to a lab report
+  // Load red flag matches, metric mappings, and lab report metrics if submission is linked to a lab report
   if (submission.report_id) {
-    const { data: matchedData } = await supabaseClient
+    const { data: matchedData, error: matchedErr } = await supabaseClient
       .from('report_red_flag_matches')
       .select('report_id, rule_key, metric_code, detected_value, action_type, warning_message, rule_status, source_verified')
       .eq('report_id', submission.report_id)
 
-    if (Array.isArray(matchedData)) {
+    if (matchedErr) {
+      console.error(`[finalize-health-report] Failed to query report_red_flag_matches for report '${submission.report_id}':`, matchedErr)
+    } else if (Array.isArray(matchedData)) {
       matchedRows = matchedData
     }
 
-    const { data: mapData } = await supabaseClient
+    const { data: mapData, error: mapErr } = await supabaseClient
       .from('metric_efficacy_mapping')
       .select('metric_code, efficacy_name, is_active')
       .eq('is_active', true)
 
-    if (Array.isArray(mapData)) {
+    if (mapErr) {
+      console.error('[finalize-health-report] Failed to query metric_efficacy_mapping:', mapErr)
+    } else if (Array.isArray(mapData)) {
       mappingRows = mapData
+    }
+
+    const { data: metricsData, error: metricsErr } = await supabaseClient
+      .from('lab_report_metrics')
+      .select('metric_code, metric_name, normalized_value, raw_value, source_flag, is_abnormal')
+      .eq('report_id', submission.report_id)
+
+    if (metricsErr) {
+      console.error(`[finalize-health-report] Failed to query lab_report_metrics for report '${submission.report_id}':`, metricsErr)
+    } else if (Array.isArray(metricsData)) {
+      labMetricsRows = metricsData
     }
   }
 
@@ -324,7 +340,7 @@ export async function handleFinalizeHealthReport(req: Request, createClientOverr
       ? Math.round(matchedDetail.score)
       : resolveEfficacyScore(row, topEfficaciesDetail, scoresJson)
 
-    const alert = resolveEfficacyAlert(row.efficacy_name, matchedRows, mappingRows)
+    const alert = resolveEfficacyAlert(row.efficacy_name, labMetricsRows, mappingRows)
 
     priorities.push({
       rank: row.efficacy_rank,

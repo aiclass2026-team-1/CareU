@@ -25,10 +25,26 @@ export interface NormalizedRecommendationItem {
   evidenceScore?: number
 }
 
+export interface LabMetricRecord {
+  metric_code: string
+  metric_name?: string | null
+  normalized_value?: number | string | null
+  raw_value?: string | null
+  source_flag?: string | null
+  is_abnormal?: boolean | null
+}
+
+export interface MetricEfficacyMappingRecord {
+  metric_code: string
+  efficacy_name: string
+  is_active?: boolean
+}
+
 export interface PriorityAlert {
-  level: 'near' | 'urgent'
+  level: 'urgent' | 'near'
   label: string
   message: string
+  source?: string
   sourceMetricCodes?: string[]
   sourceRuleKeys?: string[]
   sourceVerified?: boolean
@@ -42,12 +58,6 @@ export interface MatchedRuleRecord {
   rule_status?: string
   source_verified?: boolean
   detected_value?: string | number | null
-}
-
-export interface MetricEfficacyMappingRecord {
-  metric_code: string
-  efficacy_name: string
-  is_active?: boolean
 }
 
 export interface NormalizedPriorityItem {
@@ -300,22 +310,39 @@ export function resolveEfficacyScore(
   return null
 }
 /**
- * Resolves priority alert from authoritative matched rules and metric_efficacy_mapping.
+ * Resolves metric direction text from source_flag.
+ * HIGH / 偏高 -> 偏高
+ * LOW / 偏低 -> 偏低
+ * otherwise -> 異常
+ */
+export function getMetricDirectionText(sourceFlag?: string | null): string {
+  if (!sourceFlag) return '異常'
+  const normalized = sourceFlag.trim().toUpperCase()
+  if (normalized === 'HIGH' || normalized === '偏高') {
+    return '偏高'
+  }
+  if (normalized === 'LOW' || normalized === '偏低') {
+    return '偏低'
+  }
+  return '異常'
+}
+
+/**
+ * Resolves priority alert from authoritative lab_report_metrics (is_abnormal = true) and metric_efficacy_mapping.
  *
  * Rules:
  * 1. Resolves associated efficacy identity ONLY via approved metric_efficacy_mapping (no guessing or string heuristics).
- * 2. BLOCK_RECOMMENDATION maps to level 'urgent' / label '就醫警告'.
- * 3. SHOW_WARNING maps to level 'near' / label '接近提醒門檻'.
- * 4. Warning message is passed unmodified from backend rule.
- * 5. Returns null if no matched rule maps to this efficacy.
- * 6. Preserves provenance (source_verified, metricCodes, ruleKeys).
+ * 2. Only lab metrics with is_abnormal = true produce an alert; is_abnormal = false produces null.
+ * 3. Wording: HIGH/偏高 -> 偏高, LOW/偏低 -> 偏低, otherwise -> 異常.
+ * 4. Never fabricates metric names, values, or efficacy mappings.
+ * 5. Returns urgent alert contract for priorities with matching abnormal metrics.
  */
 export function resolveEfficacyAlert(
   efficacyName: string,
-  matchedRules: MatchedRuleRecord[],
+  labMetrics: LabMetricRecord[],
   mappings: MetricEfficacyMappingRecord[]
 ): PriorityAlert | null {
-  if (!efficacyName || !Array.isArray(matchedRules) || matchedRules.length === 0 || !Array.isArray(mappings)) {
+  if (!efficacyName || !Array.isArray(labMetrics) || labMetrics.length === 0 || !Array.isArray(mappings) || mappings.length === 0) {
     return null
   }
 
@@ -330,38 +357,48 @@ export function resolveEfficacyAlert(
 
   const mappedMetricCodes = new Set(activeMappings.map((m) => (m.metric_code || '').trim()).filter(Boolean))
 
-  const contributingRules = matchedRules.filter((rule) => {
-    if (!rule || !rule.metric_code) return false
-    return mappedMetricCodes.has(rule.metric_code.trim())
+  const contributingMetrics = labMetrics.filter((m) => {
+    if (!m || !m.metric_code) return false
+    if (m.is_abnormal !== true) return false
+    return mappedMetricCodes.has(m.metric_code.trim())
   })
 
-  if (contributingRules.length === 0) {
+  if (contributingMetrics.length === 0) {
     return null
   }
 
-  const hasUrgent = contributingRules.some((r) => r.action_type === 'BLOCK_RECOMMENDATION')
-  const level: 'urgent' | 'near' = hasUrgent ? 'urgent' : 'near'
-  const label = hasUrgent ? '就醫警告' : '接近提醒門檻'
+  // Deterministic ordering by metric_code (lexicographical sort, no clinical prioritization)
+  contributingMetrics.sort((a, b) => (a.metric_code || '').trim().localeCompare((b.metric_code || '').trim()))
 
-  const primaryRules = contributingRules.filter(
-    (r) => r.action_type === (hasUrgent ? 'BLOCK_RECOMMENDATION' : 'SHOW_WARNING')
-  )
-  const message = (primaryRules.length > 0 ? primaryRules : contributingRules)
-    .map((r) => r.warning_message)
-    .filter(Boolean)
-    .join(' ') || contributingRules[0].warning_message || ''
+  const metricSummaries = contributingMetrics.map((m) => {
+    const name = (m.metric_name || m.metric_code).trim()
+    const rawVal =
+      m.normalized_value !== null && m.normalized_value !== undefined
+        ? String(m.normalized_value)
+        : m.raw_value !== null && m.raw_value !== undefined
+        ? String(m.raw_value).trim()
+        : ''
+    const valText = rawVal ? `（${rawVal}）` : ''
+    const dir = getMetricDirectionText(m.source_flag)
+    return `${name}${valText}${dir}`
+  })
 
-  const sourceMetricCodes = Array.from(new Set(contributingRules.map((r) => r.metric_code.trim())))
-  const sourceRuleKeys = Array.from(new Set(contributingRules.map((r) => r.rule_key.trim())))
-  const sourceVerified = contributingRules.every((r) => r.source_verified === true)
+  const directions = contributingMetrics.map((m) => getMetricDirectionText(m.source_flag))
+  const allHigh = directions.every((d) => d === '偏高')
+  const allLow = directions.every((d) => d === '偏低')
+
+  const label = allHigh ? '檢驗數值偏高' : allLow ? '檢驗數值偏低' : '檢驗數值異常'
+  const message = `${metricSummaries.join('、')}。`
+
+  const sourceMetricCodes = Array.from(new Set(contributingMetrics.map((m) => m.metric_code.trim())))
 
   return {
-    level,
+    level: 'urgent',
     label,
     message,
+    source: '健檢報告檢驗數值',
     sourceMetricCodes,
-    sourceRuleKeys,
-    sourceVerified,
+    sourceVerified: true,
   }
 }
 
