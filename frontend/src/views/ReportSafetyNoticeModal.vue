@@ -45,11 +45,10 @@ onMounted(() => {
   >
     <div class="safety-modal-content" id="safetyDesc">
       <div class="safety-icon-wrap" aria-hidden="true">
-        <svg class="icon safety-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
+        <div class="safety-exclamation">
+          <span class="safety-bar"></span>
+          <span class="safety-dot"></span>
+        </div>
       </div>
 
       <h2 class="dialog-title" id="safetyTitle">查看報告前，請先留意</h2>
@@ -81,67 +80,114 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.safety-modal-card {
-  width: min(520px, calc(100% - 40px));
-  padding: 36px 32px 32px;
-  border-radius: var(--cu-radius-modal, 32px);
-  background: #ffffff;
-  color: var(--cu-navy, #07295c);
+:deep(.safety-modal-card),
+:deep(#reportSafetyDialog) {
+  width: 500px !important;
+  max-width: calc(100vw - 48px) !important;
+  min-width: 0 !important;
+  padding: 40px 48px 36px !important;
+  padding-inline: 48px !important;
+  border-radius: var(--cu-radius-modal, 32px) !important;
+  background: #ffffff !important;
+  color: var(--cu-color-navy, #07295c) !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  scrollbar-gutter: auto !important;
+  overflow: visible !important;
+}
+
+.safety-modal-content {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   text-align: left;
 }
 
 .safety-icon-wrap {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
+  border: 2.5px solid var(--cu-color-orange, #fb8f54);
   border-radius: 50%;
-  background: rgba(251, 143, 84, 0.15);
-  color: var(--cu-orange, #fb8f54);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
+  box-sizing: border-box;
 }
 
-.safety-icon {
-  width: 24px;
-  height: 24px;
+.safety-exclamation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.safety-bar {
+  width: 3px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--cu-color-orange, #fb8f54);
+  display: block;
+}
+
+.safety-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cu-color-orange, #fb8f54);
+  display: block;
 }
 
 .dialog-title {
   font-size: 22px;
   font-weight: 700;
-  color: var(--cu-navy, #07295c);
-  margin-bottom: 16px;
+  color: var(--cu-color-navy, #07295c);
+  text-align: center;
+  margin: 0 0 20px;
+  padding: 0;
   line-height: 1.4;
+  letter-spacing: normal;
 }
 
 .safety-primary-text {
   font-size: 15px;
-  color: var(--cu-ink, #304866);
+  color: var(--cu-color-ink, #304866);
   line-height: 1.65;
-  margin-bottom: 20px;
+  margin: 0 0 20px;
+  padding: 0;
 }
 
 .safety-highlight-callout {
-  background: rgba(251, 143, 84, 0.12);
-  border-left: 4px solid var(--cu-orange, #fb8f54);
-  padding: 14px 18px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: rgba(235, 147, 142, 0.15);
+  background: color-mix(in srgb, var(--cu-color-coral, #eb938e) 15%, transparent);
+  border: 0;
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin: 0 0 20px;
+  box-sizing: border-box;
   font-size: 15px;
   font-weight: 700;
-  color: var(--cu-navy, #07295c);
+  color: var(--cu-color-navy, #07295c);
   line-height: 1.6;
 }
 
 .safety-supporting-texts {
   font-size: 14px;
-  color: var(--cu-muted, #60718A);
+  color: var(--cu-color-text-muted, #60718a);
   line-height: 1.65;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 28px;
+  margin: 0 0 28px;
+  padding: 0;
+}
+
+.safety-supporting-texts p {
+  margin: 0;
+  padding: 0;
 }
 
 .safety-ack-btn {
@@ -149,7 +195,50 @@ onMounted(() => {
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 700;
-  border-radius: 14px;
+  border-radius: 9999px !important;
   justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  :deep(.safety-modal-card),
+  :deep(#reportSafetyDialog) {
+    width: calc(100vw - 32px) !important;
+    max-width: 100% !important;
+    padding: 28px 20px 24px !important;
+    padding-inline: 20px !important;
+  }
+
+  .safety-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-width: 2.5px;
+    margin-bottom: 16px;
+  }
+
+  .safety-bar {
+    width: 2.8px;
+    height: 14px;
+  }
+
+  .safety-dot {
+    width: 3.5px;
+    height: 3.5px;
+  }
+
+  .safety-exclamation {
+    gap: 2.5px;
+  }
+
+  .dialog-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .safety-highlight-callout {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
 }
 </style>

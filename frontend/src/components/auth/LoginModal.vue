@@ -424,9 +424,10 @@ const emit = defineEmits<{
 }
 
 /* 送出按鈕 */
-.auth-submit {
+.auth-submit,
+#authSubmit {
   width: 100%;
-  border-radius: 999px;
+  border-radius: 9999px !important;
   min-height: 42px;
   padding: 8px 14px;
   margin-top: 5px;

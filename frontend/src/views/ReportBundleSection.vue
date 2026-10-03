@@ -58,7 +58,6 @@ const emit = defineEmits<{
                       aria-label="膠囊與錠劑示意，非實際商品外觀"
                     >
                       <div class="dose-shapes" aria-hidden="true"><i class="dose"></i></div>
-                      <span class="art-caption">劑型示意</span>
                     </div>
 
                     <div class="product-info">
