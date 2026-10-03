@@ -107,7 +107,7 @@ const emit = defineEmits<{
                 <div>
                   <strong>{{ row.alert.label }}{{ (row.alert.sourceVerified === false || (row.alert as any).demo) ? '（示範）' : '' }}</strong>
                   <p>{{ row.alert.message }}</p>
-                  <small>{{ row.alert.source || '依檢驗資料與審核規則提供提醒' }}。此提醒獨立於保健關注排序，不代表需要購買保健食品。</small>
+                  <small>上述檢驗數值需結合個人狀況綜合判讀，建議攜帶健檢報告諮詢醫師或其他合格醫療專業人員。</small>
                 </div>
               </div>
 
