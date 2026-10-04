@@ -204,8 +204,8 @@ const onHeroPointerLeave = () => {
           <div class="section-inner">
             <p class="section-kicker">放心探索</p>
             <h2 id="trust-title">
-              <span class="trust-title__phrase">讓資料的來源、用途</span><wbr />
-              <span class="trust-title__phrase">與界線，都清楚可見。</span>
+              <span class="trust-title__phrase">讓資料的來源、用途與界線，</span><wbr />
+              <span class="trust-title__phrase">都清楚可見。</span>
             </h2>
             <div class="trust-grid">
               <article class="trust-card">
