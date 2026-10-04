@@ -850,17 +850,17 @@
 
 @media (max-width: 520px) {
   .home-page-container .brand-stage { animation-name: home-brand-to-top-mobile; }
-  .home-page-container .brand-mark { width: 61px; }
-  .home-page-container .brand-wordmark { width: 118px; }
+  .home-page-container .brand-mark { width: 56px; }
+  .home-page-container .brand-wordmark { width: 110px; }
   .home-page-container .wordmark-shell { animation-name: home-reveal-wordmark-mobile; }
-  .home-page-container .hero__content { width: min(100% - 28px, 850px); padding: 124px 0 88px; }
-  .home-page-container .typing-status { margin-bottom: 20px; font-size: .78rem; }
-  .home-page-container .hero h1 { font-size: clamp(2rem, 10.5vw, 3rem); line-height: 1.32; letter-spacing: .026em; }
-  .home-page-container .action-area { margin-top: 31px; }
-  .home-page-container .primary-cta { min-width: 232px; padding: 13px 22px; }
-  .home-page-container .questionnaire-link { font-size: .82rem; }
-  .home-page-container .privacy-note { max-width: 285px; line-height: 1.55; }
-  .home-page-container .scroll-cue { bottom: 14px; }
+  .home-page-container .hero__content { width: min(100% - 24px, 850px); padding: 110px 0 54px; }
+  .home-page-container .typing-status { margin-bottom: 16px; font-size: .76rem; }
+  .home-page-container .hero h1 { font-size: clamp(1.75rem, 8.2vw, 2.35rem); line-height: 1.38; letter-spacing: .02em; word-break: keep-all; overflow-wrap: break-word; }
+  .home-page-container .action-area { margin-top: 22px; }
+  .home-page-container .primary-cta { min-width: 216px; padding: 12px 20px; }
+  .home-page-container .questionnaire-link { margin-top: 16px; font-size: .8rem; }
+  .home-page-container .privacy-note { max-width: 285px; margin: 8px 0 0; line-height: 1.5; font-size: .68rem; }
+  .home-page-container .scroll-cue { bottom: 10px; }
   .home-page-container .upload-panel { padding: 23px 19px; border-radius: 24px; }
   .home-page-container .sheet-actions { flex-direction: column-reverse; }
   .home-page-container .secondary-button,
