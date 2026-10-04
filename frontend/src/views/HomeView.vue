@@ -260,7 +260,7 @@ const onHeroPointerLeave = () => {
         <div class="upload-panel__top">
           <div>
             <h2 id="uploadTitle">準備讀取資料</h2>
-            <p class="upload-panel__intro">確認檔案後再按「開始讀取」，目前尚未上傳。</p>
+            <p class="upload-panel__intro">確認檔案後，按「開始讀取」。</p>
           </div>
           <button id="closeUpload" class="icon-button" type="button" aria-label="關閉" @click="closeUploadSheet">&times;</button>
         </div>
@@ -307,9 +307,7 @@ const onHeroPointerLeave = () => {
             開始讀取
           </button>
         </div>
-        <p class="sheet-privacy">
-          請確認上傳檔案為正確的健康檢查報告格式（支援 PDF、JPG、PNG）。
-        </p>
+
       </div>
     </div>
 

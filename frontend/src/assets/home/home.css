@@ -576,6 +576,8 @@
   color: rgba(7,41,92,.55);
   font-size: .8rem;
   line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 .home-page-container .upload-format-hint {
   display: flex;
@@ -585,6 +587,8 @@
   color: rgba(7,41,92,.5);
   font-size: .75rem;
   line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 .home-page-container .upload-format-hint svg {
   width: 16px;
@@ -617,6 +621,9 @@
   padding: 12px;
   border-radius: 16px;
   background: #f5f8fc;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .home-page-container .file-item__icon {
   display: grid;
@@ -633,6 +640,7 @@
 .home-page-container .file-item__meta {
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 .home-page-container .file-item__name {
   overflow: hidden;
@@ -648,6 +656,7 @@
   font-size: .69rem;
 }
 .home-page-container .file-item__remove {
+  flex: 0 0 auto;
   border: 0;
   color: rgba(7,41,92,.45);
   background: transparent;
@@ -717,6 +726,8 @@
   color: rgba(7,41,92,.45);
   font-size: .69rem;
   line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .home-page-container .route-screen {
