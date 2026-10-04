@@ -72,15 +72,8 @@ function formatMoney(v: any): string {
       </div>
 
       <div class="summary-total" style="color: var(--muted)">
-        <span>模擬合計</span>
+        <span>合計</span>
         <strong style="color: var(--navy)">{{ formatMoney(total) }}</strong>
-      </div>
-
-      <div class="notice">
-        <p>
-          CareU 健康分析與商品建議不取代醫療診斷；如有異常數值，請諮詢專業醫療人員。<br /><br />
-          此組合尚未完成成分重複、交互作用及個人適用性檢查，不代表已確認適合一起服用。
-        </p>
       </div>
 
       <button
@@ -105,3 +98,9 @@ function formatMoney(v: any): string {
     </div>
   </AppModal>
 </template>
+
+<style scoped>
+#confirmCart {
+  border-radius: var(--cu-radius-pill, 9999px);
+}
+</style>

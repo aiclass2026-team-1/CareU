@@ -61,24 +61,30 @@ const emit = defineEmits<{
                     </div>
 
                     <div class="product-info">
-                      <h4>{{ product(selectedProducts[cid])!.name }}</h4>
-                      <span class="product-price">
-                        {{ formatMoney(product(selectedProducts[cid])!.price) }}
-                        <small>／30 粒</small>
-                      </span>
-                      <p class="unit-price">
-                        {{ formatMoney(product(selectedProducts[cid])!.unitPrice) }}／粒
-                      </p>
+                      <div class="product-main-copy">
+                        <h4>{{ product(selectedProducts[cid])!.name }}</h4>
+                        <div class="product-price-row">
+                          <span class="product-price">
+                            {{ formatMoney(product(selectedProducts[cid])!.price) }}
+                            <small class="package-qty">／30 粒</small>
+                          </span>
+                          <p class="unit-price">
+                            {{ formatMoney(product(selectedProducts[cid])!.unitPrice) }}／粒
+                          </p>
+                        </div>
+                      </div>
                       <div class="bundle-actions">
                         <button
                           class="text-button"
                           :id="'change-' + cid"
                           type="button"
+                          data-action="toggle-candidates"
                           :aria-expanded="expandedCandidateDirections.has(cid) ? 'true' : 'false'"
                           :aria-controls="'candidates-' + cid"
                           @click="emit('toggleCandidates', cid)"
                         >
-                          {{ expandedCandidateDirections.has(cid) ? '收合選擇' : '更換品項' }}
+                          <span class="desktop-text">{{ expandedCandidateDirections.has(cid) ? '收合選擇' : '更換品項' }}</span>
+                          <span class="mobile-text">{{ expandedCandidateDirections.has(cid) ? '收合' : '更換' }}</span>
                           <svg class="icon"><use href="#i-down" /></svg>
                         </button>
                         <button
@@ -152,7 +158,6 @@ const emit = defineEmits<{
                   class="candidates"
                   :id="'candidates-' + cid"
                 >
-                  <p>同方向候選品項 · {{ candidatesFor(cid).length }} 款 · 價格均為模擬</p>
                   <div
                     v-for="candId in candidatesFor(cid)"
                     :key="'cand-' + candId"
@@ -170,15 +175,21 @@ const emit = defineEmits<{
                         <div class="dose-shapes" aria-hidden="true"><i class="dose"></i></div>
                       </div>
                       <div class="candidate-copy product-info">
-                        <h4 class="candidate-name">{{ product(candId)?.name }}</h4>
-                        <span class="product-price">
-                          {{ formatMoney(product(candId)!.price) }}
-                          <small>／30 粒</small>
-                        </span>
-                        <p class="unit-price">{{ formatMoney(product(candId)!.unitPrice) }}／粒</p>
+                        <div class="product-main-copy">
+                          <h4 class="candidate-name">{{ product(candId)?.name }}</h4>
+                          <div class="product-price-row">
+                            <span class="product-price">
+                              {{ formatMoney(product(candId)!.price) }}
+                              <small class="package-qty">／30 粒</small>
+                            </span>
+                            <p class="unit-price">
+                              {{ formatMoney(product(candId)!.unitPrice) }}／粒
+                            </p>
+                          </div>
+                        </div>
                         <div class="candidate-add bundle-actions">
                           <button
-                            class="button outline small"
+                            class="button outline small candidate-action-btn"
                             type="button"
                             :disabled="selectedProducts[cid] === candId"
                             @click="emit('selectProduct', cid, candId)"
